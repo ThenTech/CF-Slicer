@@ -7,12 +7,12 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Slicer")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Slycer")]
+[assembly: AssemblyDescription("Computational Fabrication 3D model Slicer")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Slicer")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCompany("UHasselt")]
+[assembly: AssemblyProduct("Slycer")]
+[assembly: AssemblyCopyright("Copyright © 2019 Lieven Libberecht, William Thenaers")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

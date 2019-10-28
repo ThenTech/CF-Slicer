@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{4897B4C4-A7A3-4A42-AF50-A4E6CC981055}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>Slicer</RootNamespace>
-    <AssemblyName>Slicer</AssemblyName>
+    <RootNamespace>Slycer</RootNamespace>
+    <AssemblyName>Slycer</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -35,6 +35,12 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>Slicer.App</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\slycer.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AssimpNet, Version=4.1.0.0, Culture=neutral, PublicKeyToken=0d51b391f59f42a6, processorArchitecture=MSIL">
@@ -69,6 +75,113 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\Command.cs">
+      <Link>GCodeNet\Base\Command.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\CommandAttribute.cs">
+      <Link>GCodeNet\Base\CommandAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\CommandBase.cs">
+      <Link>GCodeNet\Base\CommandBase.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\CommandMapping.cs">
+      <Link>GCodeNet\Base\CommandMapping.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\CommandType.cs">
+      <Link>GCodeNet\Base\CommandType.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\CRC.cs">
+      <Link>GCodeNet\Base\CRC.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\GCodeTokenizer.cs">
+      <Link>GCodeNet\Base\GCodeTokenizer.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\ParameterType.cs">
+      <Link>GCodeNet\Base\ParameterType.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Base\ParameterTypeAttribute.cs">
+      <Link>GCodeNet\Base\ParameterTypeAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\CommandCollection.cs">
+      <Link>GCodeNet\CommandCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\ControlledArcMoveClockwise.cs">
+      <Link>GCodeNet\Commands\G\ControlledArcMoveClockwise.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\ControlledArcMoveCounterClockwise.cs">
+      <Link>GCodeNet\Commands\G\ControlledArcMoveCounterClockwise.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\Dwell.cs">
+      <Link>GCodeNet\Commands\G\Dwell.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\LinearMove.cs">
+      <Link>GCodeNet\Commands\G\LinearMove.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\MoveToOrigin.cs">
+      <Link>GCodeNet\Commands\G\MoveToOrigin.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\RapidLinearMove.cs">
+      <Link>GCodeNet\Commands\G\RapidLinearMove.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\SetAbsolutePositioning.cs">
+      <Link>GCodeNet\Commands\G\SetAbsolutePositioning.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\SetPosition.cs">
+      <Link>GCodeNet\Commands\G\SetPosition.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\SetRelativePositioning.cs">
+      <Link>GCodeNet\Commands\G\SetRelativePositioning.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\SetUnitsToInches.cs">
+      <Link>GCodeNet\Commands\G\SetUnitsToInches.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\G\SetUnitsToMillimeters.cs">
+      <Link>GCodeNet\Commands\G\SetUnitsToMillimeters.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\DisplayMessage.cs">
+      <Link>GCodeNet\Commands\M\DisplayMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\FanOff.cs">
+      <Link>GCodeNet\Commands\M\FanOff.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\FanOn.cs">
+      <Link>GCodeNet\Commands\M\FanOn.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\SetExtruderTemperature.cs">
+      <Link>GCodeNet\Commands\M\SetExtruderTemperature.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\SetExtruderTemperatureAndWait.cs">
+      <Link>GCodeNet\Commands\M\SetExtruderTemperatureAndWait.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\SetExtruderToAbsolute.cs">
+      <Link>GCodeNet\Commands\M\SetExtruderToAbsolute.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Commands\M\StopIdleHold.cs">
+      <Link>GCodeNet\Commands\M\StopIdleHold.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\ExportFileOptions.cs">
+      <Link>GCodeNet\ExportFileOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\GCodeFile.cs">
+      <Link>GCodeNet\GCodeFile.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\GCodeFileLine.cs">
+      <Link>GCodeNet\GCodeFileLine.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\GCodeFileOptions.cs">
+      <Link>GCodeNet\GCodeFileOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Reflection\CommandReflection.cs">
+      <Link>GCodeNet\Reflection\CommandReflection.cs</Link>
+    </Compile>
+    <Compile Include="..\GCodeNet\GCodeNet\Reflection\CommandReflectionData.cs">
+      <Link>GCodeNet\Reflection\CommandReflectionData.cs</Link>
+    </Compile>
+    <Compile Include="GCodeNet\Commands\M\SetBedTemperature.cs" />
+    <Compile Include="GCodeNet\Commands\M\SetBedTemperatureAndWait.cs" />
+    <Compile Include="GCodeNet\Commands\M\SetExtrudeFactorOverride.cs" />
+    <Compile Include="GCodeNet\Commands\M\SetSpeedFactorOverride.cs" />
+    <Compile Include="slyce\GCodeWriter.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -111,7 +224,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="slyce\" />
+    <Resource Include="Resources\slycer.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\AssimpNet.4.1.0\build\AssimpNet.targets" Condition="Exists('packages\AssimpNet.4.1.0\build\AssimpNet.targets')" />

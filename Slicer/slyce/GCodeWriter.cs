@@ -14,6 +14,11 @@ namespace Slicer.slyce
     {
         private CommandCollection instructions;
 
+        private static readonly string header_comment   = ";Generated with Slycer - Lieven Libberecht, William Thenaers";
+        private static readonly string startup_comment  = "\n;Setup";
+        private static readonly string print_comment    = "\n;Print";
+        private static readonly string teardown_comment = "\n;Teardown";
+
         private static readonly CommandCollection startup_sequence = new CommandCollection()
         {
             new SetBedTemperature() { Temperature = 200 },
@@ -63,7 +68,7 @@ namespace Slicer.slyce
 
         public GCodeWriter()
         {
-
+            this.instructions = new CommandCollection();
         }
 
         public void Reset()
@@ -81,25 +86,35 @@ namespace Slicer.slyce
             this.instructions.Add(cmd);
         }
 
-        public void ExportToFile(Uri path, bool insert_setup=true, bool append_teardown=true)
+        public void ExportToFile(Uri path, bool insert_setup = true, bool append_teardown = true)
         {
-            var fout = new StreamWriter(path.ToString());
+            this.ExportToFile(path.ToString(), insert_setup, append_teardown);
+        }
 
+        public void ExportToFile(string path, bool insert_setup=true, bool append_teardown=true)
+        {
+            var fout = new StreamWriter(path);
+
+            fout.WriteLine(GCodeWriter.header_comment);
+            
             if (insert_setup)
             {
+                fout.WriteLine(GCodeWriter.startup_comment);
                 GCodeWriter.startup_sequence.ForEach(x => {
-                    fout.Write(x.ToGCode());
+                    fout.WriteLine(x.ToGCode());
                 });
             }
 
+            fout.WriteLine(GCodeWriter.print_comment);
             this.instructions.ForEach(x => {
-                fout.Write(x.ToGCode());
+                fout.WriteLine(x.ToGCode());
             });
 
             if (append_teardown)
             {
+                fout.WriteLine(GCodeWriter.teardown_comment);
                 GCodeWriter.teardown_sequence.ForEach(x => {
-                    fout.Write(x.ToGCode());
+                    fout.WriteLine(x.ToGCode());
                 });
             }
 

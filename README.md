@@ -4,7 +4,7 @@
 
 ## Minimal requirements
 
-- [ ] Program with input STL/OBJ file and output gcode file
+- [ ] Program with input STL/OBJ file and output [gcode](https://reprap.org/wiki/G-code) file
 - [ ] Basic GUI to go through slices step by step (+ render all paths in colors)
 - [ ] Basic GUI for configuring essential parameters e.g. layer height, nozzle diameter, number of shells,…
 - [ ] Support for Shells + infill (basic e.g. rectangular) + roofs/floors

@@ -76,6 +76,17 @@ namespace Slicer.GUI
             }
         }
 
+        string _ModelFolder;
+        public string ModelFolder
+        {
+            get { return _ModelFolder; }
+            set
+            {
+                _ModelFolder = value;
+                OnPropertyChanged("ModelFolder");
+            }
+        }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;

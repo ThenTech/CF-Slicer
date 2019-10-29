@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,6 +42,9 @@ namespace Slicer
         public MainWindow()
         {
             InitializeComponent();
+
+            // Change Culture, so numeric values use a dot instead of comma in a string...
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
 
             CompositionTarget.Rendering += this.OnCompositionTargetRendering;
             DataContext = _viewModel;
@@ -100,6 +105,7 @@ namespace Slicer
             Load(s);
             s.Close();
             _viewModel.ModelTitle = Path.GetFileNameWithoutExtension(p);
+            _viewModel.ModelFolder = Path.GetDirectoryName(p);
         }
 
         private void Load(Stream s)
@@ -186,7 +192,10 @@ namespace Slicer
             var d = new SaveFileDialog
             {
                 Filter = Exporters.Filter,
-                DefaultExt = ".png"
+                DefaultExt = ".png",
+                FileName = _viewModel.ModelTitle,
+                Title = "Export current view",
+                InitialDirectory = _viewModel.ModelFolder
             };
 
             if (d.ShowDialog().Value)
@@ -194,6 +203,24 @@ namespace Slicer
                 string ext = Path.GetExtension(d.FileName).ToLower();
                 viewport.Export(d.FileName);
                 Process.Start(Path.GetDirectoryName(d.FileName));
+            }
+        }
+
+        private void ExportGCode_Click(object sender, RoutedEventArgs e)
+        {
+            var d = new SaveFileDialog
+            {
+                Filter = "GCode|*.gcode",
+                DefaultExt = ".gcode",
+                FileName = _viewModel.ModelTitle,
+                Title = "Save current slicing as gcode",
+                InitialDirectory = _viewModel.ModelFolder
+            };
+
+            if (d.ShowDialog().Value)
+            {
+                Slicer.slyce.GCodeWriter gcw = new slyce.GCodeWriter();
+                gcw.ExportToFile(d.FileName);
             }
         }
 

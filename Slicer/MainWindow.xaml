@@ -70,13 +70,13 @@
                 CameraRotationMode="Turntable"
                 Title="{Binding ModelTitle}"
                 Background="White" 
-                ShowFrameRate="False" 
+                ShowFrameRate="True" 
                 ZoomExtentsWhenLoaded="True" 
                 ZoomAroundMouseDownPoint="True" 
                 RotateAroundMouseDownPoint="False"
                 >
-                <helix:DefaultLights/>
-                <!--<HelixToolkit:SunLight />-->
+                <helix:SunLight/>
+                <helix:ThreePointLights />
 
                 <ModelVisual3D Content="{Binding Model}" />
 

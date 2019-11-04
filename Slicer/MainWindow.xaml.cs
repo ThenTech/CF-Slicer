@@ -39,7 +39,6 @@ namespace Slicer
         private object updateLock = "abc";
         private UIElement currentView;
         private Viewport3D v1;
-        private ModelVisual3D currentModel = new ModelVisual3D();
         
 
         public MainWindow()
@@ -245,9 +244,16 @@ namespace Slicer
                     Console.Out.Write(filename);
                     ModelImporter import = new ModelImporter();
                     var mod = import.Load(filename);
-                    currentModel = new ModelVisual3D();
-                    currentModel.Content = mod;
-                    viewport.Children.Add(currentModel);
+                    _viewModel.CurrentModel = new ModelVisual3D();
+                    _viewModel.CurrentModel.Content = mod;
+                    viewport.Children.Add(_viewModel.CurrentModel);
+                    _viewModel.ModelFolder = filename;
+                    //Scaling model to settings (X, Y, Z)
+                    ScaleTransform3D scaleTransform3D = new ScaleTransform3D();
+                    scaleTransform3D.ScaleX = _viewModel.MeshSizeU / 100.0;
+                    scaleTransform3D.ScaleY = _viewModel.MeshSizeV / 100.0;
+                    scaleTransform3D.ScaleZ = _viewModel.ParameterW;
+                    _viewModel.CurrentModel.Transform = scaleTransform3D;
                 }
             }
         }

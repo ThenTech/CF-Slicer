@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 
 namespace Slicer.GUI
 {
@@ -87,12 +88,29 @@ namespace Slicer.GUI
             }
         }
 
+        private ModelVisual3D currentModel;
+
+        public ModelVisual3D CurrentModel
+        {
+            get { return currentModel; }
+            set { currentModel = value; }
+        }
+
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
             if (handler != null)
             {
                 handler(this, new PropertyChangedEventArgs(propertyName));
+            }
+            if(propertyName == "MeshSizeU" || propertyName == "MeshSizeV" || propertyName == "ParameterW")
+            {
+                ScaleTransform3D scaleTransform3D = new ScaleTransform3D();
+                scaleTransform3D.ScaleX = MeshSizeU / 100.0;
+                scaleTransform3D.ScaleY = MeshSizeV / 100.0;
+                scaleTransform3D.ScaleZ = ParameterW;
+                CurrentModel.Transform = scaleTransform3D;
             }
         }
 

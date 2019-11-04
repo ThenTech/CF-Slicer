@@ -55,9 +55,7 @@ namespace Slicer
 
             surface2 = new ClonedVisual3D();
 
-            _viewModel.Brush = Brushes.Blue;
-
-            //viewport.Viewport.Children.Add(new DefaultLights());
+            _viewModel.Brush = Brushes.Yellow;
 
             v1 = viewport.Viewport;
             currentView = viewport;
@@ -88,34 +86,32 @@ namespace Slicer
             Invalidate();
         }
 
-        private void Load(Uri uri)
-        {
-            try
-            {
-                StreamResourceInfo sri = Application.GetResourceStream(uri);
-                Load(sri.Stream);
-            }
-            catch
-            {
-                MessageBox.Show("Cannot read model");
-            }
-        }
-
         private void Load(string p)
-        {
-            var s = new FileStream(p, FileMode.Open);
-            Load(s);
-            s.Close();
-            _viewModel.ModelTitle = Path.GetFileNameWithoutExtension(p);
-            _viewModel.ModelFolder = Path.GetDirectoryName(p);
-        }
-
-        private void Load(Stream s)
         {
             Invalidate();
 
-            // todo: binding didn't work
-            viewport.Title = _viewModel.ModelTitle;
+            ModelImporter import = new ModelImporter
+            {
+                DefaultMaterial = new DiffuseMaterial(_viewModel.Brush)
+            };
+
+            Model3D mod = null;
+
+            try
+            {
+                mod = import.Load(p);
+            } catch(Exception e) {
+                MessageBox.Show("Cannot read model: " + e.ToString(), "Import error");
+                return;
+            }
+
+            _viewModel.CurrentModel = mod;
+            _viewModel.ModelTitle = Path.GetFileNameWithoutExtension(p);
+            _viewModel.ModelFolder = Path.GetDirectoryName(p);
+
+            // Update translation (set any property to update)
+            _viewModel.ScaleX = 1.0;
+            
             viewport.CameraController.ResetCamera();
         }
 
@@ -197,7 +193,9 @@ namespace Slicer
                 DefaultExt = ".png",
                 FileName = _viewModel.ModelTitle,
                 Title = "Export current view",
-                InitialDirectory = _viewModel.ModelFolder
+                InitialDirectory = _viewModel.ModelFolder?.Length > 0
+                                 ? _viewModel.ModelFolder
+                                 : Environment.CurrentDirectory
             };
 
             if (d.ShowDialog().Value)
@@ -216,12 +214,14 @@ namespace Slicer
                 DefaultExt = ".gcode",
                 FileName = _viewModel.ModelTitle,
                 Title = "Save current slicing as gcode",
-                InitialDirectory = _viewModel.ModelFolder
+                InitialDirectory = _viewModel.ModelFolder?.Length > 0
+                                 ? _viewModel.ModelFolder
+                                 : Environment.CurrentDirectory
             };
 
             if (d.ShowDialog().Value)
             {
-                Slicer.slyce.GCodeWriter gcw = new slyce.GCodeWriter();
+                slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter();
                 gcw.ExportToFile(d.FileName);
             }
         }
@@ -233,29 +233,26 @@ namespace Slicer
 
         private void Open_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = false;
-            openFileDialog.Filter = "Model Files(*.obj;*.stl)|*.obj;*.stl|All files (*.*)|*.*";
-            openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            OpenFileDialog openFileDialog = new OpenFileDialog() {
+                Title = "Open a 3D model to start slicing...",
+                CheckFileExists = true,
+                Multiselect = false,
+                Filter = "Model Files (*.obj;*.stl)|*.obj;*.stl|All files (*.*)|*.*",
+                InitialDirectory = _viewModel.ModelFolder?.Length > 0 
+                                 ? _viewModel.ModelFolder
+                                 : Environment.CurrentDirectory
+            };
+
             if (openFileDialog.ShowDialog() == true)
             {
-                foreach (string filename in openFileDialog.FileNames)
-                {
-                    Console.Out.Write(filename);
-                    ModelImporter import = new ModelImporter();
-                    var mod = import.Load(filename);
-                    _viewModel.CurrentModel = new ModelVisual3D();
-                    _viewModel.CurrentModel.Content = mod;
-                    viewport.Children.Add(_viewModel.CurrentModel);
-                    _viewModel.ModelFolder = filename;
-                    //Scaling model to settings (X, Y, Z)
-                    ScaleTransform3D scaleTransform3D = new ScaleTransform3D();
-                    scaleTransform3D.ScaleX = _viewModel.MeshSizeU / 100.0;
-                    scaleTransform3D.ScaleY = _viewModel.MeshSizeV / 100.0;
-                    scaleTransform3D.ScaleZ = _viewModel.ParameterW;
-                    _viewModel.CurrentModel.Transform = scaleTransform3D;
-                }
+                Console.Out.Write(openFileDialog.FileName);
+                this.Load(openFileDialog.FileName);
             }
+        }
+
+        private void Slice_Click(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("Start slicing...");
         }
     }
 }

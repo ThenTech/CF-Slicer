@@ -36,7 +36,7 @@
                 <Grid DockPanel.Dock="Top" Margin="4" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition/>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="8"/>
                     </Grid.ColumnDefinitions>
@@ -45,21 +45,64 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Foreground="#f0f1f2" Text="Setting 1" Grid.Row="0"/>
-                    <TextBlock Foreground="#f0f1f2" Text="Elements in 'u' direction" Grid.Row="1"/>
-                    <TextBlock Foreground="#f0f1f2" Text="Elements in 'v' direction" Grid.Row="2"/>
-                    <TextBlock Foreground="#f0f1f2" Text="Parameter 'w'" Grid.Row="3"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Object settings" Grid.Row="1" Grid.ColumnSpan="3" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Foreground="#f0f1f2" Text="X scale" Grid.Row="2"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Y scale" Grid.Row="3"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Z scale" Grid.Row="4"/>
+                    <Separator Grid.Row="5" Grid.ColumnSpan="4" Height="5"/>
 
-                    <Slider Name="slider0" Grid.Column="1" Grid.Row="0" Minimum="0" Maximum="1000" Value="{Binding ValueSetting1}" Margin="10 2 10 2"/>
-                    <Slider Name="slider1" Grid.Column="1" Grid.Row="1" Minimum="10" Maximum="400" Value="{Binding MeshSizeU}" Margin="10 2 10 2"/>
-                    <Slider Name="slider2" Grid.Column="1" Grid.Row="2" Minimum="10" Maximum="400" Value="{Binding MeshSizeV}" Margin="10 2 10 2"/>
-                    <Slider Name="slider3" Grid.Column="1" Grid.Row="3" Minimum="0" Maximum="2" Value="{Binding ParameterW}" Margin="10 2 10 2"/>
+                    <TextBlock Foreground="#f0f1f2" Text="X rot" Grid.Row="6"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Y rot" Grid.Row="7"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Z rot" Grid.Row="8"/>
+                    <Separator Grid.Row="9" Grid.ColumnSpan="4" Height="5"/>
+                    
+                    <TextBlock Foreground="#f0f1f2" Text="X pos" Grid.Row="10"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Y pos" Grid.Row="11"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Z pos" Grid.Row="12"/>
+                    <Separator Grid.Row="13" Grid.ColumnSpan="4" Height="5"/>
 
-                    <TextBlock Foreground="#f0f1f2" Text="{Binding MeshSizeU, StringFormat='{}{0:N0}'}" Grid.Column="2" Grid.Row="1"/>
-                    <TextBlock Foreground="#f0f1f2" Text="{Binding MeshSizeV, StringFormat={}{0:N0}}" Grid.Column="2" Grid.Row="2"/>
-                    <TextBlock Foreground="#f0f1f2" Text="{Binding ParameterW, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="3"/>
+                    <Slider Name="slider1" Grid.Column="1" Grid.Row="2" Minimum="0.01" Maximum="4.0" Value="{Binding ScaleX}" Margin="10 2 10 2"/>
+                    <Slider Name="slider2" Grid.Column="1" Grid.Row="3" Minimum="0.01" Maximum="4.0" Value="{Binding ScaleY}" Margin="10 2 10 2"/>
+                    <Slider Name="slider3" Grid.Column="1" Grid.Row="4" Minimum="0.01" Maximum="4.0" Value="{Binding ScaleZ}" Margin="10 2 10 2"/>
+                    <Slider Name="slider4" Grid.Column="1" Grid.Row="6" Minimum="0.0" Maximum="1.0" Value="{Binding RotationX}" Margin="10 2 10 2"/>
+                    <Slider Name="slider5" Grid.Column="1" Grid.Row="7" Minimum="0.0" Maximum="1.0" Value="{Binding RotationY}" Margin="10 2 10 2"/>
+                    <Slider Name="slider6" Grid.Column="1" Grid.Row="8" Minimum="0.0" Maximum="1.0" Value="{Binding RotationZ}" Margin="10 2 10 2"/>
+                    
+                    <Slider Name="slider7" Grid.Column="1" Grid.Row="10" Minimum="-10" Maximum="10" Value="{Binding PositionX}" Margin="10 2 10 2"/>
+                    <Slider Name="slider8" Grid.Column="1" Grid.Row="11" Minimum="-10" Maximum="10" Value="{Binding PositionY}" Margin="10 2 10 2"/>
+                    <Slider Name="slider9" Grid.Column="1" Grid.Row="12" Minimum="-10" Maximum="10" Value="{Binding PositionZ}" Margin="10 2 10 2"/>
+
+                    <TextBox Foreground="Black" Text="{Binding ScaleX, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="2" Width="50" />
+                    <TextBox Foreground="Black" Text="{Binding ScaleY, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="3"/>
+                    <TextBox Foreground="Black" Text="{Binding ScaleZ, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="4"/>
+                    <TextBox Foreground="Black" Text="{Binding RotationX, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="6" Width="50" />
+                    <TextBox Foreground="Black" Text="{Binding RotationY, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="7"/>
+                    <TextBox Foreground="Black" Text="{Binding RotationZ, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="8"/>
+                    <TextBox Foreground="Black" Text="{Binding PositionX, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="10" Width="50" />
+                    <TextBox Foreground="Black" Text="{Binding PositionY, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="11"/>
+                    <TextBox Foreground="Black" Text="{Binding PositionZ, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="12"/>
+
+                    <TextBlock Foreground="#f0f1f2" Text="Slicing settings" Grid.Row="14" Grid.ColumnSpan="3" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Nozzle thickness (mm)" Grid.Row="15" Grid.ColumnSpan="2"/>
+                    <TextBox Foreground="Black" Text="{Binding NozzleThickness, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="15" />
+
+                    <Button Content="Slice!" Grid.ColumnSpan="3" Grid.Row="17" Height="30" Click="Slice_Click"/>
                 </Grid>
             </DockPanel>
 
@@ -74,11 +117,14 @@
                 ZoomExtentsWhenLoaded="True" 
                 ZoomAroundMouseDownPoint="True" 
                 RotateAroundMouseDownPoint="False"
+                ShowCoordinateSystem="False"
+                IsHeadLightEnabled="True"
                 >
-                <helix:SunLight/>
-                <helix:ThreePointLights />
+                
+                <!--<helix:SunLight/>-->
+                <!--<helix:DefaultLights />-->
 
-                <ModelVisual3D Content="{Binding Model}" />
+                <ModelVisual3D Content="{Binding CurrentModel}" />
 
                 <helix:GridLinesVisual3D
                     Width="8"

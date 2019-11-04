@@ -22,47 +22,113 @@ namespace Slicer.GUI
             }
         }
 
-        int _valueSetting1 = 500;
-        public int ValueSetting1
+        double _ScaleX = 1;
+        public double ScaleX
         {
-            get { return _valueSetting1; }
+            get { return _ScaleX; }
             set
             {
-                _valueSetting1 = value;
-                OnPropertyChanged("ValueSetting1");
+                _ScaleX = value;
+                OnPropertyChanged("ScaleX");
             }
         }
 
-        int _MeshSizeU = 140;
-        public int MeshSizeU
+        double _ScaleY = 1;
+        public double ScaleY
         {
-            get { return _MeshSizeU; }
+            get { return _ScaleY; }
             set
             {
-                _MeshSizeU = value;
-                OnPropertyChanged("MeshSizeU");
+                _ScaleY = value;
+                OnPropertyChanged("ScaleY");
             }
         }
 
-        int _MeshSizeV = 140;
-        public int MeshSizeV
+        double _ScaleZ = 1;
+        public double ScaleZ
         {
-            get { return _MeshSizeV; }
+            get { return _ScaleZ; }
             set
             {
-                _MeshSizeV = value;
-                OnPropertyChanged("MeshSizeV");
+                _ScaleZ = value;
+                OnPropertyChanged("ScaleZ");
             }
         }
 
-        double _ParameterW = 1;
-        public double ParameterW
+        double _RotationX = 0;
+        public double RotationX
         {
-            get { return _ParameterW; }
+            get { return _RotationX; }
             set
             {
-                _ParameterW = value;
-                OnPropertyChanged("ParameterW");
+                _RotationX = value;
+                OnPropertyChanged("RotationX");
+            }
+        }
+
+        double _RotationY = 0;
+        public double RotationY
+        {
+            get { return _RotationY; }
+            set
+            {
+                _RotationY = value;
+                OnPropertyChanged("RotationY");
+            }
+        }
+
+        double _RotationZ = 0;
+        public double RotationZ
+        {
+            get { return _RotationZ; }
+            set
+            {
+                _RotationZ = value;
+                OnPropertyChanged("RotationZ");
+            }
+        }
+
+        double _PositionX = 0;
+        public double PositionX
+        {
+            get { return _PositionX; }
+            set
+            {
+                _PositionX = value;
+                OnPropertyChanged("PositionX");
+            }
+        }
+
+        double _PositionY = 0;
+        public double PositionY
+        {
+            get { return _PositionY; }
+            set
+            {
+                _PositionY = value;
+                OnPropertyChanged("PositionY");
+            }
+        }
+
+        double _PositionZ = 0;
+        public double PositionZ
+        {
+            get { return _PositionZ; }
+            set
+            {
+                _PositionZ = value;
+                OnPropertyChanged("PositionZ");
+            }
+        }
+
+        double _NozzleThickness = 0.22;
+        public double NozzleThickness
+        {
+            get { return _NozzleThickness; }
+            set
+            {
+                _NozzleThickness = value;
+                OnPropertyChanged("NozzleThickness");
             }
         }
 
@@ -88,14 +154,15 @@ namespace Slicer.GUI
             }
         }
 
-        private ModelVisual3D currentModel;
-
-        public ModelVisual3D CurrentModel
+        private Model3D _CurrentModel;
+        public Model3D CurrentModel
         {
-            get { return currentModel; }
-            set { currentModel = value; }
+            get { return _CurrentModel; }
+            set {
+                _CurrentModel = value;
+                OnPropertyChanged("CurrentModel");
+            }
         }
-
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
@@ -104,13 +171,61 @@ namespace Slicer.GUI
             {
                 handler(this, new PropertyChangedEventArgs(propertyName));
             }
-            if(propertyName == "MeshSizeU" || propertyName == "MeshSizeV" || propertyName == "ParameterW")
+            if (CurrentModel != null 
+                && (propertyName == "ScaleX" || propertyName == "ScaleY" || propertyName == "ScaleZ"
+                 || propertyName == "RotationX" || propertyName == "RotationY" || propertyName == "RotationZ"
+                 || propertyName == "PositionX" || propertyName == "PositionY" || propertyName == "PositionZ"
+                ))
             {
-                ScaleTransform3D scaleTransform3D = new ScaleTransform3D();
-                scaleTransform3D.ScaleX = MeshSizeU / 100.0;
-                scaleTransform3D.ScaleY = MeshSizeV / 100.0;
-                scaleTransform3D.ScaleZ = ParameterW;
-                CurrentModel.Transform = scaleTransform3D;
+                Transform3DGroup combined = new Transform3DGroup();
+
+                // Scale
+                combined.Children.Add(new ScaleTransform3D
+                {
+                    ScaleX = ScaleX,
+                    ScaleY = ScaleY,
+                    ScaleZ = ScaleZ,
+                });
+
+                // Rotate X
+                combined.Children.Add(new RotateTransform3D()
+                {
+                    Rotation = new AxisAngleRotation3D()
+                    {
+                        Axis = new Vector3D(1, 0, 0),
+                        Angle = RotationX * 360.0
+                    }
+                });
+
+                // Rotate Y
+                combined.Children.Add(new RotateTransform3D()
+                {
+                    Rotation = new AxisAngleRotation3D()
+                    {
+                        Axis = new Vector3D(0, 1, 0),
+                        Angle = RotationY * 360.0
+                    }
+                });
+                
+                // Rotate Z
+                combined.Children.Add(new RotateTransform3D()
+                {
+                    Rotation = new AxisAngleRotation3D()
+                    {
+                        Axis = new Vector3D(0, 0, 1),
+                        Angle = RotationZ * 360.0
+                    }
+                });
+
+                // Translate (is done first)
+                combined.Children.Add(new TranslateTransform3D()
+                {
+                    OffsetX = PositionX,
+                    OffsetY = PositionY,
+                    OffsetZ = PositionZ
+                });
+
+                CurrentModel.Transform = combined;
             }
         }
 

@@ -28,7 +28,7 @@
   - [x] Basic 3D UI (William), uses:
     - [helix-toolkit](https://github.com/helix-toolkit/helix-toolkit) in a C# WPF 3D form
     - [clipper](http://www.angusj.com/delphi/clipper.php)
-  - [x] Basic GCode writer (uses [GCodeNET](https://github.com/chrismiller7/GCodeNet)) (William)
+  - [x] Basic GCode writer (William)
 - [ ] Erode perimeter with half the nozzle thickness (otherwise print will be too large)
 - [ ] **[Deadline 14/11]** Generate g-code for a perimeter of a single slice and try 3D printing
 - [ ] Extend data structure to support holes in object/polygon
@@ -45,12 +45,12 @@
 ## TODO
 
 - [ ] Scale slider naar 1 dim
-- [ ] Sliders met textfield voor manual input (of sliders weg en enkel [real scale; percentage])
-- [ ] Wat doet AssimpNet (obj import -> polygons?) en Clipper (polygon intersection etc)?
+- [ ] ~~Sliders met textfield voor manual input~~ (of sliders weg en enkel [real scale; percentage])
+- [ ] Clipper (polygon intersection etc)?
 - [ ] 2de viewport voor 1 slice te previewen => met slider voor slice te selecteren
 - [ ] Slice preview met kleuraanduiding in object of bovenkant object wegnemen om slice te zien
-- [ ] Nozzle thickness parameter
+- [x] Nozzle thickness parameter
 - [ ] Indicatie van grootte
-- [ ] XY translate en rotate
-- [ ] Slice opstellen door 2 blokken aan bovenkant en onderkant af te trekken van het oorspronkelijke object, met nozzle thickness als distance tussen de blokken
-- [ ] Add ambient light
+- [x] XY translate en rotate
+- [ ] Slice opstellen door uinion van vlak met dikte NozzleThickness en object (met Clipper?)
+- [x] Add ambient light ~~

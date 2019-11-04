@@ -15,6 +15,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Resources;
 using System.Windows.Shapes;
@@ -38,6 +39,8 @@ namespace Slicer
         private object updateLock = "abc";
         private UIElement currentView;
         private Viewport3D v1;
+        private ModelVisual3D currentModel = new ModelVisual3D();
+        
 
         public MainWindow()
         {
@@ -59,7 +62,7 @@ namespace Slicer
 
             v1 = viewport.Viewport;
             currentView = viewport;
-
+            
             Loaded += MainWindow_Loaded;
         }
 
@@ -227,6 +230,26 @@ namespace Slicer
         private void ResetCamera_Click(object sender, RoutedEventArgs e)
         {
             viewport.CameraController.ResetCamera();
+        }
+
+        private void Open_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Multiselect = false;
+            openFileDialog.Filter = "Model Files(*.obj;*.stl)|*.obj;*.stl|All files (*.*)|*.*";
+            openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (openFileDialog.ShowDialog() == true)
+            {
+                foreach (string filename in openFileDialog.FileNames)
+                {
+                    Console.Out.Write(filename);
+                    ModelImporter import = new ModelImporter();
+                    var mod = import.Load(filename);
+                    currentModel = new ModelVisual3D();
+                    currentModel.Content = mod;
+                    viewport.Children.Add(currentModel);
+                }
+            }
         }
     }
 }

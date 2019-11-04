@@ -13,7 +13,7 @@
     <DockPanel>
         <Menu Name="menuMain" DockPanel.Dock="Top">
             <MenuItem Header="File">
-                <MenuItem Header="Open..." IsEnabled="False"/>
+                <MenuItem Header="Open..." Click="Open_Click"/>
                 <MenuItem Header="Save as..." IsEnabled="False"/>
                 <Separator/>
                 <MenuItem Header="Export..." Click="Export_Click"/>

@@ -42,7 +42,8 @@ namespace Slicer.slyce
         public GeometryModel3D UpdateSlice()
         {
             this.BuildSliceBox();
-            this.BuildSlice();
+            //this.BuildSlice();
+            this.BuildSlice2();
             return this.Sliced;
         }
 
@@ -53,8 +54,16 @@ namespace Slicer.slyce
             var slice_size = 1000;
 
             // Add very large box
-            meshBuilder.AddBox(new Rect3D(-slice_size / 2, -slice_size / 2, this.data.CurrentSliceIdx * this.data.NozzleThickness,
-                                          slice_size, slice_size, this.data.NozzleThickness));
+            //meshBuilder.AddBox(new Rect3D(-slice_size / 2, -slice_size / 2, this.data.CurrentSliceIdx * this.data.NozzleThickness,
+            //                              slice_size, slice_size, this.data.NozzleThickness));
+
+            var b = this.data.CurrentModel.Bounds;
+            meshBuilder.AddBox(new Rect3D(
+                b.Location.X, b.Location.Y, 
+                b.Location.Z + this.data.CurrentSliceIdx * this.data.NozzleThickness, 
+                b.SizeX, b.SizeY, this.data.NozzleThickness));
+
+
             var mesh = meshBuilder.ToMesh(true);
             var greenMaterial = MaterialHelper.CreateMaterial(Colors.Green);
             var insideMaterial = MaterialHelper.CreateMaterial(Colors.Red);
@@ -65,6 +74,8 @@ namespace Slicer.slyce
                 Material = greenMaterial,
                 BackMaterial = insideMaterial
             };
+
+            this.data.CurrentSlicePlane = this.SlicePlane;
         }
 
         private void BuildSlice()
@@ -114,6 +125,29 @@ namespace Slicer.slyce
             MeshGeometry3D mg3D = builder.ToMesh();
 
             return mg3D;
+        }
+
+        private void BuildSlice2()
+        {
+            var builder = new MeshBuilder(false, false);
+            IList<Point3D> vertexPoints = new List<Point3D>();
+            IList<int> vertexTriang = new List<int>();
+
+            foreach (var p in this.Original.Positions.Zip(this.Original.TriangleIndices, Tuple.Create))
+            {
+                if (p.Item1.Z >= this.SlicePlane.Bounds.Z && p.Item1.Z <= this.SlicePlane.Bounds.Z + this.SlicePlane.Bounds.SizeZ)
+                {
+                    vertexPoints.Add(p.Item1);
+                    vertexTriang.Add(p.Item2);
+                }
+            }
+
+            builder.Append(vertexPoints, vertexTriang);
+
+            var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
+            this.Sliced = new GeometryModel3D(builder.ToMesh(), cutMaterial);
+
+            this.data.CurrentSlice = this.Sliced;
         }
     }
 }

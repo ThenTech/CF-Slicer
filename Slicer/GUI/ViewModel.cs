@@ -185,6 +185,17 @@ namespace Slicer.GUI
             }
         }
 
+        private Model3D _CurrentSlicePlane;
+        public Model3D CurrentSlicePlane
+        {
+            get { return _CurrentSlicePlane; }
+            set
+            {
+                _CurrentSlicePlane = value;
+                OnPropertyChanged("CurrentSlicePlane");
+            }
+        }
+
         private int _CurrentSliceIdx = 0;
         public int CurrentSliceIdx
         {
@@ -299,10 +310,10 @@ namespace Slicer.GUI
                     Slicer.UpdateSlice();
 
                     // Temp to show movement, but Slicer.Sliced itself should move when changing CurrentSliceIdx
-                    CurrentSlice.Transform = new TranslateTransform3D()
-                    {
-                        OffsetZ = CurrentSliceIdx * NozzleThickness
-                    };
+                    //CurrentSlice.Transform = new TranslateTransform3D()
+                    //{
+                    //    OffsetZ = CurrentSliceIdx * NozzleThickness
+                    //};
                 }
             }
         }

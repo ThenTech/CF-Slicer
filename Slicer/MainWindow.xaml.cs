@@ -39,6 +39,7 @@ namespace Slicer
         private object updateLock = "abc";
         private UIElement currentView;
         private Viewport3D v1;
+        private Viewport3D v2;
         
 
         public MainWindow()
@@ -59,7 +60,8 @@ namespace Slicer
 
             v1 = viewport.Viewport;
             currentView = viewport;
-            
+            v2 = viewport_slice.Viewport;
+
             Loaded += MainWindow_Loaded;
         }
 
@@ -167,12 +169,20 @@ namespace Slicer
                 panelSettings.Visibility = Visibility.Visible;
                 Grid.SetColumn(viewport, 1);
                 Grid.SetColumnSpan(viewport, 1);
+                Grid.SetColumn(viewport_slice, 1);
+                Grid.SetColumnSpan(viewport_slice, 1);
+                Grid.SetColumn(viewportsplitter, 1);
+                Grid.SetColumnSpan(viewportsplitter, 1);
             }
             else
             {
                 panelSettings.Visibility = Visibility.Collapsed;
                 Grid.SetColumn(viewport, 0);
                 Grid.SetColumnSpan(viewport, 2);
+                Grid.SetColumn(viewport_slice, 0);
+                Grid.SetColumnSpan(viewport_slice, 2);
+                Grid.SetColumn(viewportsplitter, 0);
+                Grid.SetColumnSpan(viewportsplitter, 2);
             }
         }
 
@@ -230,6 +240,7 @@ namespace Slicer
         private void ResetCamera_Click(object sender, RoutedEventArgs e)
         {
             viewport.CameraController.ResetCamera();
+            viewport_slice.CameraController.ResetCamera();
         }
 
         private void Open_Click(object sender, RoutedEventArgs e)
@@ -262,10 +273,10 @@ namespace Slicer
             _viewModel.Slicer = new slyce.SliceModel(_viewModel);
             _viewModel.Slicer.UpdateSlice();
 
-            var slicegroup = new Model3DGroup();
-            slicegroup.Children.Add(_viewModel.Slicer.SlicePlane);
-            slicegroup.Children.Add(_viewModel.Slicer.Sliced);
-            _viewModel.CurrentSlice = slicegroup;
+            //var slicegroup = new Model3DGroup();
+            ////slicegroup.Children.Add(_viewModel.Slicer.SlicePlane);
+            //slicegroup.Children.Add(_viewModel.Slicer.Sliced);
+            //_viewModel.CurrentSlice = slicegroup;
         }
     }
 }

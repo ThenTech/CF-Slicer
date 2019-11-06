@@ -112,6 +112,10 @@ namespace Slicer
             _viewModel.ModelTitle = Path.GetFileNameWithoutExtension(p);
             _viewModel.ModelFolder = Path.GetDirectoryName(p);
 
+            _viewModel.Slicer = null;
+            _viewModel.CurrentSlicePlane = null;
+            _viewModel.CurrentSliceIdx = 0;
+
             // Update translation (set any property to update)
             _viewModel.ScaleX = 1.0;
             
@@ -142,23 +146,6 @@ namespace Slicer
                     //Dispatcher.Invoke(new Action<string>(UpdateModel), src);
                 }
             }
-        }
-
-        private void UpdateModel(string src)
-        {
-            //UpdateSurface(surface1, src);
-            _isUpdating = false;
-        }
-
-        private void UpdateSurface(Mesh3D surface1, string src)
-        {
-            //surface1.Source = null;
-            //surface1.MeshSizeU = _viewModel.MeshSizeU;
-            //surface1.MeshSizeV = _viewModel.MeshSizeV;
-            //surface1.ParameterW = _viewModel.ParameterW;
-
-            //// now the surface should be updated
-            //surface1.Source = src;
         }
 
         private void ViewSettings_Click(object sender, RoutedEventArgs e)
@@ -257,7 +244,7 @@ namespace Slicer
 
             if (openFileDialog.ShowDialog() == true)
             {
-                Console.Out.Write(openFileDialog.FileName);
+                Console.WriteLine("Opened: " + openFileDialog.FileName);
                 this.Load(openFileDialog.FileName);
             }
         }

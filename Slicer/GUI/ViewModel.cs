@@ -298,6 +298,10 @@ namespace Slicer.GUI
 
                 CurrentSliceIdx = 0;
             }
+            else if (propertyName == "NozzleThickness")
+            {
+                CurrentSliceIdx = 0;
+            }
             else if (HasModel
                 && (propertyName == "CurrentSliceIdx" || propertyName == "NozzleThickness"))
             {
@@ -309,11 +313,11 @@ namespace Slicer.GUI
                 {
                     Slicer.UpdateSlice();
 
-                    // Temp to show movement, but Slicer.Sliced itself should move when changing CurrentSliceIdx
-                    //CurrentSlice.Transform = new TranslateTransform3D()
-                    //{
-                    //    OffsetZ = CurrentSliceIdx * NozzleThickness
-                    //};
+                    // Transform back to Z = 0 position in view
+                    CurrentSlice.Transform = new TranslateTransform3D()
+                    {
+                        OffsetZ = -CurrentSliceIdx * NozzleThickness
+                    };
                 }
             }
         }

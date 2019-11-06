@@ -22,10 +22,21 @@ namespace Slicer.slyce
         public SliceModel(ViewModel data)
         {
             this.data = data;
-     
-            // https://stackoverflow.com/questions/45452923/get-list-of-all-point3d-in-viewport3d-in-wpf
+            this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
+            this.SliceColour = Colors.Red;
+        }
 
-            var ori = this.data.CurrentModel;
+        public GeometryModel3D UpdateSlice()
+        {
+            this.BuildSliceBox();
+            this.BuildSlice();
+            return this.Sliced;
+        }
+
+        public static MeshGeometry3D GeometrizeModel(Model3D source)
+        {
+            // https://stackoverflow.com/questions/45452923/get-list-of-all-point3d-in-viewport3d-in-wpf
+            var ori = source.Clone();
 
             if (ori.GetType().Equals(typeof(Model3DGroup)))
             {
@@ -33,40 +44,33 @@ namespace Slicer.slyce
             }
 
             var geom = ori as GeometryModel3D;
-            this.Original = geom.Geometry as MeshGeometry3D;
-            this.SliceColour = Colors.Red;
+            var mesh = geom.Geometry as MeshGeometry3D;
 
-            // Raw Points: this.Original.Positions
-        }
+            // To polygon collection
+            var poly = Construct.Create(mesh);
 
-        public GeometryModel3D UpdateSlice()
-        {
-            this.BuildSliceBox();
-            //this.BuildSlice();
-            this.BuildSlice2();
-            return this.Sliced;
+            return mesh;
         }
 
         private void BuildSliceBox()
         {
             // Slice box
             var meshBuilder = new MeshBuilder(false, false);
-            var slice_size = 1000;
 
-            // Add very large box
-            //meshBuilder.AddBox(new Rect3D(-slice_size / 2, -slice_size / 2, this.data.CurrentSliceIdx * this.data.NozzleThickness,
-            //                              slice_size, slice_size, this.data.NozzleThickness));
-
+            // Add box
             var b = this.data.CurrentModel.Bounds;
             meshBuilder.AddBox(new Rect3D(
                 b.Location.X, b.Location.Y, 
                 b.Location.Z + this.data.CurrentSliceIdx * this.data.NozzleThickness, 
-                b.SizeX, b.SizeY, this.data.NozzleThickness));
+                b.SizeX, b.SizeY, this.data.NozzleThickness
+            ));
 
 
-            var mesh = meshBuilder.ToMesh(true);
+            var mesh = meshBuilder.ToMesh(false);
             var greenMaterial = MaterialHelper.CreateMaterial(Colors.Green);
             var insideMaterial = MaterialHelper.CreateMaterial(Colors.Red);
+
+            mesh.Normals = mesh.CalculateNormals();
 
             this.SlicePlane = new GeometryModel3D
             {
@@ -80,72 +84,15 @@ namespace Slicer.slyce
 
         private void BuildSlice()
         {
-            double thickness = this.data.NozzleThickness;
-            double zFrom = this.data.CurrentSliceIdx * thickness;
+            this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
 
-            var pInf = new Point3D(0, 0, zFrom);
-            var nInf = new Vector3D(0, 0, zFrom + thickness);
-            Plane3D cpInf = new Plane3D(pInf, nInf);
+            Construct obj = Construct.Create(this.Original);
+            Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
 
-            var pSup = new Point3D(0, 0, zFrom + thickness);
-            var nSup = new Vector3D(0, 0, zFrom + thickness * 2);
-            Plane3D cpSup = new Plane3D(pSup, nSup);
-
-            // ???
-            var cut = MeshGeometryHelper.Cut(this.Original, pInf, nInf);
-            cut = MeshPlaneCut(cut, this.Original, cpInf);
-
-            //var cut = this.Original.Cut(pInf, nInf);
-
+            Construct slice = obj.Intersect(box);
 
             var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
-
-            this.Sliced = new GeometryModel3D(cut, cutMaterial);
-        }
-
-        private static MeshGeometry3D MeshPlaneCut(MeshGeometry3D meshCut, MeshGeometry3D meshOrig, Plane3D plane)
-        {
-            //Store the positions on the cut plane
-            var segments = MeshGeometryHelper.GetContourSegments(meshOrig, plane.Position, plane.Normal).ToList();
-            IList<Point3D> vertexPoints = new List<Point3D>();
-
-            if (segments.Count > 0) // TODO is always 0
-            {
-                //assumes largest contour is the outer contour!
-                vertexPoints = MeshGeometryHelper.CombineSegments(segments, 1e-6).ToList().OrderByDescending(x => x.Count).First();
-
-            }
-
-            //meshCut the polygon opening and add to existing cut mesh
-            var builder = new MeshBuilder(false, false);
-            builder.Append(meshCut.Positions, meshCut.TriangleIndices);
-            builder.AddPolygon(vertexPoints);
-
-
-            MeshGeometry3D mg3D = builder.ToMesh();
-
-            return mg3D;
-        }
-
-        private void BuildSlice2()
-        {
-            var builder = new MeshBuilder(false, false);
-            IList<Point3D> vertexPoints = new List<Point3D>();
-            IList<int> vertexTriang = new List<int>();
-
-            foreach (var p in this.Original.Positions.Zip(this.Original.TriangleIndices, Tuple.Create))
-            {
-                if (p.Item1.Z >= this.SlicePlane.Bounds.Z && p.Item1.Z <= this.SlicePlane.Bounds.Z + this.SlicePlane.Bounds.SizeZ)
-                {
-                    vertexPoints.Add(p.Item1);
-                    vertexTriang.Add(p.Item2);
-                }
-            }
-
-            builder.Append(vertexPoints, vertexTriang);
-
-            var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
-            this.Sliced = new GeometryModel3D(builder.ToMesh(), cutMaterial);
+            this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);
 
             this.data.CurrentSlice = this.Sliced;
         }

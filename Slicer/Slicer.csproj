@@ -72,6 +72,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="slyce\Constructs\Constructs.cs" />
+    <Compile Include="slyce\Constructs\Node.cs" />
+    <Compile Include="slyce\Constructs\Plane.cs" />
+    <Compile Include="slyce\Constructs\Polygon.cs" />
+    <Compile Include="slyce\Constructs\Vector.cs" />
+    <Compile Include="slyce\Constructs\Vertex.cs" />
     <Compile Include="slyce\GCode\Commands\G\ControlledArcMoveClockwise.cs" />
     <Compile Include="slyce\GCode\Commands\G\ControlledArcMoveCounterClockwise.cs" />
     <Compile Include="slyce\GCode\Commands\G\Dwell.cs" />

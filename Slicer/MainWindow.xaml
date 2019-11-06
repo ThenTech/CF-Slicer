@@ -6,7 +6,9 @@
         xmlns:helix="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
         xmlns:local="clr-namespace:Slicer"
         mc:Ignorable="d"
-        Title="CF Slicer" Width="1280" Height="720" >
+        Title="CF Slicer" 
+        Width="1280" Height="720" 
+        WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <helix:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
     </Window.Resources>

@@ -164,6 +164,60 @@ namespace Slicer.GUI
             }
         }
 
+        private bool _HasModel;
+        public bool HasModel
+        {
+            get { return _HasModel; }
+            set
+            {
+                _HasModel = value;
+                OnPropertyChanged("HasModel");
+            }
+        }
+
+        private Model3D _CurrentSlice;
+        public Model3D CurrentSlice
+        {
+            get { return _CurrentSlice; }
+            set {
+                _CurrentSlice = value;
+                OnPropertyChanged("CurrentSlice");
+            }
+        }
+
+        private int _CurrentSliceIdx = 0;
+        public int CurrentSliceIdx
+        {
+            get { return _CurrentSliceIdx; }
+            set
+            {
+                _CurrentSliceIdx = value;
+                OnPropertyChanged("CurrentSliceIdx");
+            }
+        }
+
+        private int _MaxSliceIdx = 0;
+        public int MaxSliceIdx
+        {
+            get { return _MaxSliceIdx; }
+            set
+            {
+                _MaxSliceIdx = value;
+                OnPropertyChanged("MaxSliceIdx");
+            }
+        }
+
+        private slyce.SliceModel _Slicer = null;
+        public slyce.SliceModel Slicer
+        {
+            get { return _Slicer; }
+            set
+            {
+                _Slicer = value;
+                OnPropertyChanged("Slicer");
+            }
+        }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -171,7 +225,11 @@ namespace Slicer.GUI
             {
                 handler(this, new PropertyChangedEventArgs(propertyName));
             }
-            if (CurrentModel != null 
+            if (propertyName == "CurrentModel")
+            {
+                HasModel = CurrentModel != null;
+            }
+            else if (HasModel
                 && (propertyName == "ScaleX" || propertyName == "ScaleY" || propertyName == "ScaleZ"
                  || propertyName == "RotationX" || propertyName == "RotationY" || propertyName == "RotationZ"
                  || propertyName == "PositionX" || propertyName == "PositionY" || propertyName == "PositionZ"
@@ -226,6 +284,26 @@ namespace Slicer.GUI
                 });
 
                 CurrentModel.Transform = combined;
+
+                CurrentSliceIdx = 0;
+            }
+            else if (HasModel
+                && (propertyName == "CurrentSliceIdx" || propertyName == "NozzleThickness"))
+            {
+                // Set amount of slice layers
+                var height = CurrentModel.Bounds.SizeZ;
+                MaxSliceIdx = (int)Math.Ceiling(height / NozzleThickness);
+
+                if (Slicer != null)
+                {
+                    Slicer.UpdateSlice();
+
+                    // Temp to show movement, but Slicer.Sliced itself should move when changing CurrentSliceIdx
+                    CurrentSlice.Transform = new TranslateTransform3D()
+                    {
+                        OffsetZ = CurrentSliceIdx * NozzleThickness
+                    };
+                }
             }
         }
 

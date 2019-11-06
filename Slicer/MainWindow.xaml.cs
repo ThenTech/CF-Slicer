@@ -65,7 +65,7 @@ namespace Slicer
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // Load(path);
+
         }
 
         private void OnCompositionTargetRendering(object sender, EventArgs e)
@@ -106,6 +106,7 @@ namespace Slicer
             }
 
             _viewModel.CurrentModel = mod;
+            _viewModel.CurrentSlice = null;
             _viewModel.ModelTitle = Path.GetFileNameWithoutExtension(p);
             _viewModel.ModelFolder = Path.GetDirectoryName(p);
 
@@ -253,6 +254,18 @@ namespace Slicer
         private void Slice_Click(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("Start slicing...");
+            
+            _viewModel.Slicer = null;
+            _viewModel.CurrentSliceIdx = 0;
+
+            // Attempt cutting slice
+            _viewModel.Slicer = new slyce.SliceModel(_viewModel);
+            _viewModel.Slicer.UpdateSlice();
+
+            var slicegroup = new Model3DGroup();
+            slicegroup.Children.Add(_viewModel.Slicer.SlicePlane);
+            slicegroup.Children.Add(_viewModel.Slicer.Sliced);
+            _viewModel.CurrentSlice = slicegroup;
         }
     }
 }

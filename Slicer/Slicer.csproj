@@ -96,6 +96,7 @@
     <Compile Include="slyce\GCode\Commands\M\StopIdleHold.cs" />
     <Compile Include="slyce\GCode\GCodeBase.cs" />
     <Compile Include="slyce\GCode\GCodeWriter.cs" />
+    <Compile Include="slyce\SliceModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

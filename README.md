@@ -54,3 +54,4 @@
 - [x] XY translate en rotate
 - [ ] Slice opstellen door uinion van vlak met dikte NozzleThickness en object (met Clipper?)
 - [x] Add ambient light ~~
+- [x] Basic SliceModel class with slice plane and sliced model preview

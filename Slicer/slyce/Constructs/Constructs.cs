@@ -93,7 +93,7 @@ namespace Slicer.slyce
             {
                 Positions = points,
                 Normals = nrmls,
-                TriangleIndices = new Int32Collection(Enumerable.Range(0, points.Count))
+                TriangleIndices = new Int32Collection(Enumerable.Range(0, points.Count).Reverse())
             };
 
             return mesh;
@@ -136,8 +136,72 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Construct Intersect(Construct other)
+        public Construct Intersect(Construct other, double slice)
         {
+            double Zi = slice;
+            var polies = new List<Polygon>();
+            foreach (var p in Polygons)
+            {
+                var minV = p.Vertices.Min(v => v.Pos.Z);
+                var maxV = p.Vertices.Max(v => v.Pos.Z);
+                if(minV < Zi && maxV > Zi)
+                {
+                    //Find all points above
+                    var above = p.Vertices.Where(v => v.Pos.Z > Zi).ToList();
+                    var below = p.Vertices.Where(v => v.Pos.Z < Zi).ToList();
+                    if (above.Count == 1)
+                    {
+                        Vertex v1 = null;
+                        Vertex v2 = null;
+                        Vertex v3 = null;
+                        foreach (var v in below)
+                        {
+                            var x = v.Pos.X + (Zi - v.Pos.Z) * (above.First().Pos.X - v.Pos.X) / (above.First().Pos.Z - v.Pos.Z);
+                            var y = v.Pos.Y + (Zi - v.Pos.Z) * (above.First().Pos.Y - v.Pos.Y) / (above.First().Pos.Z - v.Pos.Z);
+                            var z = Zi;
+                            var vertex = new Vertex(new Vector(x, y, z), v.Normal);
+                            if (v1 == null)
+                            {
+                                v1 = vertex;
+                            }
+                            else if (v2 == null)
+                            {
+                                v2 = vertex;
+                            }
+                        }
+                        v3 = above.First();
+                        Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
+                        Polygon pol = new Polygon(vertices);
+                        polies.Add(pol);
+                    }
+                    else if(below.Count == 1)
+                    {
+                        Vertex v1 = null;
+                        Vertex v2 = null;
+                        Vertex v3 = null;
+                        foreach(var v in above)
+                        {
+                            var x = v.Pos.X + (Zi - v.Pos.Z) * (below.First().Pos.X - v.Pos.X) / (below.First().Pos.Z - v.Pos.Z);
+                            var y = v.Pos.Y + (Zi - v.Pos.Z) * (below.First().Pos.Y - v.Pos.Y) / (below.First().Pos.Z - v.Pos.Z);
+                            var z = Zi;
+                            var vertex = new Vertex(new Vector(x, y, z), v.Normal);
+                            if(v1 == null)
+                            {
+                                v1 = vertex;
+                            }
+                            else if(v2 == null)
+                            {
+                                v2 = vertex;
+                            }
+                        }
+                        v3 = below.First();
+                        Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
+                        Polygon pol = new Polygon(vertices);
+                        polies.Add(pol);
+                    }
+                }
+            }
+            return Construct.Create(polies.ToArray());
             var a = new Node(Polygons);
             var b = new Node(other.Polygons);
             a.Invert();

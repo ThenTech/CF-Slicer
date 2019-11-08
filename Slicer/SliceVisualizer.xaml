@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Slicer"
         mc:Ignorable="d"
         Title="SliceVisualizer" Height="500" Width="500">
-    <Grid>
+    <Grid x:Name="LayoutRoot" Height="500" Width="500">
         <Canvas Height="500" Width="500" x:Name="canvasGrid">
             
         </Canvas>

@@ -231,16 +231,26 @@ namespace Slicer.slyce
             //}
             var minX = this.Polygons.Min(p => p.Vertices.Min(v => v.Pos.X));
             var minY = this.Polygons.Min(p => p.Vertices.Min(v => v.Pos.Y));
+            var min = minX;
+            if(minY < min)
+            {
+                min = minY;
+            }
             var maxX = this.Polygons.Max(p => p.Vertices.Min(v => v.Pos.X));
             var maxY = this.Polygons.Max(p => p.Vertices.Min(v => v.Pos.Y));
+            var max = maxX;
+            if(maxY > max)
+            {
+                max = maxY;
+            }
             if (SliceVisualizer.sliceVisualizer != null)
             {
-                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), 0.22, minX, minY, maxX, maxY);
+                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), 0.22, min, max);
             }
             else
             {
                
-                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), 0.22, minX, minY, maxX, maxY);
+                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), 0.22, min, max);
                 SliceVisualizer.sliceVisualizer.Show();
             }
             

@@ -21,40 +21,46 @@ namespace Slicer
     public partial class SliceVisualizer : Window
     {
         public static SliceVisualizer sliceVisualizer;
-        private double scaleX;
-        private double scaleY;
-        private double minX;
-        private double minY;
-        private double maxX;
-        private double maxY;
-        public SliceVisualizer(Vertex[] vertices, double stroke, double minX, double minY, double maxX, double maxY)
+        private double scale;
+        private double min;
+        private double max;
+        public SliceVisualizer(Vertex[] vertices, double stroke, double min, double max)
         {
             InitializeComponent();
-            Update(vertices, stroke, minX, minY, maxX, maxY);
+            Update(vertices, stroke, min, max);
         }
 
-        public void Update(Vertex[] vertices, double stroke, double minX, double minY, double maxX, double maxY)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            ClearValue(SizeToContentProperty);
+            LayoutRoot.ClearValue(WidthProperty);
+            LayoutRoot.ClearValue(HeightProperty);
+        }
+
+        public void Update(Vertex[] vertices, double stroke, double min, double max)
         {
             var width = canvasGrid.Width;
             var height = canvasGrid.Height;
-            this.minX = minX;
-            this.minY = minY;
-            this.maxX = maxX;
-            this.maxY = maxY;
-            scaleX = width / (maxX - minX);
-            scaleY = height / (maxY - minY);
+            var comp = width;
+            if(height < comp)
+            {
+                comp = height;
+            }
+            this.min = min;
+            this.max = max;
+            scale = comp / (max - min);
             canvasGrid.Children.Clear();
             for (int i = 0; i < vertices.Count() - 1; i+=2)
             {
                 var line = new Line();
                 line.Stroke = System.Windows.Media.Brushes.Black;
-                line.X1 = (vertices[i].Pos.X - minX) * scaleX;
-                line.X2 = (vertices[i + 1].Pos.X - minX) * scaleX;
-                line.Y1 = (vertices[i].Pos.Y - minY) * scaleY;
-                line.Y2 = (vertices[i + 1].Pos.Y - minY) * scaleY;
+                line.X1 = (vertices[i].Pos.X - min) * scale;
+                line.X2 = (vertices[i + 1].Pos.X - min) * scale;
+                line.Y1 = (vertices[i].Pos.Y - min) * scale;
+                line.Y2 = (vertices[i + 1].Pos.Y - min) * scale;
                 line.HorizontalAlignment = HorizontalAlignment.Left;
                 line.VerticalAlignment = VerticalAlignment.Top;
-                line.StrokeThickness = stroke * 10;
+                line.StrokeThickness = stroke * scale;
                 canvasGrid.Children.Add(line);
             }
         }

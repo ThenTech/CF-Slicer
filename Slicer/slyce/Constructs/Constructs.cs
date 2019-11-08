@@ -149,7 +149,7 @@ namespace Slicer.slyce
                 {
                     //Find all points above
                     var above = p.Vertices.Where(v => v.Pos.Z > Zi).ToList();
-                    var below = p.Vertices.Where(v => v.Pos.Z < Zi).ToList();
+                    var below = p.Vertices.Where(v => v.Pos.Z <= Zi).ToList();
                     if (above.Count == 1)
                     {
                         Vertex v1 = null;
@@ -173,30 +173,30 @@ namespace Slicer.slyce
                         }
                         v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + 0.22), v1.Normal);
                         v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + 0.22), v2.Normal);
-                        Vertex[] vertices = new Vertex[3] { v1, v2 , v3 };
+                        Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
                         Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
                         polies.Add(new Polygon(vertices));
                         polies.Add(new Polygon(vertices2));
                         verts.Add(v1);
                         verts.Add(v2);
                     }
-                    else if(below.Count == 1)
+                    else if (below.Count == 1)
                     {
                         Vertex v1 = null;
                         Vertex v2 = null;
                         Vertex v3 = null;
                         Vertex v4 = null;
-                        foreach(var v in above)
+                        foreach (var v in above)
                         {
                             var x = v.Pos.X + (Zi - v.Pos.Z) * (below.First().Pos.X - v.Pos.X) / (below.First().Pos.Z - v.Pos.Z);
                             var y = v.Pos.Y + (Zi - v.Pos.Z) * (below.First().Pos.Y - v.Pos.Y) / (below.First().Pos.Z - v.Pos.Z);
                             var z = Zi;
                             var vertex = new Vertex(new Vector(x, y, z), v.Normal);
-                            if(v1 == null)
+                            if (v1 == null)
                             {
                                 v1 = vertex;
                             }
-                            else if(v2 == null)
+                            else if (v2 == null)
                             {
                                 v2 = vertex;
                             }
@@ -210,6 +210,10 @@ namespace Slicer.slyce
                         polies.Add(new Polygon(vertices2));
                         verts.Add(v1);
                         verts.Add(v2);
+                    }
+                    else
+                    {
+                        polies.Add(p);
                     }
                 }
             }

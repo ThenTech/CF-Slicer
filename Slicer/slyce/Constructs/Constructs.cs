@@ -229,6 +229,21 @@ namespace Slicer.slyce
             //    Vertex[] vertices = new Vertex[3] { verts[i], verts[i+1], new Vertex(new Vector(currentMiddle.X, currentMiddle.Y, currentMiddle.Z), new Vector(0,0,1)) };
             //    polies.Add(new Polygon(vertices));
             //}
+            var minX = this.Polygons.Min(p => p.Vertices.Min(v => v.Pos.X));
+            var minY = this.Polygons.Min(p => p.Vertices.Min(v => v.Pos.Y));
+            var maxX = this.Polygons.Max(p => p.Vertices.Min(v => v.Pos.X));
+            var maxY = this.Polygons.Max(p => p.Vertices.Min(v => v.Pos.Y));
+            if (SliceVisualizer.sliceVisualizer != null)
+            {
+                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), 0.22, minX, minY, maxX, maxY);
+            }
+            else
+            {
+               
+                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), 0.22, minX, minY, maxX, maxY);
+                SliceVisualizer.sliceVisualizer.Show();
+            }
+            
             return Construct.Create(polies.ToArray());
             var a = new Node(Polygons);
             var b = new Node(other.Polygons);

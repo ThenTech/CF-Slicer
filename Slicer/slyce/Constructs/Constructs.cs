@@ -140,11 +140,12 @@ namespace Slicer.slyce
         {
             double Zi = slice;
             var polies = new List<Polygon>();
+            var verts = new List<Vertex>();
             foreach (var p in Polygons)
             {
                 var minV = p.Vertices.Min(v => v.Pos.Z);
                 var maxV = p.Vertices.Max(v => v.Pos.Z);
-                if(minV < Zi && maxV > Zi)
+                if(minV <= Zi && maxV >= Zi)
                 {
                     //Find all points above
                     var above = p.Vertices.Where(v => v.Pos.Z > Zi).ToList();
@@ -154,6 +155,7 @@ namespace Slicer.slyce
                         Vertex v1 = null;
                         Vertex v2 = null;
                         Vertex v3 = null;
+                        Vertex v4 = null;
                         foreach (var v in below)
                         {
                             var x = v.Pos.X + (Zi - v.Pos.Z) * (above.First().Pos.X - v.Pos.X) / (above.First().Pos.Z - v.Pos.Z);
@@ -169,16 +171,21 @@ namespace Slicer.slyce
                                 v2 = vertex;
                             }
                         }
-                        v3 = above.First();
-                        Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
-                        Polygon pol = new Polygon(vertices);
-                        polies.Add(pol);
+                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + 0.22), v1.Normal);
+                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + 0.22), v2.Normal);
+                        Vertex[] vertices = new Vertex[3] { v1, v2 , v3 };
+                        Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
+                        polies.Add(new Polygon(vertices));
+                        polies.Add(new Polygon(vertices2));
+                        verts.Add(v1);
+                        verts.Add(v2);
                     }
                     else if(below.Count == 1)
                     {
                         Vertex v1 = null;
                         Vertex v2 = null;
                         Vertex v3 = null;
+                        Vertex v4 = null;
                         foreach(var v in above)
                         {
                             var x = v.Pos.X + (Zi - v.Pos.Z) * (below.First().Pos.X - v.Pos.X) / (below.First().Pos.Z - v.Pos.Z);
@@ -194,13 +201,30 @@ namespace Slicer.slyce
                                 v2 = vertex;
                             }
                         }
-                        v3 = below.First();
+                        //v3 = below.First();
+                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + 0.22), v1.Normal);
+                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + 0.22), v2.Normal);
                         Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
-                        Polygon pol = new Polygon(vertices);
-                        polies.Add(pol);
+                        Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
+                        polies.Add(new Polygon(vertices));
+                        polies.Add(new Polygon(vertices2));
+                        verts.Add(v1);
+                        verts.Add(v2);
                     }
                 }
             }
+            //Point3D currentMiddle = new Point3D(0, 0, Zi);
+            //foreach (var v in verts)
+            //{
+            //    currentMiddle.X = (currentMiddle.X + v.Pos.X) / 2;
+            //    currentMiddle.Y = (currentMiddle.Y + v.Pos.Y) / 2; 
+            //}
+            //polies = new List<Polygon>();
+            //for (int i = 0; i < verts.Count; i += 2)
+            //{
+            //    Vertex[] vertices = new Vertex[3] { verts[i], verts[i+1], new Vertex(new Vector(currentMiddle.X, currentMiddle.Y, currentMiddle.Z), new Vector(0,0,1)) };
+            //    polies.Add(new Polygon(vertices));
+            //}
             return Construct.Create(polies.ToArray());
             var a = new Node(Polygons);
             var b = new Node(other.Polygons);

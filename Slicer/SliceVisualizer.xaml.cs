@@ -24,10 +24,10 @@ namespace Slicer
         private double scale;
         private double min;
         private double max;
-        public SliceVisualizer(Vertex[] vertices, double stroke, double min, double max)
+        public SliceVisualizer(Vertex[] vertices, slyce.Constructs.Polygon[] poliesToDraw, double stroke, double min, double max)
         {
             InitializeComponent();
-            Update(vertices, stroke, min, max);
+            Update(vertices, poliesToDraw, stroke, min, max);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -37,7 +37,7 @@ namespace Slicer
             LayoutRoot.ClearValue(HeightProperty);
         }
 
-        public void Update(Vertex[] vertices, double stroke, double min, double max)
+        public void Update(Vertex[] vertices, slyce.Constructs.Polygon[] poliesToDraw, double stroke, double min, double max)
         {
             var width = canvasGrid.Width;
             var height = canvasGrid.Height;
@@ -50,6 +50,20 @@ namespace Slicer
             this.max = max;
             scale = comp / (max - min);
             canvasGrid.Children.Clear();
+            for(int i = 0; i < poliesToDraw.Count(); i++)
+            {
+                System.Windows.Shapes.Polygon myPolygon = new System.Windows.Shapes.Polygon();
+                PointCollection points = new PointCollection();
+                points.Add(new Point(poliesToDraw[i].Vertices[0].Pos.X, poliesToDraw[i].Vertices[0].Pos.Y));
+                points.Add(new Point(poliesToDraw[i].Vertices[1].Pos.X, poliesToDraw[i].Vertices[1].Pos.Y));
+                points.Add(new Point(poliesToDraw[i].Vertices[2].Pos.X, poliesToDraw[i].Vertices[2].Pos.Y));
+                myPolygon.Fill = Brushes.Black;
+                myPolygon.Stroke = Brushes.Black;
+                myPolygon.StrokeThickness = stroke * scale;
+                myPolygon.HorizontalAlignment = HorizontalAlignment.Left;
+                myPolygon.VerticalAlignment = VerticalAlignment.Top;
+                canvasGrid.Children.Add(myPolygon);
+            }
             for (int i = 0; i < vertices.Count() - 1; i+=2)
             {
                 var line = new Line();

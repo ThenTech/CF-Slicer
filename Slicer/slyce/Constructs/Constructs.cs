@@ -141,6 +141,7 @@ namespace Slicer.slyce
             double Zi = slice;
             var polies = new List<Polygon>();
             var verts = new List<Vertex>();
+            var poliesToDraw = new List<Polygon>();
             foreach (var p in Polygons)
             {
                 var minV = p.Vertices.Min(v => v.Pos.Z);
@@ -214,6 +215,7 @@ namespace Slicer.slyce
                     else
                     {
                         polies.Add(p);
+                        poliesToDraw.Add(p);
                     }
                 }
             }
@@ -245,12 +247,12 @@ namespace Slicer.slyce
             }
             if (SliceVisualizer.sliceVisualizer != null)
             {
-                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), 0.22, min, max);
+                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), poliesToDraw.ToArray(), 0.22, min, max);
             }
             else
             {
-               
-                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), 0.22, min, max);
+
+                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), poliesToDraw.ToArray(), 0.22, min, max);
                 SliceVisualizer.sliceVisualizer.Show();
             }
             

@@ -89,7 +89,7 @@ namespace Slicer.slyce
             Construct obj = Construct.Create(this.Original);
             Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
 
-            Construct slice = obj.Intersect(box, data.CurrentSliceIdx * data.NozzleThickness);
+            Construct slice = obj.Intersect(box, data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
 
             var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
             this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);

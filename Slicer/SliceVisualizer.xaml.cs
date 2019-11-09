@@ -50,18 +50,21 @@ namespace Slicer
             this.max = max;
             scale = comp / (max - min);
             canvasGrid.Children.Clear();
+            //Random r = new Random();
             for(int i = 0; i < poliesToDraw.Count(); i++)
             {
                 System.Windows.Shapes.Polygon myPolygon = new System.Windows.Shapes.Polygon();
                 PointCollection points = new PointCollection();
-                points.Add(new Point(poliesToDraw[i].Vertices[0].Pos.X, poliesToDraw[i].Vertices[0].Pos.Y));
-                points.Add(new Point(poliesToDraw[i].Vertices[1].Pos.X, poliesToDraw[i].Vertices[1].Pos.Y));
-                points.Add(new Point(poliesToDraw[i].Vertices[2].Pos.X, poliesToDraw[i].Vertices[2].Pos.Y));
+                points.Add(new Point((poliesToDraw[i].Vertices[0].Pos.X - min)*scale, (poliesToDraw[i].Vertices[0].Pos.Y - min) * scale));
+                points.Add(new Point((poliesToDraw[i].Vertices[1].Pos.X - min) * scale, (poliesToDraw[i].Vertices[1].Pos.Y - min) * scale));
+                points.Add(new Point((poliesToDraw[i].Vertices[2].Pos.X - min) * scale, (poliesToDraw[i].Vertices[2].Pos.Y - min) * scale));
+                //Color c = Color.FromRgb((byte)r.Next(255), (byte)r.Next(255), (byte)r.Next(255));
                 myPolygon.Fill = Brushes.Black;
                 myPolygon.Stroke = Brushes.Black;
-                myPolygon.StrokeThickness = stroke * scale;
+                myPolygon.StrokeThickness = 1;
                 myPolygon.HorizontalAlignment = HorizontalAlignment.Left;
                 myPolygon.VerticalAlignment = VerticalAlignment.Top;
+                myPolygon.Points = points;
                 canvasGrid.Children.Add(myPolygon);
             }
             for (int i = 0; i < vertices.Count() - 1; i+=2)

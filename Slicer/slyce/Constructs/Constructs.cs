@@ -136,7 +136,7 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Construct Intersect(Construct other, double slice)
+        public Construct Intersect(Construct other, double slice, double perSlice)
         {
             double Zi = slice;
             var polies = new List<Polygon>();
@@ -172,8 +172,8 @@ namespace Slicer.slyce
                                 v2 = vertex;
                             }
                         }
-                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + 0.22), v1.Normal);
-                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + 0.22), v2.Normal);
+                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + perSlice), v1.Normal);
+                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + perSlice), v2.Normal);
                         Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
                         Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
                         polies.Add(new Polygon(vertices));
@@ -203,8 +203,8 @@ namespace Slicer.slyce
                             }
                         }
                         //v3 = below.First();
-                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + 0.22), v1.Normal);
-                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + 0.22), v2.Normal);
+                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + perSlice), v1.Normal);
+                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + perSlice), v2.Normal);
                         Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
                         Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
                         polies.Add(new Polygon(vertices));
@@ -212,7 +212,7 @@ namespace Slicer.slyce
                         verts.Add(v1);
                         verts.Add(v2);
                     }
-                    else
+                    else if(below.Count == 3 || above.Count == 3)
                     {
                         polies.Add(p);
                         poliesToDraw.Add(p);
@@ -247,12 +247,12 @@ namespace Slicer.slyce
             }
             if (SliceVisualizer.sliceVisualizer != null)
             {
-                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), poliesToDraw.ToArray(), 0.22, min, max);
+                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), poliesToDraw.ToArray(), perSlice, min, max);
             }
             else
             {
 
-                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), poliesToDraw.ToArray(), 0.22, min, max);
+                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), poliesToDraw.ToArray(), perSlice, min, max);
                 SliceVisualizer.sliceVisualizer.Show();
             }
             

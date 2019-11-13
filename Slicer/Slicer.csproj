@@ -75,10 +75,15 @@
     <Compile Include="SliceVisualizer.xaml.cs">
       <DependentUpon>SliceVisualizer.xaml</DependentUpon>
     </Compile>
+    <Compile Include="slyce\Constructs\2D\2DPolygon.cs" />
+    <Compile Include="slyce\Constructs\2D\Line.cs" />
+    <Compile Include="slyce\Constructs\2D\Point.cs" />
+    <Compile Include="slyce\Constructs\2D\Triangle.cs" />
     <Compile Include="slyce\Constructs\Constructs.cs" />
     <Compile Include="slyce\Constructs\Node.cs" />
     <Compile Include="slyce\Constructs\Plane.cs" />
     <Compile Include="slyce\Constructs\Polygon.cs" />
+    <Compile Include="slyce\Constructs\2D\Slice.cs" />
     <Compile Include="slyce\Constructs\Vector.cs" />
     <Compile Include="slyce\Constructs\Vertex.cs" />
     <Compile Include="slyce\GCode\Commands\G\ControlledArcMoveClockwise.cs" />

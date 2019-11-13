@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using Slicer.GUI;
+using Slicer.slyce.Constructs._2D;
 
 namespace Slicer.slyce
 {
@@ -90,6 +91,7 @@ namespace Slicer.slyce
             Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
 
             Construct slice = obj.Intersect(box, data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
+            Slice realSLice = obj.Slice(box, data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
 
             var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
             this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);

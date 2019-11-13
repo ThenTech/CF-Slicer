@@ -180,7 +180,10 @@ namespace Slicer.slyce
                                 p2 = new Point(x, y);
                             }
                         }
-                        lines.Add(new Line(p1, p2));
+                        if(!p1.Equals(p2))
+                        {
+                            lines.Add(new Line(p1, p2));
+                        }
                     }
                     else if (below.Count == 3 || above.Count == 3)
                     {

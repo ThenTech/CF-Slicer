@@ -25,6 +25,10 @@ namespace Slicer
         private double scale;
         private double min;
         private double max;
+        public SliceVisualizer()
+        {
+            InitializeComponent();
+        }
         public SliceVisualizer(Slice slice, double stroke)
         {
             InitializeComponent();
@@ -46,6 +50,33 @@ namespace Slicer
             ClearValue(SizeToContentProperty);
             LayoutRoot.ClearValue(WidthProperty);
             LayoutRoot.ClearValue(HeightProperty);
+        }
+
+        public void DrawPolygon(List<slyce.Constructs._2D.Point> allPoints, double stroke, double min, double max)
+        {
+            this.Title = "DRAW POLY";
+            var width = canvasGrid.Width;
+            var height = canvasGrid.Height;
+            var comp = width;
+            if (height < comp)
+            {
+                comp = height;
+            }
+            scale = comp / (max - min);
+            System.Windows.Shapes.Polygon myPolygon = new System.Windows.Shapes.Polygon();
+            PointCollection points = new PointCollection();
+            foreach (var p in allPoints)
+            {
+                points.Add(new System.Windows.Point((p.X - min)*scale, (p.Y - min)*scale));
+            }
+            //Color c = Color.FromRgb((byte)r.Next(255), (byte)r.Next(255), (byte)r.Next(255));
+            myPolygon.Fill = Brushes.Black;
+            myPolygon.Stroke = Brushes.Black;
+            myPolygon.StrokeThickness = stroke;
+            myPolygon.HorizontalAlignment = HorizontalAlignment.Left;
+            myPolygon.VerticalAlignment = VerticalAlignment.Top;
+            myPolygon.Points = points;
+            canvasGrid.Children.Add(myPolygon);
         }
 
         public void Update(Slice slice, double stroke)

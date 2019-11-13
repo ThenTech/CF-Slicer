@@ -8,6 +8,9 @@ using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using Slicer.GUI;
 using Slicer.slyce.Constructs._2D;
+using ClipperLib;
+using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
+using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
 
 namespace Slicer.slyce
 {
@@ -32,6 +35,7 @@ namespace Slicer.slyce
         {
             this.BuildSliceBox();
             this.BuildSlice();
+            this.ErodeSlice();
             return this.Sliced;
         }
 
@@ -98,6 +102,40 @@ namespace Slicer.slyce
             this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);
 
             this.data.CurrentSlice = this.Sliced;
+        }
+
+        private void ErodeSlice()
+        {
+            
+        //    Paths paths = new Paths();
+        //    Path path = new Path();
+        //    foreach (var l in Slice.Lines)
+        //    {
+        //        path.Add(new IntPoint((long)(l.StartPoint.X * 1000), (long)(l.StartPoint.Y * 1000)));
+        //        path.Add(new IntPoint((long)(l.EndPoint.X * 1000), (long)(l.EndPoint.Y * 1000)));
+        //    }
+        //    paths.Add(path);
+        //    Paths result = ClipperLib.Clipper.OffsetPolygons(paths, -1000);
+        //    //Slice.Lines = new List<Line>();
+        //    //Slice.TrianglesInSlice = new List<Constructs._2D.Triangle>();
+        //    SliceVisualizer visualizer = new SliceVisualizer();
+        //    foreach (var pol in result)
+        //    {
+        //        List<Point> points = new List<Point>();
+        //        foreach (var p in pol)
+        //        {
+        //            points.Add(new Point(p.X/1000.0, p.Y/1000.0));
+        //        }
+        //        visualizer.DrawPolygon(points, 1, -15, 15);
+        //    }
+        //    //visualizer.Show();
+        //    int x = Slice.Lines.Count();
+        //    for(int i = 0; i < x; i++)
+        //    {
+        //        Line l = Slice.Lines[i];
+        //        Line l2 = new Line(l.StartPoint.X * 0.8, l.StartPoint.Y*0.8, l.EndPoint.X*0.8, l.EndPoint.Y*0.8);
+        //        Slice.Lines.Add(l2);
+        //    }
         }
     }
 }

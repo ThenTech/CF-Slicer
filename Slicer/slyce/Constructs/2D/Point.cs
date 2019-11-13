@@ -15,5 +15,13 @@ namespace Slicer.slyce.Constructs._2D
             this.X = X;
             this.Y = Y;
         }
+        public override string ToString()
+        {
+            return X + "," + Y;
+        }
+        public bool Equals(Point p2)
+        {
+            return this.X == p2.X && this.Y == p2.Y;
+        }
     }
 }

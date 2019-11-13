@@ -30,5 +30,9 @@ namespace Slicer.slyce.Constructs._2D
             points.Add(StartPoint);
             points.Add(EndPoint);
         }
+        public override string ToString()
+        {
+            return "(" + StartPoint + ")" + "-" + "(" + EndPoint + ")"; 
+        }
     }
 }

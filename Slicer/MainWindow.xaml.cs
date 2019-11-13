@@ -40,7 +40,7 @@ namespace Slicer
         private UIElement currentView;
         private Viewport3D v1;
         private Viewport3D v2;
-        
+        private SliceVisualizer sliceVisualizer;
 
         public MainWindow()
         {
@@ -260,6 +260,16 @@ namespace Slicer
             _viewModel.Slicer = new slyce.SliceModel(_viewModel);
             _viewModel.Slicer.UpdateSlice();
 
+            if(sliceVisualizer == null)
+            {
+                sliceVisualizer = new SliceVisualizer(_viewModel.Slicer.Slice, 1);
+                sliceVisualizer.Show();
+                _viewModel.sliceVisualizer = sliceVisualizer;
+            }
+            else
+            {
+                sliceVisualizer.Update(_viewModel.Slicer.Slice, 1);
+            }
             //var slicegroup = new Model3DGroup();
             ////slicegroup.Children.Add(_viewModel.Slicer.SlicePlane);
             //slicegroup.Children.Add(_viewModel.Slicer.Sliced);

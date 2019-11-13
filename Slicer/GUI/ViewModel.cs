@@ -11,6 +11,7 @@ namespace Slicer.GUI
 {
     public class ViewModel : INotifyPropertyChanged
     {
+        public SliceVisualizer sliceVisualizer { get; set; }
         Brush _Brush;
         public Brush Brush
         {
@@ -228,7 +229,6 @@ namespace Slicer.GUI
                 OnPropertyChanged("Slicer");
             }
         }
-
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -312,7 +312,7 @@ namespace Slicer.GUI
                 if (Slicer != null)
                 {
                     Slicer.UpdateSlice();
-
+                    sliceVisualizer.Update(this.Slicer.Slice, 1);
                     // Transform back to Z = 0 position in view
                     CurrentSlice.Transform = new TranslateTransform3D()
                     {

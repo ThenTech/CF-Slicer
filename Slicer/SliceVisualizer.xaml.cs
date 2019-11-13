@@ -1,4 +1,5 @@
 ﻿using Slicer.slyce.Constructs;
+using Slicer.slyce.Constructs._2D;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,10 +25,20 @@ namespace Slicer
         private double scale;
         private double min;
         private double max;
-        public SliceVisualizer(Vertex[] vertices, slyce.Constructs.Polygon[] poliesToDraw, double stroke, double min, double max)
+        public SliceVisualizer(Slice slice, double stroke)
         {
             InitializeComponent();
-            Update(vertices, poliesToDraw, stroke, min, max);
+            this.min = slice.MinX;
+            if(slice.MinY < min)
+            {
+                min = slice.MinY;
+            }
+            this.max = slice.MaxX;
+            if(slice.MaxY > max)
+            {
+                max = slice.MaxY;
+            }
+            Update(slice, stroke);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -37,7 +48,7 @@ namespace Slicer
             LayoutRoot.ClearValue(HeightProperty);
         }
 
-        public void Update(Vertex[] vertices, slyce.Constructs.Polygon[] poliesToDraw, double stroke, double min, double max)
+        public void Update(Slice slice, double stroke)
         {
             var width = canvasGrid.Width;
             var height = canvasGrid.Height;
@@ -46,38 +57,36 @@ namespace Slicer
             {
                 comp = height;
             }
-            this.min = min;
-            this.max = max;
             scale = comp / (max - min);
             canvasGrid.Children.Clear();
             //Random r = new Random();
-            for(int i = 0; i < poliesToDraw.Count(); i++)
+            foreach (var t in slice.TrianglesInSlice)
             {
                 System.Windows.Shapes.Polygon myPolygon = new System.Windows.Shapes.Polygon();
                 PointCollection points = new PointCollection();
-                points.Add(new Point((poliesToDraw[i].Vertices[0].Pos.X - min)*scale, (poliesToDraw[i].Vertices[0].Pos.Y - min) * scale));
-                points.Add(new Point((poliesToDraw[i].Vertices[1].Pos.X - min) * scale, (poliesToDraw[i].Vertices[1].Pos.Y - min) * scale));
-                points.Add(new Point((poliesToDraw[i].Vertices[2].Pos.X - min) * scale, (poliesToDraw[i].Vertices[2].Pos.Y - min) * scale));
+                points.Add(new System.Windows.Point((t.Point1.X - min)*scale, (t.Point1.Y - min) * scale));
+                points.Add(new System.Windows.Point((t.Point2.X - min) * scale, (t.Point2.Y - min) * scale));
+                points.Add(new System.Windows.Point((t.Point3.X - min) * scale, (t.Point3.Y - min) * scale));
                 //Color c = Color.FromRgb((byte)r.Next(255), (byte)r.Next(255), (byte)r.Next(255));
                 myPolygon.Fill = Brushes.Black;
                 myPolygon.Stroke = Brushes.Black;
-                myPolygon.StrokeThickness = 1;
+                myPolygon.StrokeThickness = stroke;
                 myPolygon.HorizontalAlignment = HorizontalAlignment.Left;
                 myPolygon.VerticalAlignment = VerticalAlignment.Top;
                 myPolygon.Points = points;
                 canvasGrid.Children.Add(myPolygon);
             }
-            for (int i = 0; i < vertices.Count() - 1; i+=2)
+            foreach (var l in slice.Lines)
             {
-                var line = new Line();
+                var line = new System.Windows.Shapes.Line();
                 line.Stroke = System.Windows.Media.Brushes.Black;
-                line.X1 = (vertices[i].Pos.X - min) * scale;
-                line.X2 = (vertices[i + 1].Pos.X - min) * scale;
-                line.Y1 = (vertices[i].Pos.Y - min) * scale;
-                line.Y2 = (vertices[i + 1].Pos.Y - min) * scale;
+                line.X1 = (l.StartPoint.X - min) * scale;
+                line.X2 = (l.EndPoint.X - min) * scale;
+                line.Y1 = (l.StartPoint.Y - min) * scale;
+                line.Y2 = (l.EndPoint.Y - min) * scale;
                 line.HorizontalAlignment = HorizontalAlignment.Left;
                 line.VerticalAlignment = VerticalAlignment.Top;
-                line.StrokeThickness = stroke * scale;
+                line.StrokeThickness = stroke;//* scale;
                 canvasGrid.Children.Add(line);
             }
         }

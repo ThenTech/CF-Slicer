@@ -27,10 +27,14 @@ namespace Slicer.slyce.Constructs._2D
             {
                 t.AddToPointList(allPoints);
             }
-            MinX = allPoints.Min(p => p.X);
-            MinY = allPoints.Min(p => p.Y);
-            MaxX = allPoints.Max(p => p.X);
-            MaxY = allPoints.Max(p => p.Y);
+            if(allPoints.Count() > 0)
+            {
+                MinX = allPoints.Min(p => p.X);
+                MinY = allPoints.Min(p => p.Y);
+                MaxX = allPoints.Max(p => p.X);
+                MaxY = allPoints.Max(p => p.Y);
+            }
+            
         }
         public Slice(List<Line> lines, List<Triangle> triangles, double MinX, double MinY, double MaxX, double MaxY)
         {

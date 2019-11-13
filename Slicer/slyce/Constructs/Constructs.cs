@@ -195,8 +195,6 @@ namespace Slicer.slyce
         {
             double Zi = slice;
             var polies = new List<Polygon>();
-            var verts = new List<Vertex>();
-            var poliesToDraw = new List<Polygon>();
             foreach (var p in Polygons)
             {
                 var minV = p.Vertices.Min(v => v.Pos.Z);
@@ -245,41 +243,13 @@ namespace Slicer.slyce
                         Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
                         polies.Add(new Polygon(vertices));
                         polies.Add(new Polygon(vertices2));
-                        verts.Add(v1);
-                        verts.Add(v2);
                     }
                     else if(below.Count == 3 || above.Count == 3)
                     {
                         polies.Add(p);
-                        poliesToDraw.Add(p);
                     }
                 }
             }
-            var minX = this.Polygons.Min(p => p.Vertices.Min(v => v.Pos.X));
-            var minY = this.Polygons.Min(p => p.Vertices.Min(v => v.Pos.Y));
-            var min = minX;
-            if(minY < min)
-            {
-                min = minY;
-            }
-            var maxX = this.Polygons.Max(p => p.Vertices.Min(v => v.Pos.X));
-            var maxY = this.Polygons.Max(p => p.Vertices.Min(v => v.Pos.Y));
-            var max = maxX;
-            if(maxY > max)
-            {
-                max = maxY;
-            }
-            if (SliceVisualizer.sliceVisualizer != null)
-            {
-                SliceVisualizer.sliceVisualizer.Update(verts.ToArray(), poliesToDraw.ToArray(), perSlice, min, max);
-            }
-            else
-            {
-
-                SliceVisualizer.sliceVisualizer = new SliceVisualizer(verts.ToArray(), poliesToDraw.ToArray(), perSlice, min, max);
-                SliceVisualizer.sliceVisualizer.Show();
-            }
-            
             return Construct.Create(polies.ToArray());
         }
 

@@ -44,6 +44,16 @@ namespace Slicer.slyce.Constructs._2D
         {
             return l2.StartPoint.Equals(this.EndPoint);
         }
+        public bool CloseToConnects(Line l2)
+        {
+            if (EndPoint.X == l2.StartPoint.X && EndPoint.Y == l2.StartPoint.Y)
+            {
+                return true;
+            }
+            var xDiff = (EndPoint.X + 0.1) / (l2.StartPoint.X + 0.1);
+            var yDiff = (EndPoint.Y + 0.1) / (l2.StartPoint.Y + 0.1);
+            return xDiff <= 1.05 && yDiff <= 1.05 && xDiff >= 0.95 && yDiff >= 0.95;
+        }
         public bool ReverseConnects(Line l2)
         {
             return l2.EndPoint.Equals(this.StartPoint);
@@ -52,6 +62,10 @@ namespace Slicer.slyce.Constructs._2D
         {
             var l = (Line)obj;
             return l.StartPoint.Equals(this.StartPoint) && l.EndPoint.Equals(this.EndPoint); 
+        }
+        public Line GetConnection(Line line2)
+        {
+            return new Line(this.EndPoint, line2.StartPoint);
         }
     }
 }

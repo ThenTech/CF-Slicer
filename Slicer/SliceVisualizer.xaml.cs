@@ -25,6 +25,7 @@ namespace Slicer
         private double scale;
         private double min;
         private double max;
+        private double stroke;
         private Slice slice;
         public SliceVisualizer()
         {
@@ -34,6 +35,10 @@ namespace Slicer
         {
             InitializeComponent();
             this.slice = slice;
+            this.stroke = stroke;   
+        }
+        public void Init()
+        {
             RecalculateMinMax(slice);
             Update(slice, stroke);
         }

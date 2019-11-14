@@ -264,6 +264,7 @@ namespace Slicer
             {
                 sliceVisualizer = new SliceVisualizer(_viewModel.Slicer.Slice, 1);
                 sliceVisualizer.Show();
+                sliceVisualizer.Init();
                 _viewModel.sliceVisualizer = sliceVisualizer;
             }
             else

@@ -91,12 +91,17 @@ namespace Slicer.slyce
         private void BuildSlice()
         {
             this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
+            var bounds = Original.Bounds;
+            var minX = bounds.X;
+            var maxX = bounds.X + bounds.Size.X;
+            var minY = bounds.Y;
+            var maxY = bounds.Y + bounds.Size.Y;
 
             Construct obj = Construct.Create(this.Original);
             Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
 
-            Construct slice = obj.Intersect(box, data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
-            this.Slice = obj.Slice(box, data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
+            Construct slice = obj.Intersect(box, bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
+            this.Slice = obj.Slice(box, bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness, minX, maxX, minY, maxY);
 
             var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
             this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);

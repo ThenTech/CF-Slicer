@@ -137,7 +137,7 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Slice Slice(Construct other, double slice, double perSlice)
+        public Slice Slice(Construct other, double slice, double perSlice, double minX, double maxX, double minY, double maxY)
         {
             double Zi = slice;
             var lines = new List<Line>();
@@ -213,7 +213,7 @@ namespace Slicer.slyce
                     }
                 }
             }
-            return new Slice(lines, triangles);
+            return new Slice(lines, triangles, minX, minY, maxX, maxY);
         }
 
         public Construct Intersect(Construct other, double slice, double perSlice)

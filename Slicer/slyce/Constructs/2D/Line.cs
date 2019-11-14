@@ -34,5 +34,24 @@ namespace Slicer.slyce.Constructs._2D
         {
             return "(" + StartPoint + ")" + "-" + "(" + EndPoint + ")"; 
         }
+        public void Swap()
+        {
+            var tmp = StartPoint;
+            StartPoint = EndPoint;
+            EndPoint = tmp;
+        }
+        public bool Connects(Line l2)
+        {
+            return l2.StartPoint.Equals(this.EndPoint);
+        }
+        public bool ReverseConnects(Line l2)
+        {
+            return l2.EndPoint.Equals(this.StartPoint);
+        }
+        public override bool Equals(object obj)
+        {
+            var l = (Line)obj;
+            return l.StartPoint.Equals(this.StartPoint) && l.EndPoint.Equals(this.EndPoint); 
+        }
     }
 }

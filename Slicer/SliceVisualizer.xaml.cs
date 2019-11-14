@@ -25,6 +25,7 @@ namespace Slicer
         private double scale;
         private double min;
         private double max;
+        private Slice slice;
         public SliceVisualizer()
         {
             InitializeComponent();
@@ -32,17 +33,22 @@ namespace Slicer
         public SliceVisualizer(Slice slice, double stroke)
         {
             InitializeComponent();
+            this.slice = slice;
+            RecalculateMinMax(slice);
+            Update(slice, stroke);
+        }
+        public void RecalculateMinMax(Slice slice)
+        {
             this.min = slice.MinX;
-            if(slice.MinY < min)
+            if (slice.MinY < min)
             {
                 min = slice.MinY;
             }
             this.max = slice.MaxX;
-            if(slice.MaxY > max)
+            if (slice.MaxY > max)
             {
                 max = slice.MaxY;
             }
-            Update(slice, stroke);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

@@ -142,6 +142,7 @@ namespace Slicer.slyce
             double Zi = slice;
             var lines = new List<Line>();
             var triangles = new List<Triangle>();
+            Line lastLine = null;
             foreach (var p in Polygons)
             {
                 var minV = p.Vertices.Min(v => v.Pos.Z);
@@ -169,8 +170,8 @@ namespace Slicer.slyce
                         Point p2 = null;
                         foreach (var v in list2)
                         {
-                            var x = v.Pos.X + (Zi - v.Pos.Z) * (list1.First().Pos.X - v.Pos.X) / (list1.First().Pos.Z - v.Pos.Z);
-                            var y = v.Pos.Y + (Zi - v.Pos.Z) * (list1.First().Pos.Y - v.Pos.Y) / (list1.First().Pos.Z - v.Pos.Z);
+                            var x = Math.Round(v.Pos.X + (Zi - v.Pos.Z) * (list1.First().Pos.X - v.Pos.X) / (list1.First().Pos.Z - v.Pos.Z), 3);
+                            var y = Math.Round(v.Pos.Y + (Zi - v.Pos.Z) * (list1.First().Pos.Y - v.Pos.Y) / (list1.First().Pos.Z - v.Pos.Z), 3);
                             if(p1 == null)
                             {
                                 p1 = new Point(x, y);
@@ -180,9 +181,30 @@ namespace Slicer.slyce
                                 p2 = new Point(x, y);
                             }
                         }
-                        if(!p1.Equals(p2))
+                        var line = new Line(p1, p2);
+                        if (!p1.Equals(p2) && (lastLine == null || !lastLine.Equals(line)))
                         {
-                            lines.Add(new Line(p1, p2));
+
+                            if (lastLine == null || lastLine.Connects(line))
+                            {
+                                lines.Add(line);
+                            }
+                            else if (lastLine.ReverseConnects(line))
+                            {
+                                line.Swap();
+                                lines.Add(line);
+                            }
+                            else if (lastLine.StartPoint.Equals(line.StartPoint))
+                            {
+                                lines.Last().Swap();
+                                lines.Add(line);
+                            }
+                            else
+                            {
+                                lines.Add(line);
+                            }
+                            lastLine = line;
+                            
                         }
                     }
                     else if (below.Count == 3 || above.Count == 3)

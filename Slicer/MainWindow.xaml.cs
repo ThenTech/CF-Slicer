@@ -268,6 +268,7 @@ namespace Slicer
             }
             else
             {
+                sliceVisualizer.RecalculateMinMax(_viewModel.Slicer.Slice);
                 sliceVisualizer.Update(_viewModel.Slicer.Slice, 1);
             }
             //var slicegroup = new Model3DGroup();

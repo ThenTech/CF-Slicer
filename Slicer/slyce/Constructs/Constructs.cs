@@ -142,7 +142,8 @@ namespace Slicer.slyce
             double Zi = slice;
             var lines = new List<Line>();
             var triangles = new List<Triangle>();
-            Line lastLine = null;
+            var polies = new List<Polygon2D>();
+            //Line lastLine = null;
 
             foreach (var p in Polygons)
             {
@@ -188,8 +189,30 @@ namespace Slicer.slyce
                                 p2 = new Point(x, y);
                             }
                         }
-
-                        var line = new Line(p1, p2);
+                        if(!p1.Equals(p2))
+                        {
+                            var line = new Line(p1, p2);
+                            lines.Add(line);
+                            if (polies.Count > 0)
+                            {
+                                var connectionPolygon = polies.FirstOrDefault(po => po.CanConnect(line) != Connection.NOT);
+                                if (connectionPolygon != null)
+                                {
+                                    var connectType = connectionPolygon.CanConnect(line);
+                                    connectionPolygon.AddLine(line, connectType);
+                                }
+                                else
+                                {
+                                    Polygon2D poly = new Polygon2D(line);
+                                    polies.Add(poly);
+                                }
+                            }
+                            else
+                            {
+                                Polygon2D poly = new Polygon2D(line);
+                                polies.Add(poly);
+                            }
+                        }
 
 
                         // Slice has list of Polies
@@ -198,36 +221,79 @@ namespace Slicer.slyce
                         //      if not: Add a new Polygon to the list with the found line
                         // 
                         // Eventually sort created polies with their distance to the middle, so we can print the middle one first
+                        
+                        
 
-                        if (!p1.Equals(p2) && (lastLine == null || !lastLine.Equals(line)))
-                        {
+                        //if (!p1.Equals(p2) && (lastLine == null || !lastLine.Equals(line)))
+                        //{
 
-                            if (lastLine == null || lastLine.Connects(line))
-                            {
-                                lines.Add(line);
-                            }
-                            else if (lastLine.ReverseConnects(line))
-                            {
-                                line.Swap();
-                                lines.Add(line);
-                            }
-                            else if (lastLine.StartPoint.Equals(line.StartPoint))
-                            {
-                                lines.Last().Swap();
-                                lines.Add(line);
-                            }
-                            else
-                            {
-                                lines.Add(line);
-                            }
+                        //    if (lastLine == null || lastLine.Connects(line))
+                        //    {
+                        //        lines.Add(line);
+                        //    }
+                        //    else if (lastLine.ReverseConnects(line))
+                        //    {
+                        //        line.Swap();
+                        //        lines.Add(line);
+                        //    }
+                        //    else if (lastLine.StartPoint.Equals(line.StartPoint))
+                        //    {
+                        //        lines.Last().Swap();
+                        //        lines.Add(line);
+                        //    }
+                        //    else
+                        //    {
+                        //        lines.Add(line);
+                        //    }
 
-                            lastLine = line;
-                        }
+                        //    lastLine = line;
+                        //}
                     }
                     else if (below.Count == 3 || above.Count == 3)
                     {
                         triangles.Add(new Triangle(p.Vertices[0].Pos.X, p.Vertices[0].Pos.Y, p.Vertices[1].Pos.X, p.Vertices[1].Pos.Y, p.Vertices[2].Pos.X, p.Vertices[2].Pos.Y));
                     }
+                }
+            }
+            List<bool> takenAway = new List<bool>(new bool[polies.Count]);
+            List<Polygon2D> completePolygons = new List<Polygon2D>();
+            for(int i = 0; i < polies.Count; i++)
+            {
+                var p = polies[i];
+                if(!p.IsComplete() && !takenAway[i])
+                {
+                    bool connectionFound = false;
+                    do
+                    {
+                        connectionFound = false;
+                        if(!p.IsComplete() && !takenAway[i])
+                        {
+                            for (int j = 0; j < polies.Count; j++)
+                            {
+                                if(!takenAway[j])
+                                {
+                                    var p2 = polies[j];
+                                    if (i != j)
+                                    {
+                                        var connected = p.AddPolygon(p2, p.CanConnect(p2));
+                                        if (connected)
+                                        {
+                                            takenAway[j] = true;
+                                            connectionFound = connected;
+                                        }
+                                    }
+                                }
+                                
+
+                            }
+                        }
+                        
+                    } while (connectionFound);
+                    completePolygons.Add(p);
+                }
+                else if(!takenAway[i])
+                {
+                    completePolygons.Add(p);
                 }
             }
 

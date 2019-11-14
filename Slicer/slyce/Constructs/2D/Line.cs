@@ -85,6 +85,11 @@ namespace Slicer.slyce.Constructs._2D
                    EqualityComparer<Point>.Default.Equals(this.EndPoint, other.EndPoint);
         }
 
+        public bool CanConnect(Line line)
+        {
+            return this.StartPoint.Equals(line.StartPoint) || this.StartPoint.Equals(line.EndPoint) || this.EndPoint.Equals(line.StartPoint) || this.EndPoint.Equals(line.EndPoint);
+        }
+
         public override int GetHashCode()
         {
             var hashCode = 1140990155;
@@ -101,6 +106,11 @@ namespace Slicer.slyce.Constructs._2D
         public static bool operator !=(Line line1, Line line2)
         {
             return !(line1 == line2);
+        }
+        
+        public Line Reversed()
+        {
+            return new Line(EndPoint, StartPoint);
         }
     }
 }

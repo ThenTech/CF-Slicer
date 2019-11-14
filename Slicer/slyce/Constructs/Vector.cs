@@ -25,9 +25,10 @@ namespace Slicer.slyce.Constructs
         public double Y { get { return vec.Y; } private set { vec.Y = value; } }
         public double Z { get { return vec.Z; } private set { vec.Z = value; } }
 
-        public Vector(Vector3D v) : this(v.X, v.Y, v.Z) { }
-        public Vector(Point3D v) : this(v.X, v.Y, v.Z) { }
-        public Vector(Vector v) : this(v.X, v.Y, v.Z) { }
+        public Vector(Vector3D v)  : this(v.X, v.Y, v.Z) { }
+        public Vector(Point3D v)   : this(v.X, v.Y, v.Z) { }
+        public Vector(Vector v)    : this(v.X, v.Y, v.Z) { }
+        public Vector(_2D.Point v) : this(v.X, v.Y, 0) { }
 
         public Vector(double x, double y, double z)
         {

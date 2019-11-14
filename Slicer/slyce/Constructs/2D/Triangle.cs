@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Slicer.slyce.Constructs;
+
 namespace Slicer.slyce.Constructs._2D
 {
     public class Triangle
@@ -31,6 +33,15 @@ namespace Slicer.slyce.Constructs._2D
             points.Add(Point1);
             points.Add(Point2);
             points.Add(Point3);
+        }
+
+        public Polygon ToPolygon()
+        {
+            return new Polygon(new Vertex[3] {
+                new Vertex(new Vector(this.Point1), Vector.Up),
+                new Vertex(new Vector(this.Point2), Vector.Up),
+                new Vertex(new Vector(this.Point3), Vector.Up),
+            });
         }
     }
 }

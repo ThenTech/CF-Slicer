@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Slicer.slyce.GCode;
+
 namespace Slicer.slyce.Constructs._2D
 {
     public class Slice
@@ -14,6 +16,8 @@ namespace Slicer.slyce.Constructs._2D
         public double MinY { get; set; }
         public double MaxX { get; set; }
         public double MaxY { get; set; }
+
+        public double Z { get; set; }
 
         public Slice(List<Line> lines, List<Triangle> triangles)
         {

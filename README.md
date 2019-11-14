@@ -35,7 +35,7 @@
 - [ ] Generate second shell
 - [ ] Generate basic rectangular infill structure (line per line intersection between grid and
   polygon slices)
-- [ ] Extend g-code generation and 3D print simple object that does not require support 
+- [ ] **[Deadline 7/12]** Extend g-code generation and 3D print simple object that does not require support 
   structure
 - [ ] Calculate regions + generate paths (+ g-code) for floors and roofs
 - [ ] Try 3D printing a closed object (roofs + floors) that does not require support
@@ -51,9 +51,8 @@
 - [x] Slice preview met kleuraanduiding in object of bovenkant object wegnemen om slice te zien
 - [x] Nozzle thickness parameter
 - [ ] Indicatie van grootte
-- [x] XY translate en rotate
+- [ ] XY translate en rotate op object voor te slicen (=> transform individual polygons...)
 - [x] Slice opstellen door uinion van vlak met dikte NozzleThickness en object (met Clipper?)
-- [ ] Slice opstellen door triangle en plane intersection ipv 3D intersection
+- [x] Slice opstellen door triangle en plane intersection ipv 3D intersection
 - [x] Add ambient light ~~
 - [x] Basic SliceModel class with slice plane and sliced model preview
-- [ ] Keep transformation when applying slice?

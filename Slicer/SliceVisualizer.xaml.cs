@@ -27,21 +27,25 @@ namespace Slicer
         private double max;
         private double stroke;
         private Slice slice;
+
         public SliceVisualizer()
         {
             InitializeComponent();
         }
+
         public SliceVisualizer(Slice slice, double stroke)
         {
             InitializeComponent();
             this.slice = slice;
             this.stroke = stroke;   
         }
+
         public void Init()
         {
             RecalculateMinMax(slice);
             Update(slice, stroke);
         }
+
         public void RecalculateMinMax(Slice slice)
         {
             this.min = slice.MinX;
@@ -69,17 +73,21 @@ namespace Slicer
             var width = canvasGrid.Width;
             var height = canvasGrid.Height;
             var comp = width;
+
             if (height < comp)
             {
                 comp = height;
             }
+
             scale = comp / (max - min);
             System.Windows.Shapes.Polygon myPolygon = new System.Windows.Shapes.Polygon();
             PointCollection points = new PointCollection();
+
             foreach (var p in allPoints)
             {
                 points.Add(new System.Windows.Point((p.X - min)*scale, (p.Y - min)*scale));
             }
+
             //Color c = Color.FromRgb((byte)r.Next(255), (byte)r.Next(255), (byte)r.Next(255));
             myPolygon.Fill = Brushes.Black;
             myPolygon.Stroke = Brushes.Black;
@@ -95,32 +103,40 @@ namespace Slicer
             var width = canvasGrid.Width;
             var height = canvasGrid.Height;
             var comp = width;
+
             if(height < comp)
             {
                 comp = height;
             }
+
             scale = comp / (max - min);
             canvasGrid.Children.Clear();
             //Random r = new Random();
+
             foreach (var t in slice.TrianglesInSlice)
             {
                 System.Windows.Shapes.Polygon myPolygon = new System.Windows.Shapes.Polygon();
+
                 PointCollection points = new PointCollection();
                 points.Add(new System.Windows.Point((t.Point1.X - min)*scale, (t.Point1.Y - min) * scale));
                 points.Add(new System.Windows.Point((t.Point2.X - min) * scale, (t.Point2.Y - min) * scale));
                 points.Add(new System.Windows.Point((t.Point3.X - min) * scale, (t.Point3.Y - min) * scale));
                 //Color c = Color.FromRgb((byte)r.Next(255), (byte)r.Next(255), (byte)r.Next(255));
+
                 myPolygon.Fill = Brushes.Black;
                 myPolygon.Stroke = Brushes.Black;
                 myPolygon.StrokeThickness = stroke;
                 myPolygon.HorizontalAlignment = HorizontalAlignment.Left;
                 myPolygon.VerticalAlignment = VerticalAlignment.Top;
                 myPolygon.Points = points;
+
                 canvasGrid.Children.Add(myPolygon);
             }
+
             foreach (var l in slice.Lines)
             {
                 var line = new System.Windows.Shapes.Line();
+
                 line.Stroke = System.Windows.Media.Brushes.Black;
                 line.X1 = (l.StartPoint.X - min) * scale;
                 line.X2 = (l.EndPoint.X - min) * scale;
@@ -128,7 +144,8 @@ namespace Slicer
                 line.Y2 = (l.EndPoint.Y - min) * scale;
                 line.HorizontalAlignment = HorizontalAlignment.Left;
                 line.VerticalAlignment = VerticalAlignment.Top;
-                line.StrokeThickness = stroke;//* scale;
+                line.StrokeThickness = stroke; //* scale;
+
                 canvasGrid.Children.Add(line);
             }
         }

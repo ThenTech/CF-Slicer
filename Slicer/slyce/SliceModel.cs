@@ -100,8 +100,8 @@ namespace Slicer.slyce
             Construct obj = Construct.Create(this.Original);
             Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
 
-            Construct slice = obj.Intersect(box, bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness);
-            this.Slice = obj.Slice(box, bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness, minX, maxX, minY, maxY);
+            //this.Slice = obj.Slice(box, bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness, minX, maxX, minY, maxY);
+            Construct slice = obj.Slice(bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness, minX, maxX, minY, maxY);
 
             var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
             this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);
@@ -115,20 +115,25 @@ namespace Slicer.slyce
             {
                 var l = Slice.Lines[i];
             }
+
             Paths paths = new Paths();
             Path path = new Path();
+
             foreach (var l in Slice.Lines)
             {
                 path.Add(new IntPoint((long)(l.StartPoint.X * 1000), (long)(l.StartPoint.Y * 1000)));
                 path.Add(new IntPoint((long)(l.EndPoint.X * 1000), (long)(l.EndPoint.Y * 1000)));
             }
+
             paths.Add(path);
+
             Paths result = ClipperLib.Clipper.OffsetPolygons(paths, -1000);
             //Slice.Lines = new List<Line>();
             //Slice.TrianglesInSlice = new List<Constructs._2D.Triangle>();
             SliceVisualizer visualizer = new SliceVisualizer();
             List<Line> polygonLines = new List<Line>();
             Line lastLine = null;
+
             foreach (var pol in result)
             {
                 List<Point> points = new List<Point>();
@@ -147,6 +152,7 @@ namespace Slicer.slyce
                 }
                 //visualizer.DrawPolygon(points, 1, 0, 18);
             }
+
             if(polygonLines.Count > 0)
             {
                 polygonLines.Add(new Line(polygonLines.Last().EndPoint, polygonLines.First().StartPoint));

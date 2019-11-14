@@ -5,7 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ClipperLib;
+using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
+using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
+
+
 using Slicer.slyce.GCode.Commands;
+using Slicer.slyce.Constructs._2D;
+
 
 namespace Slicer.slyce.GCode
 {
@@ -29,6 +36,7 @@ namespace Slicer.slyce.GCode
             new SetExtruderTemperatureAndWait() { MinTemperature = 200 },
 
             new SetExtruderToAbsolute(),
+            new SetUnitsToMillimeters(),
             new MoveToOrigin(),
 
             new SetPosition() { Extrude = 0 },
@@ -86,6 +94,78 @@ namespace Slicer.slyce.GCode
         public void Add(GCodeBase cmd)
         {
             this.instructions.Add(cmd);
+        }
+
+        public void AddSlice(Slice s, double layer_height, double nozzle_diam, double filament_diam)
+        {
+            // TODO add FanOn() after first layer
+            // TODO set s.Z position as current layer Z position
+
+            // foreach (var p in s.Polygons)
+            {
+                int count = s.Lines.Count();
+
+                if (count > 1)
+                {
+                    var current_point = s.Lines[0].StartPoint;
+
+                    var move_start = new SetPosition()
+                    {
+                        MoveX = (decimal)current_point.X,
+                        MoveY = (decimal)current_point.Y,
+                        MoveZ = (decimal)s.Z,
+                        Extrude = 0
+                    };
+
+                    this.Add(move_start);
+
+                    for (int i = 1; i < count; i++)
+                    {
+                        var next_point = s.Lines[i].StartPoint;
+
+                        double extrusion_length = (layer_height * nozzle_diam * s.Lines[i - 1].GetLength()) / filament_diam;
+
+                        var move_next = new LinearMove()
+                        {
+                            MoveX = (decimal)next_point.X,
+                            MoveY = (decimal)next_point.Y,
+                            Extrude = (decimal)extrusion_length
+                        };
+                        this.Add(move_next);
+                    }
+
+                    // Move nozzle back up a little
+                    this.Add(new SetPosition() { Extrude = 0 });
+                    this.Add(new LinearMove()  { MoveZ = (decimal)(s.Z + layer_height), Feedrate = 3000 });
+                    this.Add(new SetPosition() { Extrude = 0 });
+                    this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
+                }
+            }
+
+            /*
+            // foreach (var p in s.FillPolygons)
+            {
+                // Generate filling for surface of these polies          
+                var obj         = new Paths();  // Current FillPoly to fill with infill
+                var filler_grid = new Paths();  // Infill grid structure
+
+                Paths solution = new Paths();
+                Clipper c = new Clipper();
+                c.AddPolygons(obj, PolyType.ptSubject);
+                c.AddPolygons(filler_grid, PolyType.ptClip);
+
+                // Intersect fill poly with infill
+                c.Execute(ClipType.ctIntersection, solution);
+
+                // Add solution to gcode?
+            }
+            */
+
+            // Move nozzle back up a little
+            this.Add(new SetPosition() { Extrude = 0 });
+            this.Add(new LinearMove()  { MoveZ = (decimal)(s.Z + layer_height), Feedrate = 3000 });
+            this.Add(new SetPosition() { Extrude = 0 });
+            this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
         }
 
         public void ExportToFile(Uri path, bool insert_setup = true, bool append_teardown = true)

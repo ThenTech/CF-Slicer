@@ -102,5 +102,13 @@ namespace Slicer.slyce.Constructs._2D
         {
             return !(line1 == line2);
         }
+
+        public double GetLength()
+        {
+            double x = this.StartPoint.X - this.EndPoint.X;
+            double y = this.StartPoint.Y - this.EndPoint.Y;
+
+            return Math.Sqrt(x * x + y * y);
+        }
     }
 }

@@ -137,9 +137,9 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Slice Slice(Construct other, double slice, double perSlice, double minX, double maxX, double minY, double maxY)
+        public Construct Slice(double slice_z_height, double perSlice, double minX, double maxX, double minY, double maxY)
         {
-            double Zi = slice;
+            double Zi = slice_z_height;
             var lines = new List<Line>();
             var triangles = new List<Triangle>();
             Line lastLine = null;
@@ -231,68 +231,11 @@ namespace Slicer.slyce
                 }
             }
 
-            return new Slice(lines, triangles, minX, minY, maxX, maxY);
-        }
+            //return new Slice(lines, triangles, minX, minY, maxX, maxY);
 
-        public Construct Intersect(Construct other, double slice, double perSlice)
-        {
-            double Zi = slice;
-            var polies = new List<Polygon>();
-            foreach (var p in Polygons)
-            {
-                var minV = p.Vertices.Min(v => v.Pos.Z);
-                var maxV = p.Vertices.Max(v => v.Pos.Z);
-                if(minV <= Zi && maxV >= Zi)
-                {
-                    List<Vertex> list1 = null;
-                    List<Vertex> list2 = null;
-                    //Find all points above
-                    var above = p.Vertices.Where(v => v.Pos.Z > Zi).ToList();
-                    var below = p.Vertices.Where(v => v.Pos.Z <= Zi).ToList();
-                    if (above.Count == 1 || below.Count == 1)
-                    {
-                        if(above.Count == 1)
-                        {
-                            list1 = above;
-                            list2 = below;
-                        }
-                        else
-                        {
-                            list2 = above;
-                            list1 = below;
-                        }
-                        Vertex v1 = null;
-                        Vertex v2 = null;
-                        Vertex v3 = null;
-                        Vertex v4 = null;
-                        foreach (var v in list2)
-                        {
-                            var x = v.Pos.X + (Zi - v.Pos.Z) * (list1.First().Pos.X - v.Pos.X) / (list1.First().Pos.Z - v.Pos.Z);
-                            var y = v.Pos.Y + (Zi - v.Pos.Z) * (list1.First().Pos.Y - v.Pos.Y) / (list1.First().Pos.Z - v.Pos.Z);
-                            var z = Zi;
-                            var vertex = new Vertex(new Vector(x, y, z), v.Normal);
-                            if (v1 == null)
-                            {
-                                v1 = vertex;
-                            }
-                            else if (v2 == null)
-                            {
-                                v2 = vertex;
-                            }
-                        }
-                        v3 = new Vertex(new Vector(v1.Pos.X, v1.Pos.Y, Zi + perSlice), v1.Normal);
-                        v4 = new Vertex(new Vector(v2.Pos.X, v2.Pos.Y, Zi + perSlice), v2.Normal);
-                        Vertex[] vertices = new Vertex[3] { v1, v2, v3 };
-                        Vertex[] vertices2 = new Vertex[3] { v4, v3, v2 };
-                        polies.Add(new Polygon(vertices));
-                        polies.Add(new Polygon(vertices2));
-                    }
-                    else if(below.Count == 3 || above.Count == 3)
-                    {
-                        polies.Add(p);
-                    }
-                }
-            }
+            List<Polygon> polies = new List<Polygon>();
+            triangles.ForEach(t => polies.Add(t.ToPolygon()));
+
             return Construct.Create(polies.ToArray());
         }
 

@@ -137,22 +137,27 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Slice Slice(Construct other, double slice, double perSlice)
+        public Slice Slice(Construct other, double slice, double perSlice, double minX, double maxX, double minY, double maxY)
         {
             double Zi = slice;
             var lines = new List<Line>();
             var triangles = new List<Triangle>();
+            Line lastLine = null;
+
             foreach (var p in Polygons)
             {
                 var minV = p.Vertices.Min(v => v.Pos.Z);
                 var maxV = p.Vertices.Max(v => v.Pos.Z);
+
                 if (minV <= Zi && maxV >= Zi)
                 {
                     List<Vertex> list1 = null;
                     List<Vertex> list2 = null;
+
                     //Find all points above
                     var above = p.Vertices.Where(v => v.Pos.Z > Zi).ToList();
                     var below = p.Vertices.Where(v => v.Pos.Z <= Zi).ToList();
+
                     if (above.Count == 1 || below.Count == 1)
                     {
                         if (above.Count == 1)
@@ -165,13 +170,16 @@ namespace Slicer.slyce
                             list2 = above;
                             list1 = below;
                         }
+
                         Point p1 = null;
                         Point p2 = null;
+
                         foreach (var v in list2)
                         {
-                            var x = v.Pos.X + (Zi - v.Pos.Z) * (list1.First().Pos.X - v.Pos.X) / (list1.First().Pos.Z - v.Pos.Z);
-                            var y = v.Pos.Y + (Zi - v.Pos.Z) * (list1.First().Pos.Y - v.Pos.Y) / (list1.First().Pos.Z - v.Pos.Z);
-                            if(p1 == null)
+                            var x = Math.Round(v.Pos.X + (Zi - v.Pos.Z) * (list1.First().Pos.X - v.Pos.X) / (list1.First().Pos.Z - v.Pos.Z), 3);
+                            var y = Math.Round(v.Pos.Y + (Zi - v.Pos.Z) * (list1.First().Pos.Y - v.Pos.Y) / (list1.First().Pos.Z - v.Pos.Z), 3);
+
+                            if (p1 == null)
                             {
                                 p1 = new Point(x, y);
                             }
@@ -180,9 +188,40 @@ namespace Slicer.slyce
                                 p2 = new Point(x, y);
                             }
                         }
-                        if(!p1.Equals(p2))
+
+                        var line = new Line(p1, p2);
+
+
+                        // Slice has list of Polies
+                        // > Look through the existing polies and check if any has the same start- or endpoint
+                        //      if found: add line to poly
+                        //      if not: Add a new Polygon to the list with the found line
+                        // 
+                        // Eventually sort created polies with their distance to the middle, so we can print the middle one first
+
+                        if (!p1.Equals(p2) && (lastLine == null || !lastLine.Equals(line)))
                         {
-                            lines.Add(new Line(p1, p2));
+
+                            if (lastLine == null || lastLine.Connects(line))
+                            {
+                                lines.Add(line);
+                            }
+                            else if (lastLine.ReverseConnects(line))
+                            {
+                                line.Swap();
+                                lines.Add(line);
+                            }
+                            else if (lastLine.StartPoint.Equals(line.StartPoint))
+                            {
+                                lines.Last().Swap();
+                                lines.Add(line);
+                            }
+                            else
+                            {
+                                lines.Add(line);
+                            }
+
+                            lastLine = line;
                         }
                     }
                     else if (below.Count == 3 || above.Count == 3)
@@ -191,7 +230,8 @@ namespace Slicer.slyce
                     }
                 }
             }
-            return new Slice(lines, triangles);
+
+            return new Slice(lines, triangles, minX, minY, maxX, maxY);
         }
 
         public Construct Intersect(Construct other, double slice, double perSlice)
@@ -254,6 +294,20 @@ namespace Slicer.slyce
                 }
             }
             return Construct.Create(polies.ToArray());
+        }
+
+        public Construct Intersect(Construct other)
+        {
+            var a = new Node(Polygons);
+            var b = new Node(other.Polygons);
+            a.Invert();
+            b.ClipTo(a);
+            b.Invert();
+            a.ClipTo(b);
+            b.ClipTo(a);
+            a.Build(b.AllPolygons());
+            a.Invert();
+            return Construct.Create(a.AllPolygons());
         }
 
         public Construct Inverse()

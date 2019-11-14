@@ -264,10 +264,12 @@ namespace Slicer
             {
                 sliceVisualizer = new SliceVisualizer(_viewModel.Slicer.Slice, 1);
                 sliceVisualizer.Show();
+                sliceVisualizer.Init();
                 _viewModel.sliceVisualizer = sliceVisualizer;
             }
             else
             {
+                sliceVisualizer.RecalculateMinMax(_viewModel.Slicer.Slice);
                 sliceVisualizer.Update(_viewModel.Slicer.Slice, 1);
             }
             //var slicegroup = new Model3DGroup();

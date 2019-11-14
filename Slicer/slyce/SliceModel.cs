@@ -35,7 +35,7 @@ namespace Slicer.slyce
         {
             this.BuildSliceBox();
             this.BuildSlice();
-            this.ErodeSlice();
+            //this.ErodeSlice();
             return this.Sliced;
         }
 
@@ -150,7 +150,7 @@ namespace Slicer.slyce
             if(polygonLines.Count > 0)
             {
                 polygonLines.Add(new Line(polygonLines.Last().EndPoint, polygonLines.First().StartPoint));
-                Slice.Lines.AddRange(polygonLines);
+                //Slice.Lines.AddRange(polygonLines);
             }
             
             //visualizer.Show();

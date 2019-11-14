@@ -35,7 +35,7 @@ namespace Slicer.slyce.Constructs._2D
             points.Add(Point3);
         }
 
-        public Polygon ToPolygon()
+        public Polygon ToPolygon3D()
         {
             return new Polygon(new Vertex[3] {
                 new Vertex(new Vector(this.Point1), Vector.Up),

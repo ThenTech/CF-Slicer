@@ -137,7 +137,7 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Construct Slice(double slice_z_height, double perSlice, double minX, double maxX, double minY, double maxY)
+        public Slice Slice(double slice_z_height, double perSlice, double minX, double maxX, double minY, double maxY)
         {
             double Zi = slice_z_height;
             var lines = new List<Line>();
@@ -255,32 +255,34 @@ namespace Slicer.slyce
                     }
                 }
             }
-            List<bool> takenAway = new List<bool>(new bool[polies.Count]);
+
             List<Polygon2D> completePolygons = new List<Polygon2D>();
-            for(int i = 0; i < polies.Count; i++)
+
+            for (int i = 0; i < polies.Count; i++)
             {
                 var p = polies[i];
-                if(!p.IsComplete() && !takenAway[i])
+       
+                if (!p.IsComplete() && !p.WasTakenAway)
                 {
                     bool connectionFound = false;
+
                     do
                     {
                         connectionFound = false;
-                        if(!p.IsComplete() && !takenAway[i])
+
+                        if (!p.IsComplete() && !p.WasTakenAway)
                         {
                             for (int j = 0; j < polies.Count; j++)
                             {
-                                if(!takenAway[j])
+                                var p2 = polies[j];
+
+                                if (i != j && !p2.WasTakenAway)
                                 {
-                                    var p2 = polies[j];
-                                    if (i != j)
+                                    var connected = p.AddPolygon(p2, p.CanConnect(p2));
+                                    if (connected)
                                     {
-                                        var connected = p.AddPolygon(p2, p.CanConnect(p2));
-                                        if (connected)
-                                        {
-                                            takenAway[j] = true;
-                                            connectionFound = connected;
-                                        }
+                                        p2.WasTakenAway = true;
+                                        connectionFound = connected;
                                     }
                                 }
                                 
@@ -289,20 +291,21 @@ namespace Slicer.slyce
                         }
                         
                     } while (connectionFound);
+
                     completePolygons.Add(p);
                 }
-                else if(!takenAway[i])
+                else if(!p.WasTakenAway)
                 {
                     completePolygons.Add(p);
                 }
             }
 
-            //return new Slice(lines, triangles, minX, minY, maxX, maxY);
+            return new Slice(completePolygons, minX, minY, maxX, maxY);
 
-            List<Polygon> polies = new List<Polygon>();
-            triangles.ForEach(t => polies.Add(t.ToPolygon()));
+            //List<Polygon> polies3d = new List<Polygon>();
+            //completePolygons.ForEach(p => polies3d.Add(p.ToPolygon3D()));
 
-            return Construct.Create(polies.ToArray());
+            //return Construct.Create(polies3d.ToArray());
         }
 
         public Construct Intersect(Construct other)

@@ -9,31 +9,39 @@ namespace Slicer.slyce.Constructs._2D
     public class Polygon2D
     {
         public LinkedList<Line> Lines { get; set; }
+        public bool WasTakenAway { get; set; } = false;
+
         public Polygon2D()
         {
             Lines = new LinkedList<Line>();
         }
+
         public Polygon2D(Line firstLine)
         {
             Lines = new LinkedList<Line>();
             Lines.AddLast(firstLine);
         }
+
         public Point FirstPoint()
         {
             return Lines.First().StartPoint;
         }
+
         public Point LastPoint()
         {
             return Lines.Last().EndPoint;
         }
+
         public Line First()
         {
             return Lines.First();
         }
+
         public Line Last()
         {
             return Lines.Last();
         }
+
         public Connection CanConnect(Line line)
         {
             if (First().CanConnect(line))
@@ -91,7 +99,8 @@ namespace Slicer.slyce.Constructs._2D
 
         public bool IsComplete()
         {
-            return First().StartPoint.Equals(Last().EndPoint) || First().StartPoint.Equals(Last().Reversed().EndPoint);
+            return First().StartPoint.Equals(Last().EndPoint) 
+                || First().StartPoint.Equals(Last().Reversed().EndPoint);
         }
 
         public bool AddPolygon(Polygon2D poly, Connection connection)
@@ -150,5 +159,10 @@ namespace Slicer.slyce.Constructs._2D
             }
         }
 
+        public Polygon ToPolygon3D()
+        {
+            // TODO? Convert to triangles?
+            return null;
+        }
     }
 }

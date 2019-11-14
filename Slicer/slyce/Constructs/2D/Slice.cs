@@ -10,8 +10,11 @@ namespace Slicer.slyce.Constructs._2D
 {
     public class Slice
     {
+        public List<Polygon2D> Polygons { get; set; }
+
         public List<Triangle> TrianglesInSlice { get; set; }
         public List<Line> Lines { get; set; }
+
         public double MinX { get; set; }
         public double MinY { get; set; }
         public double MaxX { get; set; }
@@ -53,6 +56,25 @@ namespace Slicer.slyce.Constructs._2D
             this.MinY = MinY;
             this.MaxX = MaxX;
             this.MaxY = MaxY;
+        }
+
+        public Slice(List<Polygon2D> polies, double MinX, double MinY, double MaxX, double MaxY)
+        {
+            this.Polygons = polies;
+            this.Lines = new List<Line>();
+            this.TrianglesInSlice = new List<Triangle>();
+            this.MinX = MinX;
+            this.MinY = MinY;
+            this.MaxX = MaxX;
+            this.MaxY = MaxY;
+
+            foreach (var p in this.Polygons)
+            {
+                foreach (var line in p.Lines)
+                {
+                    this.Lines.Add(line);
+                }
+            }
         }
     }
 }

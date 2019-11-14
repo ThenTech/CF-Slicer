@@ -14,19 +14,23 @@ namespace Slicer.slyce.Constructs._2D
         public double MinY { get; set; }
         public double MaxX { get; set; }
         public double MaxY { get; set; }
+
         public Slice(List<Line> lines, List<Triangle> triangles)
         {
             List<Point> allPoints = new List<Point>();
             this.Lines = lines;
             this.TrianglesInSlice = triangles;
+
             foreach (var l in Lines)
             {
                 l.AddToPointList(allPoints);
             }
+
             foreach (var t in TrianglesInSlice)
             {
                 t.AddToPointList(allPoints);
             }
+
             if(allPoints.Count() > 0)
             {
                 MinX = allPoints.Min(p => p.X);
@@ -36,6 +40,7 @@ namespace Slicer.slyce.Constructs._2D
             }
             
         }
+        
         public Slice(List<Line> lines, List<Triangle> triangles, double MinX, double MinY, double MaxX, double MaxY)
         {
             this.Lines = lines;

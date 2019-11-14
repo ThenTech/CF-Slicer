@@ -75,7 +75,7 @@
     <Compile Include="SliceVisualizer.xaml.cs">
       <DependentUpon>SliceVisualizer.xaml</DependentUpon>
     </Compile>
-    <Compile Include="slyce\Constructs\2D\2DPolygon.cs" />
+    <Compile Include="slyce\Constructs\2D\Polygon2D.cs" />
     <Compile Include="slyce\Constructs\2D\Line.cs" />
     <Compile Include="slyce\Constructs\2D\Point.cs" />
     <Compile Include="slyce\Constructs\2D\Triangle.cs" />

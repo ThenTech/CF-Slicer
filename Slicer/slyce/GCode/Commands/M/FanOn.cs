@@ -6,7 +6,7 @@ namespace Slicer.slyce.GCode.Commands
         [ParameterType("P")]
         public int? FanNumber { get; set; }
         [ParameterType("S")]
-        public double FanSpeed { get; set; }
+        public int FanSpeed { get; set; }
         [ParameterType("I")]
         public int? Invert { get; set; }
         [ParameterType("F")]

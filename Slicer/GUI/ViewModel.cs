@@ -142,6 +142,17 @@ namespace Slicer.GUI
             }
         }
 
+        double _FilamentDiameter = 2.6477;
+        public double FilamentDiameter
+        {
+            get { return _FilamentDiameter; }
+            set
+            {
+                _FilamentDiameter = value;
+                OnPropertyChanged("FilamentDiameter");
+            }
+        }
+
         string _ModelTitle;
         public string ModelTitle
         {

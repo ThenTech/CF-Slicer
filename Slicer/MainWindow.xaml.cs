@@ -154,13 +154,10 @@ namespace Slicer
 
             if (d.ShowDialog().Value)
             {
-                slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter();
-
-                gcw.AddSlice(_viewModel.Slicer.Slice, 
-                            _viewModel.NozzleThickness,
-                            _viewModel.NozzleDiameter,
-                            _viewModel.NozzleDiameter);
-
+                slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter(_viewModel.NozzleThickness,
+                                                                          _viewModel.NozzleDiameter,
+                                                                          _viewModel.FilamentDiameter);
+                gcw.AddAllSlices(_viewModel.Slicer.SliceStore);
                 gcw.ExportToFile(d.FileName);
             }
         }

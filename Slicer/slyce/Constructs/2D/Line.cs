@@ -3,13 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace Slicer.slyce.Constructs._2D
 {
     public class Line : IEquatable<Line>
     {
+        public static readonly Brush BrushContour = Brushes.Black;
+        public static readonly Brush BrushInfill  = Brushes.Red;
+
         public Point StartPoint { get; set; }
         public Point EndPoint { get; set; }
+
+        public bool IsContour { get; set; } = true;
+        public bool IsInfill  { get => !IsContour; set => IsContour = !value; }
 
         public Line(double X1, double Y1, double X2, double Y2)
         {
@@ -122,6 +129,23 @@ namespace Slicer.slyce.Constructs._2D
         public Line Reversed()
         {
             return new Line(EndPoint, StartPoint);
+        }
+
+        public System.Windows.Shapes.Line ToShape(double minX, double minY, double scale, double stroke)
+        {
+            return new System.Windows.Shapes.Line
+            {
+                Stroke = this.IsContour ? Line.BrushContour : Line.BrushInfill,
+                X1 = (this.StartPoint.X - minX) * scale,
+                X2 = (this.EndPoint.X - minX) * scale,
+                Y1 = (this.StartPoint.Y - minY) * scale,
+                Y2 = (this.EndPoint.Y - minY) * scale,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                StrokeThickness = stroke,
+                StrokeEndLineCap = PenLineCap.Round,
+                StrokeStartLineCap = PenLineCap.Round
+            };
         }
     }
 }

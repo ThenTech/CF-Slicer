@@ -21,36 +21,52 @@ namespace Slicer.slyce.GCode
 
     class GCodeWriter
     {
+        // GCode reference: https://reprap.org/wiki/G-code
+    
         private CommandCollection instructions;
+        private double layer_height;
+        private double nozzle_diam;
+        private double filament_diam;
+        private bool first_start;
 
-        private static readonly string header_comment   = ";Generated with Slycer - Lieven Libberecht, William Thenaers";
-        private static readonly string startup_comment  = "\n;Setup";
-        private static readonly string print_comment    = "\n;Print";
-        private static readonly string teardown_comment = "\n;Teardown";
+        private static readonly Comment header_comment   = new Comment() { Text = "Generated with Pancakes - Lieven Libberecht, William Thenaers" };
+        private static readonly Comment startup_comment  = new Comment() { Text = "\nSetup" };
+        private static readonly Comment print_comment    = new Comment() { Text = "\nPrint" };
+        private static readonly Comment teardown_comment = new Comment() { Text = "\nTeardown" };
 
         private static readonly CommandCollection startup_sequence = new CommandCollection()
         {
-            new SetBedTemperature() { Temperature = 200 },
-            new SetBedTemperatureAndWait() { MinTemperature = 200 },
+            startup_comment,
+            new SetBedTemperature() { Temperature = 50 },
+            new GetExtruderTemperature(),
+            new SetBedTemperatureAndWait() { MinTemperature = 50 },
             new SetExtruderTemperature() { Temperature = 200 },
+            new GetExtruderTemperature(),
             new SetExtruderTemperatureAndWait() { MinTemperature = 200 },
 
             new SetExtruderToAbsolute(),
             new SetUnitsToMillimeters(),
+
+            new SetPrintingAcceleration()  { AccX = 500.0m, AccY = 500.0m, AccZ = 100.0m, AccE = 5000.0m,},
+            new SetMaximumFeedrate()       { FeedX = 500.0m, FeedY = 500.0m, FeedZ = 10.0m, FeedE = 50.0m,},
+            new SetDefaultAcceleration()   { Printing = 500.0m, Retracting = 1000.0m, Travel = 500.0m },
+            new SetAdvancedSettings()      { MaxXJerk = 8.0m, MaxYJerk = 8.0m, MaxZJerk = 0.4m, MaxEJerk = 5.0m },
+            new SetSpeedFactorOverride()   { Percentage = 100.0m },
+            new SetExtrudeFactorOverride() { Percentage = 100.0m },
+
             new MoveToOrigin(),
+            new SetPosition() { Extrude = 0 },
+            new LinearMove() { MoveZ = 2.0m, Feedrate=3000},
+            new LinearMove() { MoveX = 10.1m, MoveY =  20.0m, MoveZ = 0.28m, Feedrate=5000 },
+            new LinearMove() { MoveX = 10.1m, MoveY = 200.0m, MoveZ = 0.28m, Feedrate=1500, Extrude = 15},
+            new LinearMove() { MoveX = 10.4m, MoveY = 200.0m, MoveZ = 0.28m, Feedrate=5000 },
+            new LinearMove() { MoveX = 10.4m, MoveY =  20.0m, MoveZ = 0.28m, Feedrate=1500, Extrude = 30 },
 
             new SetPosition() { Extrude = 0 },
             new LinearMove() { MoveZ = 2.0m, Feedrate=3000},
-            new LinearMove() { MoveX = 0.1m, MoveY =  20.0m, MoveZ = 0.3m, Feedrate=5000 },
-            new LinearMove() { MoveX = 0.1m, MoveY = 200.0m, MoveZ = 0.3m, Feedrate=1500, Extrude = 15},
-            new LinearMove() { MoveX = 0.4m, MoveY = 200.0m, MoveZ = 0.3m, Feedrate=5000 },
-            new LinearMove() { MoveX = 0.4m, MoveY =  20.0m, MoveZ = 0.3m, Feedrate=1500, Extrude = 30 },
 
             new SetPosition() { Extrude = 0 },
-            new LinearMove() { MoveZ = 2.0m, Feedrate=3000},
-
-            new SetPosition() { Extrude = 0 },
-            new LinearMove() { Feedrate=2400, Extrude = -5 },
+            new LinearMove() { Feedrate=2700, Extrude = -5 },
 
             new FanOff(),
             new LinearMove() { Feedrate=1500, Extrude = 0 },
@@ -58,6 +74,7 @@ namespace Slicer.slyce.GCode
 
         private static readonly CommandCollection teardown_sequence = new CommandCollection()
         {
+            teardown_comment,
             new SetBedTemperature() { Temperature = 0 },
             new FanOff(),
             new SetSpeedFactorOverride() { Percentage = 100 },
@@ -76,9 +93,12 @@ namespace Slicer.slyce.GCode
             new SetExtruderTemperature() { Temperature = 0 },
         };
 
-        public GCodeWriter()
+        public GCodeWriter(double layer_height, double nozzle_diam, double filament_diam)
         {
-            this.instructions = new CommandCollection();
+            this.instructions  = new CommandCollection();
+            this.layer_height  = layer_height;
+            this.nozzle_diam   = nozzle_diam;
+            this.filament_diam = filament_diam;
         }
 
         public void Reset()
@@ -96,9 +116,63 @@ namespace Slicer.slyce.GCode
             this.instructions.Add(cmd);
         }
 
-        public void AddSlice(Slice s, double layer_height, double nozzle_diam, double filament_diam)
+        private void MoveNozzleUp(double current_z)
         {
-            // TODO add FanOn() after first layer
+            // Move nozzle back up a little
+            this.Add(new SetPosition() { Extrude = 0 });
+            this.Add(new LinearMove()  { MoveZ = (decimal)(current_z + this.layer_height), Feedrate = 3000 });
+            this.Add(new SetPosition() { Extrude = 0 });  // Required to reset extrusion accumulator!
+            this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
+        }
+
+        private void MoveToNextStart(Point start_point, double start_z)
+        {
+            if (this.first_start)
+            {
+                first_start = false;
+
+                // Move to XYZ
+                this.Add(new RapidLinearMove()
+                {
+                    MoveX = (decimal)start_point.X,
+                    MoveY = (decimal)start_point.Y,
+                    MoveZ = (decimal)(start_z - 0.02),
+                    Feedrate = 6000
+                });
+
+                // Set feed
+                this.Add(new LinearMove()
+                {
+                    Extrude = 0,
+                    Feedrate = 2700,
+                });
+                this.Add(new LinearMove()
+                {
+                    Feedrate = 1200,
+                });
+            }
+            else
+            {
+                // Move to XYZ
+                this.Add(new RapidLinearMove()
+                {
+                    MoveX = (decimal)start_point.X,
+                    MoveY = (decimal)start_point.Y,
+                    Feedrate = 6000
+                });
+
+                // Set feed
+                this.Add(new LinearMove()
+                {
+                    Feedrate = 1200,
+                });
+            }
+        }
+
+        private void AddSlice(Slice s)
+        {
+            this.first_start = true;
+            decimal accumulated_extrusion = 0.0m;
 
             foreach (var p in s.Polygons)
             {
@@ -107,24 +181,7 @@ namespace Slicer.slyce.GCode
                     continue;
 
                 // Move to position of first point
-                var start_point = p.Lines.First.Value.StartPoint;
-
-                // Move to XY
-                this.Add(new SetPosition()
-                {
-                    MoveX = (decimal)start_point.X,
-                    MoveY = (decimal)start_point.Y,
-                    Extrude = 0
-                });
-
-                // Move down
-                this.Add(new SetPosition()
-                {
-                    MoveX = (decimal)start_point.X,
-                    MoveY = (decimal)start_point.Y,
-                    MoveZ = (decimal)s.Z,
-                    Extrude = 0
-                });
+                this.MoveToNextStart(p.Lines.First.Value.StartPoint, s.ZHeight);
 
                 // Extrude from first and follow next points
                 for (LinkedListNode<Line> it = p.Lines.First; it != null; it = it.Next)
@@ -132,23 +189,17 @@ namespace Slicer.slyce.GCode
                     var next_point = it.Value.EndPoint;
 
                     // Get extrusion for prev line segment (next_point == EndPoint of prev)
-                    double extrusion_length = (layer_height * nozzle_diam * it.Value.GetLength())
-                                                / filament_diam;
+                    accumulated_extrusion += (decimal)((this.layer_height * this.nozzle_diam * it.Value.GetLength())
+                                                        / this.filament_diam);
 
                     // Move and extrude
                     this.Add(new LinearMove()
                     {
                         MoveX = (decimal)next_point.X,
                         MoveY = (decimal)next_point.Y,
-                        Extrude = (decimal)extrusion_length
+                        Extrude = accumulated_extrusion
                     });
                 }
-
-                // Move nozzle back up a little
-                this.Add(new SetPosition() { Extrude = 0 });
-                this.Add(new LinearMove()  { MoveZ = (decimal)(s.Z + layer_height), Feedrate = 3000 });
-                this.Add(new SetPosition() { Extrude = 0 });
-                this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
             }
 
             /*
@@ -170,11 +221,34 @@ namespace Slicer.slyce.GCode
             }
             */
 
-            // Move nozzle back up a little
-            this.Add(new SetPosition() { Extrude = 0 });
-            this.Add(new LinearMove()  { MoveZ = (decimal)(s.Z + layer_height), Feedrate = 3000 });
-            this.Add(new SetPosition() { Extrude = 0 });
-            this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
+            // Move nozzle back up a little to clear current layer and reset extrusion
+            this.MoveNozzleUp(s.ZHeight);
+        }
+
+        public void AddAllSlices(List<Slice> slices)
+        {
+            string layer_fmt = "\nLAYER {0} of " + slices.Count;
+            var layer = 0;
+            var it = slices.GetEnumerator();
+
+            // Go to first
+            if (it.MoveNext())
+            {
+                // If we would support a brim, it should be added here, or within the first layer.
+
+                // Start layer 0
+                this.Add(new Comment() { Text = String.Format(layer_fmt, layer++) });
+                this.Add(new FanOn() { FanSpeed = 85 });  // Fan on low for first layer?
+                this.AddSlice(it.Current);
+                this.Add(new FanOn() { FanSpeed = 170 });
+
+                // Start next layers
+                while (it.MoveNext())
+                {
+                    this.Add(new Comment() { Text = String.Format(layer_fmt, layer++) });
+                    this.AddSlice(it.Current);
+                }
+            }
         }
 
         public void ExportToFile(Uri path, bool insert_setup = true, bool append_teardown = true)
@@ -186,24 +260,22 @@ namespace Slicer.slyce.GCode
         {
             var fout = new StreamWriter(path);
 
-            fout.WriteLine(GCodeWriter.header_comment);
+            fout.WriteLine(GCodeWriter.header_comment.ToString());
             
             if (insert_setup)
             {
-                fout.WriteLine(GCodeWriter.startup_comment);
                 GCodeWriter.startup_sequence.ForEach(x => {
                     fout.WriteLine(x.ToString());
                 });
             }
 
-            fout.WriteLine(GCodeWriter.print_comment);
+            fout.WriteLine(GCodeWriter.print_comment.ToString());
             this.instructions.ForEach(x => {
                 fout.WriteLine(x.ToString());
             });
 
             if (append_teardown)
             {
-                fout.WriteLine(GCodeWriter.teardown_comment);
                 GCodeWriter.teardown_sequence.ForEach(x => {
                     fout.WriteLine(x.ToString());
                 });

@@ -78,6 +78,7 @@ namespace Slicer.slyce
                 {
                     this.Slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                            data.NozzleThickness);
+                    this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
                     // this.Slice.Erode(data.NozzleThickness / 2.0);
 
                     var min = Math.Min(bounds.X, bounds.Y);

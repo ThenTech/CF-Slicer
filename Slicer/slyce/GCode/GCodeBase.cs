@@ -14,7 +14,7 @@ namespace Slicer.slyce.GCode
 
     public enum ParameterType
     {
-        T, S, P, X, Y, Z, I, J, D, H, F, R, Q, E
+        T, S, P, X, Y, Z, I, J, D, H, F, R, Q, E, B
     }
 
     [AttributeUsage(AttributeTargets.Class)]
@@ -74,12 +74,32 @@ namespace Slicer.slyce.GCode
                     }
                     else if (val != null)
                     {
-                        sb.Append(" " + key);
                         if (prop.PropertyType.IsEnum)
                         {
-                            sb.Append((int)val);
-                        } else
+                            if ((int)val > 0)
+                            {
+                                sb.Append(" " + key);
+                                sb.Append((int)val);
+                            }
+                        }
+                        else
                         {
+                            sb.Append(" " + key);
+                            // Special case for movement: round values
+                            if (cmdattrib.CommandType == CommandType.G 
+                                && (cmdattrib.CommandSubType == 0 || cmdattrib.CommandSubType == 1))
+                            {
+                                switch (key)
+                                {
+                                    case ParameterType.X: case ParameterType.Y: case ParameterType.Z:
+                                        val = Math.Round((decimal)val, 3);
+                                        break;
+                                    case ParameterType.E:
+                                        val = Math.Round((decimal)val, 5);
+                                        break;
+                                }
+                            }
+
                             sb.Append(val);
                         }
                     }

@@ -8,8 +8,15 @@ namespace Slicer.slyce.Constructs._2D
 {
     public class Polygon2D
     {
+        // The connected (!) line segments that creates this polygon.
         public LinkedList<Line> Lines { get; set; }
+
+        // Was merged with another poly
         public bool WasTakenAway { get; set; } = false;
+
+        // Indicates that this is an outer surface, and should be completely filled in
+        // with lines very close together (=> create a "solid" surface)
+        public bool IsSurface { get; set; } = false;
 
         public Polygon2D()
         {

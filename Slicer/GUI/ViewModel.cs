@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Controls;
+using System.Windows;
 
 namespace Slicer.GUI
 {
     public class ViewModel : INotifyPropertyChanged
     {
-        public SliceVisualizer sliceVisualizer { get; set; }
         Brush _Brush;
         public Brush Brush
         {
@@ -133,6 +131,17 @@ namespace Slicer.GUI
             }
         }
 
+        double _NozzleDiameter = 0.4;
+        public double NozzleDiameter
+        {
+            get { return _NozzleDiameter; }
+            set
+            {
+                _NozzleDiameter = value;
+                OnPropertyChanged("NozzleDiameter");
+            }
+        }
+
         string _ModelTitle;
         public string ModelTitle
         {
@@ -173,16 +182,6 @@ namespace Slicer.GUI
             {
                 _HasModel = value;
                 OnPropertyChanged("HasModel");
-            }
-        }
-
-        private Model3D _CurrentSlice;
-        public Model3D CurrentSlice
-        {
-            get { return _CurrentSlice; }
-            set {
-                _CurrentSlice = value;
-                OnPropertyChanged("CurrentSlice");
             }
         }
 
@@ -229,6 +228,54 @@ namespace Slicer.GUI
                 OnPropertyChanged("Slicer");
             }
         }
+
+        private List<System.Windows.Shapes.Shape> _SliceShapes = null;
+        public List<System.Windows.Shapes.Shape> SliceShapes
+        {
+            get { return _SliceShapes; }
+            set
+            {
+                _SliceShapes = value;
+                OnPropertyChanged("SliceShapes");
+            }
+        }
+
+        private Canvas _SliceCanvas = null;
+        public Canvas SliceCanvas
+        {
+            get { return _SliceCanvas; }
+            set
+            {
+                _SliceCanvas = value;
+                OnPropertyChanged("SliceCanvas");
+            }
+        }
+
+        private bool _SlicingInProgress = false;
+        public bool SlicingInProgress {
+            get { return _SlicingInProgress; }
+            set
+            {
+                _SlicingInProgress = value;
+                OnPropertyChanged("SlicingInProgress");
+                OnPropertyChanged("SlicingProgressVisible");
+            }
+        }
+
+        public Visibility SlicingProgressVisible {
+            get => SlicingInProgress ? Visibility.Visible : Visibility.Hidden;
+        }
+
+        private int _SlicingProgressValue = 0;
+        public int SlicingProgressValue {
+            get { return _SlicingProgressValue; }
+            set
+            {
+                _SlicingProgressValue = value;
+                OnPropertyChanged("SlicingProgressValue");
+            }
+        }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -305,19 +352,14 @@ namespace Slicer.GUI
             else if (HasModel
                 && (propertyName == "CurrentSliceIdx" || propertyName == "NozzleThickness"))
             {
+
                 // Set amount of slice layers
                 var height = CurrentModel.Bounds.SizeZ;
-                MaxSliceIdx = (int)Math.Ceiling(height / NozzleThickness);
+                MaxSliceIdx = (int)Math.Floor(height / NozzleThickness);
 
                 if (Slicer != null)
                 {
                     Slicer.UpdateSlice();
-                    sliceVisualizer.Update(this.Slicer.Slice, 1);
-                    // Transform back to Z = 0 position in view
-                    CurrentSlice.Transform = new TranslateTransform3D()
-                    {
-                        OffsetZ = -CurrentSliceIdx * NozzleThickness
-                    };
                 }
             }
         }

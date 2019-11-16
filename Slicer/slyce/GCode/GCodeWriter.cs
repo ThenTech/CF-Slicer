@@ -99,47 +99,56 @@ namespace Slicer.slyce.GCode
         public void AddSlice(Slice s, double layer_height, double nozzle_diam, double filament_diam)
         {
             // TODO add FanOn() after first layer
-            // TODO set s.Z position as current layer Z position
 
-            // foreach (var p in s.Polygons)
+            foreach (var p in s.Polygons)
             {
-                int count = s.Lines.Count();
+                // Skip if only one line in poly?
+                if (p.Lines.First.Next == null)
+                    continue;
 
-                if (count > 1)
+                // Move to position of first point
+                var start_point = p.Lines.First.Value.StartPoint;
+
+                // Move to XY
+                this.Add(new SetPosition()
                 {
-                    var current_point = s.Lines[0].StartPoint;
+                    MoveX = (decimal)start_point.X,
+                    MoveY = (decimal)start_point.Y,
+                    Extrude = 0
+                });
 
-                    var move_start = new SetPosition()
+                // Move down
+                this.Add(new SetPosition()
+                {
+                    MoveX = (decimal)start_point.X,
+                    MoveY = (decimal)start_point.Y,
+                    MoveZ = (decimal)s.Z,
+                    Extrude = 0
+                });
+
+                // Extrude from first and follow next points
+                for (LinkedListNode<Line> it = p.Lines.First; it != null; it = it.Next)
+                {
+                    var next_point = it.Value.EndPoint;
+
+                    // Get extrusion for prev line segment (next_point == EndPoint of prev)
+                    double extrusion_length = (layer_height * nozzle_diam * it.Value.GetLength())
+                                                / filament_diam;
+
+                    // Move and extrude
+                    this.Add(new LinearMove()
                     {
-                        MoveX = (decimal)current_point.X,
-                        MoveY = (decimal)current_point.Y,
-                        MoveZ = (decimal)s.Z,
-                        Extrude = 0
-                    };
-
-                    this.Add(move_start);
-
-                    for (int i = 1; i < count; i++)
-                    {
-                        var next_point = s.Lines[i].StartPoint;
-
-                        double extrusion_length = (layer_height * nozzle_diam * s.Lines[i - 1].GetLength()) / filament_diam;
-
-                        var move_next = new LinearMove()
-                        {
-                            MoveX = (decimal)next_point.X,
-                            MoveY = (decimal)next_point.Y,
-                            Extrude = (decimal)extrusion_length
-                        };
-                        this.Add(move_next);
-                    }
-
-                    // Move nozzle back up a little
-                    this.Add(new SetPosition() { Extrude = 0 });
-                    this.Add(new LinearMove()  { MoveZ = (decimal)(s.Z + layer_height), Feedrate = 3000 });
-                    this.Add(new SetPosition() { Extrude = 0 });
-                    this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
+                        MoveX = (decimal)next_point.X,
+                        MoveY = (decimal)next_point.Y,
+                        Extrude = (decimal)extrusion_length
+                    });
                 }
+
+                // Move nozzle back up a little
+                this.Add(new SetPosition() { Extrude = 0 });
+                this.Add(new LinearMove()  { MoveZ = (decimal)(s.Z + layer_height), Feedrate = 3000 });
+                this.Add(new SetPosition() { Extrude = 0 });
+                this.Add(new LinearMove()  { Feedrate = 2400, Extrude = -5 });
             }
 
             /*

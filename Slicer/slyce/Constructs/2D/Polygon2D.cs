@@ -44,46 +44,70 @@ namespace Slicer.slyce.Constructs._2D
 
         public Connection CanConnect(Line line)
         {
-            if (First().CanConnect(line))
+            if (this.Lines.Count > 1)
             {
+                if (First().CanConnect(line))
+                {
+                    if (First().StartPoint.Equals(line.StartPoint))
+                    {
+                        return Connection.FIRSTREVERSED;
+                    }
+                    return Connection.FIRST;
+                }
+                else if (Last().CanConnect(line))
+                {
+                    if (Last().EndPoint.Equals(line.EndPoint))
+                    {
+                        return Connection.LASTREVERSED;
+                    }
+                    return Connection.LAST;
+                }
+            }
+            else
+            {
+                // Only one Line in poly, so First and Last are the same
                 if (First().StartPoint.Equals(line.StartPoint))
                 {
                     return Connection.FIRSTREVERSED;
                 }
-                return Connection.FIRST;
-            }
-            else if (Last().CanConnect(line))
-            {
-                if (Last().EndPoint.Equals(line.EndPoint))
+                else if (First().StartPoint.Equals(line.EndPoint))
+                {
+                    return Connection.FIRST;
+                }
+                else if (First().EndPoint.Equals(line.EndPoint))
                 {
                     return Connection.LASTREVERSED;
                 }
-                return Connection.LAST;
+                else if (First().EndPoint.Equals(line.StartPoint))
+                {
+                    return Connection.LAST;
+                }
             }
-            
-            
+
             return Connection.NOT;
         }
 
         public Connection CanConnect(Polygon2D other)
         {
-            if(First().CanConnect(other.Last()))
+            Connection can = Connection.NOT;
+
+            if (other.Lines.Count > 1)
             {
-                return Connection.FIRST;
+                if ((can = this.CanConnect(other.Last())) != Connection.NOT)
+                {
+                    return can;
+                }
+                else if ((can = this.CanConnect(other.First())) != Connection.NOT)
+                {
+                    return can;
+                }
             }
-            else if(First().CanConnect(other.First()))
+            else
             {
-                return Connection.FIRSTREVERSED;
+                return this.CanConnect(other.First());
             }
-            else if(Last().CanConnect(other.Last()))
-            {
-                return Connection.LASTREVERSED;
-            }
-            else if(Last().CanConnect(other.First()))
-            {
-                return Connection.LAST;
-            }
-            return Connection.NOT;
+
+            return can;
         }
 
         public void Swap()
@@ -99,17 +123,18 @@ namespace Slicer.slyce.Constructs._2D
 
         public bool IsComplete()
         {
-            return First().StartPoint.Equals(Last().EndPoint) 
-                || First().StartPoint.Equals(Last().Reversed().EndPoint);
+            return this.Lines.Count > 2
+                && (First().StartPoint.Equals(Last().EndPoint) 
+                 || First().StartPoint.Equals(Last().StartPoint));
         }
 
         public bool AddPolygon(Polygon2D poly, Connection connection)
         {
-            if(connection != Connection.NOT)
+            if (connection != Connection.NOT)
             {
-                if(connection == Connection.FIRST || connection == Connection.FIRSTREVERSED)
+                if (connection == Connection.FIRST || connection == Connection.FIRSTREVERSED)
                 {
-                    if(connection == Connection.FIRSTREVERSED)
+                    if (connection == Connection.FIRSTREVERSED)
                     {
                         poly.Swap();
                     }
@@ -118,13 +143,13 @@ namespace Slicer.slyce.Constructs._2D
                         Lines.AddFirst(l);
                     }
                 }
-                else if(connection == Connection.LAST || connection == Connection.LASTREVERSED)
+                else if (connection == Connection.LAST || connection == Connection.LASTREVERSED)
                 {
                     if (connection == Connection.LASTREVERSED)
                     {
-                        this.Swap();
+                        poly.Swap();
                     }
-                    foreach (var l in poly.Lines.Reverse())
+                    foreach (var l in poly.Lines)
                     {
                         Lines.AddLast(l);
                     }
@@ -136,26 +161,24 @@ namespace Slicer.slyce.Constructs._2D
 
         public void AddLine(Line line, Connection connection)
         {
-            if(connection != Connection.NOT)
+            switch (connection)
             {
-                if(connection == Connection.FIRST)
-                {
+                case Connection.NOT:
+                    break;
+                case Connection.FIRST:
                     Lines.AddFirst(line);
-                }
-                else if(connection == Connection.LAST)
-                {
+                    break;
+                case Connection.LAST:
                     Lines.AddLast(line);
-                }
-                else if(connection == Connection.FIRSTREVERSED)
-                {
+                    break;
+                case Connection.FIRSTREVERSED:
                     line.Swap();
                     Lines.AddFirst(line);
-                }
-                else if(connection == Connection.LASTREVERSED)
-                {
+                    break;
+                case Connection.LASTREVERSED:
                     line.Swap();
                     Lines.AddLast(line);
-                }
+                    break;
             }
         }
 

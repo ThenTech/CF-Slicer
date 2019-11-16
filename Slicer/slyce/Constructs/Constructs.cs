@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using ClipperLib;
@@ -33,7 +31,6 @@ namespace Slicer.slyce
 
     public class Construct
     {
-        //public PolyNode[] Polygons { get; private set; }
         public Polygon[] Polygons { get; private set; }
 
         public Construct()
@@ -48,6 +45,11 @@ namespace Slicer.slyce
                 Polygons = polygons
             };
             return obj;
+        }
+
+        public static Slice Create(List<Polygon2D> polygons, double z)
+        {
+            return new Slice(polygons, z);
         }
 
         public static Construct Create(MeshGeometry3D source)
@@ -137,121 +139,40 @@ namespace Slicer.slyce
             return Construct.Create(a.AllPolygons());
         }
 
-        public Slice Slice(double slice_z_height, double perSlice, double minX, double maxX, double minY, double maxY)
+        public Slice Slice(double slice_z_height, double perSlice)
         {
-            double Zi = slice_z_height;
-            var lines = new List<Line>();
-            var triangles = new List<Triangle>();
             var polies = new List<Polygon2D>();
-            //Line lastLine = null;
 
             foreach (var p in Polygons)
             {
-                var minV = p.Vertices.Min(v => v.Pos.Z);
-                var maxV = p.Vertices.Max(v => v.Pos.Z);
+                var line = p.CutAtZ(slice_z_height);
 
-                if (minV <= Zi && maxV >= Zi)
+                if (line != null)
                 {
-                    List<Vertex> list1 = null;
-                    List<Vertex> list2 = null;
-
-                    //Find all points above
-                    var above = p.Vertices.Where(v => v.Pos.Z > Zi).ToList();
-                    var below = p.Vertices.Where(v => v.Pos.Z <= Zi).ToList();
-
-                    if (above.Count == 1 || below.Count == 1)
+                    // Got slice line
+                    if (polies.Count > 0)
                     {
-                        if (above.Count == 1)
+                        // Try to add it to a Polygon already
+                        Polygon2D connectionPolygon = null;
+                        foreach (var po in polies)
                         {
-                            list1 = above;
-                            list2 = below;
-                        }
-                        else
-                        {
-                            list2 = above;
-                            list1 = below;
-                        }
-
-                        Point p1 = null;
-                        Point p2 = null;
-
-                        foreach (var v in list2)
-                        {
-                            var x = Math.Round(v.Pos.X + (Zi - v.Pos.Z) * (list1.First().Pos.X - v.Pos.X) / (list1.First().Pos.Z - v.Pos.Z), 3);
-                            var y = Math.Round(v.Pos.Y + (Zi - v.Pos.Z) * (list1.First().Pos.Y - v.Pos.Y) / (list1.First().Pos.Z - v.Pos.Z), 3);
-
-                            if (p1 == null)
+                            var connectType = po.CanConnect(line);
+                            if (connectType != Connection.NOT)
                             {
-                                p1 = new Point(x, y);
-                            }
-                            else
-                            {
-                                p2 = new Point(x, y);
-                            }
-                        }
-                        if(!p1.Equals(p2))
-                        {
-                            var line = new Line(p1, p2);
-                            lines.Add(line);
-                            if (polies.Count > 0)
-                            {
-                                var connectionPolygon = polies.FirstOrDefault(po => po.CanConnect(line) != Connection.NOT);
-                                if (connectionPolygon != null)
-                                {
-                                    var connectType = connectionPolygon.CanConnect(line);
-                                    connectionPolygon.AddLine(line, connectType);
-                                }
-                                else
-                                {
-                                    Polygon2D poly = new Polygon2D(line);
-                                    polies.Add(poly);
-                                }
-                            }
-                            else
-                            {
-                                Polygon2D poly = new Polygon2D(line);
-                                polies.Add(poly);
+                                connectionPolygon = po;
+                                connectionPolygon.AddLine(line, connectType);
+                                break;
                             }
                         }
 
-
-                        // Slice has list of Polies
-                        // > Look through the existing polies and check if any has the same start- or endpoint
-                        //      if found: add line to poly
-                        //      if not: Add a new Polygon to the list with the found line
-                        // 
-                        // Eventually sort created polies with their distance to the middle, so we can print the middle one first
-                        
-                        
-
-                        //if (!p1.Equals(p2) && (lastLine == null || !lastLine.Equals(line)))
-                        //{
-
-                        //    if (lastLine == null || lastLine.Connects(line))
-                        //    {
-                        //        lines.Add(line);
-                        //    }
-                        //    else if (lastLine.ReverseConnects(line))
-                        //    {
-                        //        line.Swap();
-                        //        lines.Add(line);
-                        //    }
-                        //    else if (lastLine.StartPoint.Equals(line.StartPoint))
-                        //    {
-                        //        lines.Last().Swap();
-                        //        lines.Add(line);
-                        //    }
-                        //    else
-                        //    {
-                        //        lines.Add(line);
-                        //    }
-
-                        //    lastLine = line;
-                        //}
+                        if (connectionPolygon == null)
+                        {
+                            polies.Add(new Polygon2D(line));
+                        }
                     }
-                    else if (below.Count == 3 || above.Count == 3)
+                    else
                     {
-                        triangles.Add(new Triangle(p.Vertices[0].Pos.X, p.Vertices[0].Pos.Y, p.Vertices[1].Pos.X, p.Vertices[1].Pos.Y, p.Vertices[2].Pos.X, p.Vertices[2].Pos.Y));
+                        polies.Add(new Polygon2D(line));
                     }
                 }
             }
@@ -270,8 +191,10 @@ namespace Slicer.slyce
                     {
                         connectionFound = false;
 
-                        if (!p.IsComplete() && !p.WasTakenAway)
+                        if (!p.IsComplete())
                         {
+                            // Find another poly that can connect to this one,
+                            // until it is closed.
                             for (int j = 0; j < polies.Count; j++)
                             {
                                 var p2 = polies[j];
@@ -283,35 +206,34 @@ namespace Slicer.slyce
                                     {
                                         p2.WasTakenAway = true;
                                         connectionFound = connected;
+                                        break;
                                     }
                                 }
-                                
-
                             }
                         }
-                        
                     } while (connectionFound);
 
+                    // IsComplete => take away
+                    p.WasTakenAway = true;
                     completePolygons.Add(p);
                 }
                 else if(!p.WasTakenAway)
                 {
+                    // IsComplete => take away
+                    p.WasTakenAway = true;
                     completePolygons.Add(p);
                 }
             }
 
-            return new Slice(completePolygons, minX, minY, maxX, maxY);
+            // TODO? Sort created polies with their distance to the middle, so we can print the middle one first?
 
-            //List<Polygon> polies3d = new List<Polygon>();
-            //completePolygons.ForEach(p => polies3d.Add(p.ToPolygon3D()));
-
-            //return Construct.Create(polies3d.ToArray());
+            return new Slice(completePolygons, slice_z_height);
         }
 
         public Construct Intersect(Construct other)
         {
-            var a = new Node(Polygons);
-            var b = new Node(other.Polygons);
+            var a = new Node(Clone().Polygons);
+            var b = new Node(other.Clone().Polygons);
             a.Invert();
             b.ClipTo(a);
             b.Invert();

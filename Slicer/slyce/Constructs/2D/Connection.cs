@@ -8,6 +8,6 @@ namespace Slicer.slyce.Constructs._2D
 {
     public enum Connection
     {
-        FIRST, LAST, NOT, FIRSTREVERSED, LASTREVERSED
+        NOT, FIRST, LAST, FIRSTREVERSED, LASTREVERSED
     }
 }

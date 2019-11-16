@@ -11,6 +11,8 @@ using Slicer.slyce.Constructs._2D;
 using ClipperLib;
 using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
 using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Slicer.slyce
 {
@@ -20,23 +22,88 @@ namespace Slicer.slyce
 
         public MeshGeometry3D  Original   { get; private set; }
         public GeometryModel3D SlicePlane { get; private set; }
-        public GeometryModel3D Sliced     { get; private set; }
         public Slice Slice { get; set; }
-        public Color SliceColour { get; set; }
+        public List<Slice> SliceStore { get; set; }
 
         public SliceModel(ViewModel data)
         {
             this.data = data;
             this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
-            this.SliceColour = Colors.Red;
+            this.SliceStore = new List<Slice>();
         }
 
-        public GeometryModel3D UpdateSlice()
+        public void UpdateSlice()
         {
             this.BuildSliceBox();
-            this.BuildSlice();
-            //this.ErodeSlice();
-            return this.Sliced;
+
+            if (this.data.CurrentSliceIdx <= this.SliceStore.Count && this.SliceStore.Count == this.data.MaxSliceIdx+1)
+            {
+                this.Slice = this.SliceStore[this.data.CurrentSliceIdx];
+                this.data.SliceShapes = this.Slice.Shapes;
+                this.data.SliceCanvas.Children.Clear();
+                this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
+                Console.WriteLine("Retreived slice " + this.data.CurrentSliceIdx + " from cache.");
+            }
+            else
+            {
+                this.BuildSlice();
+                //this.ErodeSlice();
+
+                Console.WriteLine("Created new slice for " + this.data.CurrentSliceIdx + ".");
+            }
+        }
+
+        public async void BuildAllSlices()
+        {
+            // Main task is run on another thread, 
+            // so that the UI thread does not block and we can update progress bar
+            // and display current built slice.
+
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                this.data.SlicingProgressValue = 0;
+                this.data.SlicingInProgress = true;
+            });
+
+            this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
+            var bounds = Original.Bounds;
+
+            this.SliceStore = new List<Slice>(this.data.MaxSliceIdx);
+
+            Construct obj = Construct.Create(this.Original);
+
+            await Task.Run(() =>
+            {
+                for (int i = 0; i < this.data.MaxSliceIdx + 1; i++)
+                {
+                    this.Slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
+                                           data.NozzleThickness);
+                    // this.Slice.Erode(data.NozzleThickness / 2.0);
+
+                    var min = Math.Min(bounds.X, bounds.Y);
+                    var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
+                    var size = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
+                    var scale = size / (max - min);
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale);
+
+                        this.data.SliceCanvas.Children.Clear();
+                        this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
+
+                        this.SliceStore.Add(this.Slice);
+
+                        this.data.SlicingProgressValue = i;
+                    });
+                }
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.data.CurrentSliceIdx = 0;
+                    this.data.SlicingInProgress = false;
+                });
+            });
         }
 
         public static MeshGeometry3D GeometrizeModel(Model3D source)
@@ -57,6 +124,7 @@ namespace Slicer.slyce
 
             return mesh;
         }
+ 
 
         private void BuildSliceBox()
         {
@@ -92,33 +160,27 @@ namespace Slicer.slyce
         {
             this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
             var bounds = Original.Bounds;
-            var minX = bounds.X;
-            var maxX = bounds.X + bounds.Size.X;
-            var minY = bounds.Y;
-            var maxY = bounds.Y + bounds.Size.Y;
 
             Construct obj = Construct.Create(this.Original);
-            Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
+            //Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
+            //Construct sli = obj.Intersect(box);
 
-            this.Slice = obj.Slice(bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness, minX, maxX, minY, maxY);
-            //Construct slice = obj.Slice(bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, data.NozzleThickness, minX, maxX, minY, maxY);
+            this.Slice = obj.Slice(bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, 
+                                   data.NozzleThickness);
 
-            // tmp
-            var slice = obj;
+            var min = Math.Min(bounds.X, bounds.Y);
+            var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
+            var size = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
+            var scale = size / (max - min);
 
-            var cutMaterial = MaterialHelper.CreateMaterial(this.SliceColour);
-            this.Sliced = new GeometryModel3D(slice.ToMesh(), cutMaterial);
+            this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale);
 
-            this.data.CurrentSlice = this.Sliced;
+            this.data.SliceCanvas.Children.Clear();
+            this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
         }
 
         private void ErodeSlice()
         {
-            for (int i = 0; i < Slice.Lines.Count; i++)
-            {
-                var l = Slice.Lines[i];
-            }
-
             Paths paths = new Paths();
             Path path = new Path();
 
@@ -131,9 +193,6 @@ namespace Slicer.slyce
             paths.Add(path);
 
             Paths result = ClipperLib.Clipper.OffsetPolygons(paths, -1000);
-            //Slice.Lines = new List<Line>();
-            //Slice.TrianglesInSlice = new List<Constructs._2D.Triangle>();
-            SliceVisualizer visualizer = new SliceVisualizer();
             List<Line> polygonLines = new List<Line>();
             Line lastLine = null;
 
@@ -161,8 +220,6 @@ namespace Slicer.slyce
                 polygonLines.Add(new Line(polygonLines.Last().EndPoint, polygonLines.First().StartPoint));
                 //Slice.Lines.AddRange(polygonLines);
             }
-            
-            //visualizer.Show();
         }
     }
 }

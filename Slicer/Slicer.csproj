@@ -7,7 +7,7 @@
     <ProjectGuid>{4897B4C4-A7A3-4A42-AF50-A4E6CC981055}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>Slicer</RootNamespace>
-    <AssemblyName>Slycer</AssemblyName>
+    <AssemblyName>Pancakes</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -40,7 +40,7 @@
     <StartupObject>Slicer.App</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\slycer.ico</ApplicationIcon>
+    <ApplicationIcon>pancakes.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="clipper_library, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -51,6 +51,9 @@
     </Reference>
     <Reference Include="HelixToolkit.Wpf, Version=2.9.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
       <HintPath>packages\HelixToolkit.Wpf.2.9.0\lib\net45\HelixToolkit.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="PanAndZoom, Version=2.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\PanAndZoom.2.2.1\lib\net461\PanAndZoom.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -66,15 +69,18 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Wpf.Controls.PanAndZoom, Version=2.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Wpf.Controls.PanAndZoom.2.2.1\lib\net461\Wpf.Controls.PanAndZoom.dll</HintPath>
+    </Reference>
+    <Reference Include="Wpf.MatrixExtensions, Version=2.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Wpf.MatrixExtensions.2.2.1\lib\net461\Wpf.MatrixExtensions.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="SliceVisualizer.xaml.cs">
-      <DependentUpon>SliceVisualizer.xaml</DependentUpon>
-    </Compile>
     <Compile Include="slyce\Constructs\2D\Connection.cs" />
     <Compile Include="slyce\Constructs\2D\Polygon2D.cs" />
     <Compile Include="slyce\Constructs\2D\Line.cs" />
@@ -125,10 +131,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="SliceVisualizer.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -160,6 +162,8 @@
   <ItemGroup>
     <Resource Include="Resources\slycer.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="pancakes.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -36,7 +36,7 @@ namespace Slicer.slyce.Constructs._2D
 
         public override string ToString()
         {
-            return "(" + StartPoint + ")" + "-" + "(" + EndPoint + ")";
+            return StartPoint + " -> " + EndPoint;
         }
 
         public void Swap()
@@ -87,7 +87,10 @@ namespace Slicer.slyce.Constructs._2D
 
         public bool CanConnect(Line line)
         {
-            return this.StartPoint.Equals(line.StartPoint) || this.StartPoint.Equals(line.EndPoint) || this.EndPoint.Equals(line.StartPoint) || this.EndPoint.Equals(line.EndPoint);
+            return this.StartPoint.Equals(line.StartPoint) 
+                || this.StartPoint.Equals(line.EndPoint) 
+                || this.EndPoint.Equals(line.StartPoint) 
+                || this.EndPoint.Equals(line.EndPoint);
         }
 
         public override int GetHashCode()

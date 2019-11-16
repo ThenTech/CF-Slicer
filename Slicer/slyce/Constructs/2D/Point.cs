@@ -8,7 +8,8 @@ namespace Slicer.slyce.Constructs._2D
 {
     public class Point
     {
-        public const double EPSILON = 1e-4;
+        // Point equality tolerance
+        public static readonly double EPSILON = 1e-4;
 
         public double X { get; set; }
         public double Y { get; set; }
@@ -21,7 +22,7 @@ namespace Slicer.slyce.Constructs._2D
 
         public override string ToString()
         {
-            return X + "," + Y;
+            return "(" + X + ", " + Y + ")";
         }
 
         public bool Equals(Point p2)

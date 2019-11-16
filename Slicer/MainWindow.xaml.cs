@@ -33,34 +33,17 @@ namespace Slicer
     {
         private readonly ViewModel _viewModel = new ViewModel();
 
-        private readonly ClonedVisual3D surface2;
-        private bool _isInvalidated = true;
-        private bool _isUpdating;
-        private object updateLock = "abc";
-        private UIElement currentView;
-        private Viewport3D v1;
-        private Viewport3D v2;
-        private SliceVisualizer sliceVisualizer;
-
         public MainWindow()
         {
             InitializeComponent();
 
             // Change Culture, so numeric values use a dot instead of comma in a string...
             Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
-
-            CompositionTarget.Rendering += this.OnCompositionTargetRendering;
+            
             DataContext = _viewModel;
-
-            _viewModel.PropertyChanged += ModelChanged;
-
-            surface2 = new ClonedVisual3D();
-
+            
             _viewModel.Brush = Brushes.Yellow;
-
-            v1 = viewport.Viewport;
-            currentView = viewport;
-            v2 = viewport_slice.Viewport;
+            _viewModel.SliceCanvas = canvas_slice;
 
             Loaded += MainWindow_Loaded;
         }
@@ -70,28 +53,8 @@ namespace Slicer
 
         }
 
-        private void OnCompositionTargetRendering(object sender, EventArgs e)
-        {
-            if (_isInvalidated)
-            {
-                // sync:
-                // _isInvalidated = false;
-                // UpdateModel(source1.Text);
-
-                // async:
-                BeginUpdateModel();
-            }
-        }
-
-        private void ModelChanged(object sender, PropertyChangedEventArgs e)
-        {
-            Invalidate();
-        }
-
         private void Load(string p)
         {
-            Invalidate();
-
             ModelImporter import = new ModelImporter
             {
                 DefaultMaterial = new DiffuseMaterial(_viewModel.Brush)
@@ -108,45 +71,24 @@ namespace Slicer
             }
 
             _viewModel.CurrentModel = mod;
-            _viewModel.CurrentSlice = null;
             _viewModel.ModelTitle = Path.GetFileNameWithoutExtension(p);
             _viewModel.ModelFolder = Path.GetDirectoryName(p);
 
             _viewModel.Slicer = null;
             _viewModel.CurrentSlicePlane = null;
             _viewModel.CurrentSliceIdx = 0;
+            _viewModel.SliceCanvas.Children.Clear();
+            _viewModel.SlicingInProgress = false;
 
             // Update translation (set any property to update)
             _viewModel.ScaleX = 1.0;
             
-            viewport.CameraController.ResetCamera();
-        }
-
-        private void Invalidate()
-        {
-            lock (updateLock)
-            {
-                _isInvalidated = true;
-            }
+            this.ResetCamera_Click(null, null);
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            this.sliceVisualizer.Close();
             Close();
-        }
-
-        private void BeginUpdateModel()
-        {
-            lock (updateLock)
-            {
-                if (!_isUpdating)
-                {
-                    _isInvalidated = false;
-                    _isUpdating = true;
-                    //Dispatcher.Invoke(new Action<string>(UpdateModel), src);
-                }
-            }
         }
 
         private void ViewSettings_Click(object sender, RoutedEventArgs e)
@@ -157,20 +99,12 @@ namespace Slicer
                 panelSettings.Visibility = Visibility.Visible;
                 Grid.SetColumn(viewport, 1);
                 Grid.SetColumnSpan(viewport, 1);
-                Grid.SetColumn(viewport_slice, 1);
-                Grid.SetColumnSpan(viewport_slice, 1);
-                Grid.SetColumn(viewportsplitter, 1);
-                Grid.SetColumnSpan(viewportsplitter, 1);
             }
             else
             {
                 panelSettings.Visibility = Visibility.Collapsed;
                 Grid.SetColumn(viewport, 0);
                 Grid.SetColumnSpan(viewport, 2);
-                Grid.SetColumn(viewport_slice, 0);
-                Grid.SetColumnSpan(viewport_slice, 2);
-                Grid.SetColumn(viewportsplitter, 0);
-                Grid.SetColumnSpan(viewportsplitter, 2);
             }
         }
 
@@ -179,7 +113,7 @@ namespace Slicer
             WindowState = WindowState.Normal;
             WindowStyle = Fullscreen.IsChecked ? WindowStyle.None : WindowStyle.ThreeDBorderWindow;
             WindowState = Fullscreen.IsChecked ? WindowState.Maximized : WindowState.Normal;
-            ResizeMode = Fullscreen.IsChecked ? ResizeMode.NoResize : ResizeMode.CanResize;
+            ResizeMode  = Fullscreen.IsChecked ? ResizeMode.NoResize : ResizeMode.CanResize;
 
             // mainMenu.Visibility = Fullscreen.IsChecked ? Visibility.Collapsed : Visibility.Visible;
         }
@@ -221,6 +155,12 @@ namespace Slicer
             if (d.ShowDialog().Value)
             {
                 slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter();
+
+                gcw.AddSlice(_viewModel.Slicer.Slice, 
+                            _viewModel.NozzleThickness,
+                            _viewModel.NozzleDiameter,
+                            _viewModel.NozzleDiameter);
+
                 gcw.ExportToFile(d.FileName);
             }
         }
@@ -228,7 +168,8 @@ namespace Slicer
         private void ResetCamera_Click(object sender, RoutedEventArgs e)
         {
             viewport.CameraController.ResetCamera();
-            viewport_slice.CameraController.ResetCamera();
+            zoomBorder.Reset();
+            zoomBorder.Fill();
         }
 
         private void Open_Click(object sender, RoutedEventArgs e)
@@ -250,6 +191,24 @@ namespace Slicer
             }
         }
 
+        private void SliceDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel.Slicer != null)
+            {
+                var newidx = _viewModel.CurrentSliceIdx - 1;
+                _viewModel.CurrentSliceIdx = (newidx < 0) ? 0 : newidx;
+            }
+        }
+
+        private void SliceUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel.Slicer != null)
+            {
+                var newidx = _viewModel.CurrentSliceIdx + 1;
+                _viewModel.CurrentSliceIdx = (newidx > _viewModel.MaxSliceIdx) ? _viewModel.MaxSliceIdx : newidx;
+            }
+        }
+
         private void Slice_Click(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("Start slicing...");
@@ -259,24 +218,78 @@ namespace Slicer
 
             // Attempt cutting slice
             _viewModel.Slicer = new slyce.SliceModel(_viewModel);
-            _viewModel.Slicer.UpdateSlice();
-
-            if(sliceVisualizer == null)
-            {
-                sliceVisualizer = new SliceVisualizer(_viewModel.Slicer.Slice, 1);
-                sliceVisualizer.Show();
-                sliceVisualizer.Init();
-                _viewModel.sliceVisualizer = sliceVisualizer;
-            }
-            else
-            {
-                sliceVisualizer.RecalculateMinMax(_viewModel.Slicer.Slice);
-                sliceVisualizer.Update(_viewModel.Slicer.Slice, 1);
-            }
-            //var slicegroup = new Model3DGroup();
-            ////slicegroup.Children.Add(_viewModel.Slicer.SlicePlane);
-            //slicegroup.Children.Add(_viewModel.Slicer.Sliced);
-            //_viewModel.CurrentSlice = slicegroup;
+            //_viewModel.Slicer.UpdateSlice();
+            _viewModel.Slicer.BuildAllSlices();
         }
+
+
+
+        //private Point _mCurrentStart;
+        //private Point _mPrevEnd;
+        //private bool _isDragged;
+        //private const double _scaleRate = 1.1;
+
+        //protected void Canvas_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        //{
+        //    base.OnMouseLeftButtonDown(e);
+        //    CaptureMouse();
+
+        //    if (e.OriginalSource is Border)
+        //    {
+        //        // Is Canvas?
+        //        this._mCurrentStart = e.GetPosition(this);
+        //        this._isDragged = true;
+        //    }
+        //}
+
+        //protected void Canvas_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        //{
+        //    base.OnMouseLeftButtonUp(e);
+        //    ReleaseMouseCapture();
+
+        //    if (this._isDragged)
+        //    {
+        //        this._isDragged = false;
+        //        this._mPrevEnd = new Point(canvas_slice_transform.X, canvas_slice_transform.Y);
+        //    }
+        //}
+
+        //protected void Canvas_OnMouseMove(object sender, MouseEventArgs e)
+        //{
+        //    if (!this._isDragged)
+        //        return;
+
+        //    base.OnMouseMove(e);
+        //    if (e.LeftButton == MouseButtonState.Pressed && IsMouseCaptured)
+        //    {
+        //        var pos = e.GetPosition(this);
+        //        var new_pos = new Point(_mPrevEnd.X + pos.X - this._mCurrentStart.X,
+        //                                _mPrevEnd.Y + pos.Y - this._mCurrentStart.Y);
+
+        //        canvas_slice_transform.X = new_pos.X;
+        //        canvas_slice_transform.Y = new_pos.Y;
+        //    }
+        //}
+
+        //protected void Canvas_MouseWheel(object sender, MouseWheelEventArgs e)
+        //{
+        //    if (e.OriginalSource is Border)
+        //    {
+        //        var pos = e.GetPosition(this);
+        //        canvas_slice_scale.CenterX = pos.X;
+        //        canvas_slice_scale.CenterY = pos.Y;
+
+        //        if (e.Delta > 0)
+        //        {
+        //            canvas_slice_scale.ScaleX *= _scaleRate;
+        //            canvas_slice_scale.ScaleY *= _scaleRate;
+        //        }
+        //        else
+        //        {
+        //            canvas_slice_scale.ScaleX /= _scaleRate;
+        //            canvas_slice_scale.ScaleY /= _scaleRate;
+        //        }
+        //    }
+        //}
     }
 }

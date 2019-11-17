@@ -131,20 +131,85 @@ namespace Slicer.slyce.Constructs._2D
             return new Line(EndPoint, StartPoint);
         }
 
-        public System.Windows.Shapes.Line ToShape(double minX, double minY, double scale, double stroke)
+        public System.Windows.Shapes.Shape ToShape(double minX, double minY, double scale, double stroke)
         {
-            return new System.Windows.Shapes.Line
+            // Line with arrow at end to give traverse/print direction
+            return this.DrawLinkArrow(minX, minY, scale, stroke,
+                                      this.IsContour ? Line.BrushContour : Line.BrushInfill);
+
+            //// Simple line
+            //return new System.Windows.Shapes.Line
+            //{
+            //    Stroke = this.IsContour ? Line.BrushContour : Line.BrushInfill,
+            //    X1 = (this.StartPoint.X - minX) * scale,
+            //    X2 = (this.EndPoint.X - minX) * scale,
+            //    Y1 = (this.StartPoint.Y - minY) * scale,
+            //    Y2 = (this.EndPoint.Y - minY) * scale,
+            //    HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+            //    VerticalAlignment = System.Windows.VerticalAlignment.Top,
+            //    StrokeThickness = stroke,
+            //    StrokeStartLineCap = PenLineCap.Round,
+            //    StrokeEndLineCap = PenLineCap.Round,
+            //};
+        }
+
+        private System.Windows.Shapes.Shape DrawLinkArrow(double minX, double minY, double scale, double stroke, Brush brush)
+        {
+            System.Windows.Point p1 = new System.Windows.Point((this.StartPoint.X - minX) * scale,
+                                                               (this.StartPoint.Y - minY) * scale);
+            System.Windows.Point p2 = new System.Windows.Point((this.EndPoint.X - minX) * scale,
+                                                               (this.EndPoint.Y - minY) * scale);
+
+            double theta = Math.Atan2((p2.Y - p1.Y), (p2.X - p1.X)) * 180 / Math.PI;
+
+            
+            PathFigure pathFigure = new PathFigure
             {
-                Stroke = this.IsContour ? Line.BrushContour : Line.BrushInfill,
-                X1 = (this.StartPoint.X - minX) * scale,
-                X2 = (this.EndPoint.X - minX) * scale,
-                Y1 = (this.StartPoint.Y - minY) * scale,
-                Y2 = (this.EndPoint.Y - minY) * scale,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
-                VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                StartPoint = p2
+            };
+
+            System.Windows.Point lpoint = new System.Windows.Point(p2.X + 2.1 / scale, p2.Y + 5.2 / scale);
+            System.Windows.Point rpoint = new System.Windows.Point(p2.X - 2.1 / scale, p2.Y + 5.2 / scale);
+
+            pathFigure.Segments.Add(new LineSegment
+            {
+                Point = lpoint
+            });
+            pathFigure.Segments.Add(new LineSegment
+            {
+                Point = rpoint
+            });
+            pathFigure.Segments.Add(new LineSegment
+            {
+                Point = p2
+            });
+
+            PathGeometry pathGeometry = new PathGeometry();
+            pathGeometry.Figures.Add(pathFigure);
+            pathGeometry.Transform = new RotateTransform
+            {
+                Angle = theta + 90,
+                CenterX = p2.X,
+                CenterY = p2.Y
+
+            };
+
+            GeometryGroup lineGroup = new GeometryGroup();
+            lineGroup.Children.Add(pathGeometry);
+            lineGroup.Children.Add(new LineGeometry
+            {
+                StartPoint = p1,
+                EndPoint = p2
+            });
+
+            return new System.Windows.Shapes.Path
+            {
+                Data = lineGroup,
                 StrokeThickness = stroke,
+                Stroke = brush,
+                Fill = brush,
+                StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
-                StrokeStartLineCap = PenLineCap.Round
             };
         }
     }

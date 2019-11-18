@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ClipperLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,13 @@ using System.Threading.Tasks;
 
 namespace Slicer.slyce.Constructs._2D
 {
+    using Path = List<IntPoint>;
+    using Paths = List<List<IntPoint>>;
+
     public class Polygon2D
     {
+        public static readonly double INT_POINT_FACTOR = 1000.0;
+
         // The connected (!) line segments that creates this polygon.
         public LinkedList<Line> Lines { get; set; }
 
@@ -17,6 +23,31 @@ namespace Slicer.slyce.Constructs._2D
         // Indicates that this is an outer surface, and should be completely filled in
         // with lines very close together (=> create a "solid" surface)
         public bool IsSurface { get; set; } = false;
+
+        // Indicates whether this is an outside edge polygon
+        public bool IsContour { get; set; } = true;
+
+        // Indicates whether this is an inside edge (hole)
+        public bool IsHole { get => !IsContour; set => IsContour = !value; }
+
+        // List of seperate points in the Polygon for ClipperLib
+        private Path _IntPoints = null;
+        public Path IntPoints
+        {
+            get
+            {
+                if (_IntPoints == null || _IntPoints.Count != Lines.Count)
+                {
+                    // Cache list
+                    this._IntPoints = this.Lines.Select(
+                        l => new IntPoint((long)(l.StartPoint.X * INT_POINT_FACTOR),
+                                          (long)(l.StartPoint.Y * INT_POINT_FACTOR))
+                    ).ToList();
+                }
+
+                return this._IntPoints;
+            }
+        }
 
         public Polygon2D()
         {
@@ -193,6 +224,84 @@ namespace Slicer.slyce.Constructs._2D
         {
             // TODO? Convert to triangles?
             return null;
+        }
+
+        //*******************************************************************************
+        // Clipper utils
+        //*******************************************************************************
+        private void UpdateLinesFromPoints()
+        {
+            var lines = new LinkedList<Line>();
+
+            // Use this._IntPoints to not let it update, and keep the difference in points.
+            for (var i = 1; i < this._IntPoints.Count; i++)
+            {
+                var start = this._IntPoints[i - 1];
+                var end = this._IntPoints[i];
+
+                lines.AddLast(new Line((double)start.X / INT_POINT_FACTOR, (double)start.Y / INT_POINT_FACTOR,
+                                       (double)end.X / INT_POINT_FACTOR, (double)end.Y / INT_POINT_FACTOR));
+            }
+
+            var first = this._IntPoints.First();
+            var last = this._IntPoints.Last();
+            lines.AddLast(new Line((double)last.X / INT_POINT_FACTOR, (double)last.Y / INT_POINT_FACTOR,
+                                   (double)first.X / INT_POINT_FACTOR, (double)first.Y / INT_POINT_FACTOR));
+
+            this.Lines = lines;
+        }
+
+        public void CleanLines()
+        {
+            if (this.Lines.Count > 2)
+            {
+                // At least a triangle
+                this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
+                this.UpdateLinesFromPoints();
+            }
+        }
+
+        public void Offset(double delta, double miter_limit = 3)
+        {
+            Paths li = new Paths
+            {
+                this.IntPoints
+            };
+
+            var paths = Clipper.OffsetPolygons(li, delta * INT_POINT_FACTOR, JoinType.jtMiter, miter_limit);
+
+            if (paths.Count > 0)
+            {
+                this._IntPoints = paths[0];
+                this.UpdateLinesFromPoints();
+            }
+            else
+            {
+                // ?
+                Console.Error.WriteLine("Poly offset has no result?");
+            }
+        }
+
+        private PolyTree GetClipperSolutionWith(Polygon2D other, ClipType type)
+        {
+            // https://github.com/junmer/clipper-lib/blob/master/Documentation.md#clipperlibcliptype
+
+            Clipper c = new Clipper();
+            c.AddPolygon(this.IntPoints, PolyType.ptSubject);
+            c.AddPolygon(other.IntPoints, PolyType.ptClip);
+
+            PolyTree solution = new PolyTree();
+
+            // intersection, union, difference or XOR
+            c.Execute(type, solution);
+
+            return solution;
+        }
+
+        public bool Contains(Polygon2D other)
+        {
+            // ?? TODO
+            return GetClipperSolutionWith(other, ClipType.ctIntersection).ChildCount == 1;
         }
     }
 }

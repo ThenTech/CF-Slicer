@@ -75,6 +75,23 @@ namespace Slicer.slyce.Constructs._2D
             this.ZHeight = height;
         }
 
+        public void Erode(double delta, double miter_limit = 5)
+        {
+            foreach (var poly in this.Polygons)
+            {
+                if (poly.IsContour)
+                {
+                    // Expand inwards
+                    poly.Offset(-delta, miter_limit);
+                }
+                else // if (poly.IsHole)
+                {
+                    // Expand outwards == inwards into object
+                    poly.Offset(delta, miter_limit);
+                }
+            }
+        }
+
         public List<Shape> ToShapes(double minX, double minY, double scale, double stroke = 1.0)
         {
             // Create Shapes for drawing the preview

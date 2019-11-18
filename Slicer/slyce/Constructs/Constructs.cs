@@ -52,16 +52,24 @@ namespace Slicer.slyce
             return new Slice(polygons, z);
         }
 
-        public static Construct Create(MeshGeometry3D source)
+        public static Construct Create(MeshGeometry3D source, Transform3D transform)
         {
             var polies = new List<Polygon>();
 
+            // Apply transfomation to all triangles
+            var matr = transform.Value;
+            var pointClone = source.Positions.ToArray();
+            var nrmlClone = source.Normals.ToArray();
+
+            matr.Transform(pointClone);
+            matr.Transform(nrmlClone);
+
             // Sort points by TriangleIndices to be sure
             var points = source.TriangleIndices.Select(
-                i => Tuple.Create(new Vector(source.Positions[i]),
-                                  new Vector(source.Normals[i]))
+                i => Tuple.Create(new Vector(pointClone[i]),
+                                  new Vector(nrmlClone[i]))
             );
-
+            
             // Take next 3 points and create a Triangle polygon to add
             foreach (var p in points.Chunks(3))
             {
@@ -199,23 +207,22 @@ namespace Slicer.slyce
                             {
                                 var p2 = polies[j];
 
-                                if (i != j && !p2.WasTakenAway)
+                                if (i != j && !p2.WasTakenAway && p.AddPolygon(p2, p.CanConnect(p2)))
                                 {
-                                    var connected = p.AddPolygon(p2, p.CanConnect(p2));
-                                    if (connected)
-                                    {
-                                        p2.WasTakenAway = true;
-                                        connectionFound = connected;
-                                        break;
-                                    }
+                                    p2.WasTakenAway = true;
+                                    connectionFound = true;
+                                    break;
                                 }
                             }
                         }
                     } while (connectionFound);
 
-                    // IsComplete => take away
-                    p.WasTakenAway = true;
-                    completePolygons.Add(p);
+                    if (p.IsComplete())
+                    {
+                        // IsComplete => take away
+                        p.WasTakenAway = true;
+                        completePolygons.Add(p);
+                    }
                 }
                 else if(!p.WasTakenAway)
                 {
@@ -226,6 +233,10 @@ namespace Slicer.slyce
             }
 
             // TODO? Sort created polies with their distance to the middle, so we can print the middle one first?
+            //  ==> Probably not needed..
+
+            // Simplify lines and reduce them to a minimum
+            completePolygons.ForEach(p => p.CleanLines());
 
             return new Slice(completePolygons, slice_z_height);
         }

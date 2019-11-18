@@ -21,6 +21,12 @@ namespace Slicer.GUI
             }
         }
 
+        public bool ResetInProgress { get; set; } = false;
+
+        public double DimX { get => HasModel ? this.CurrentModel.Bounds.SizeX : 0.0; }
+        public double DimY { get => HasModel ? this.CurrentModel.Bounds.SizeY : 0.0; }
+        public double DimZ { get => HasModel ? this.CurrentModel.Bounds.SizeZ : 0.0; }
+
         double _ScaleX = 1;
         public double ScaleX
         {
@@ -150,6 +156,28 @@ namespace Slicer.GUI
             {
                 _FilamentDiameter = value;
                 OnPropertyChanged("FilamentDiameter");
+            }
+        }
+        
+        int _NumberOfShells = 5;
+        public int NumberOfShells
+        {
+            get { return _NumberOfShells; }
+            set
+            {
+                _NumberOfShells = value;
+                OnPropertyChanged("NumberOfShells");
+            }
+        }
+                
+        double _ShellThickness = 0;
+        public double ShellThickness
+        {
+            get { return _ShellThickness; }
+            set
+            {
+                _ShellThickness = value;
+                OnPropertyChanged("ShellThickness");
             }
         }
 
@@ -297,8 +325,11 @@ namespace Slicer.GUI
             if (propertyName == "CurrentModel")
             {
                 HasModel = CurrentModel != null;
+                OnPropertyChanged("DimX");
+                OnPropertyChanged("DimY");
+                OnPropertyChanged("DimZ");
             }
-            else if (HasModel
+            else if (HasModel && !ResetInProgress
                 && (propertyName == "ScaleX" || propertyName == "ScaleY" || propertyName == "ScaleZ"
                  || propertyName == "RotationX" || propertyName == "RotationY" || propertyName == "RotationZ"
                  || propertyName == "PositionX" || propertyName == "PositionY" || propertyName == "PositionZ"
@@ -353,6 +384,9 @@ namespace Slicer.GUI
                 });
 
                 CurrentModel.Transform = combined;
+                OnPropertyChanged("DimX");
+                OnPropertyChanged("DimY");
+                OnPropertyChanged("DimZ");
 
                 CurrentSliceIdx = 0;
             }
@@ -372,6 +406,10 @@ namespace Slicer.GUI
                 {
                     Slicer.UpdateSlice();
                 }
+            }
+            else if (propertyName == "NumberOfShells")
+            {
+                ShellThickness = NozzleDiameter * NumberOfShells;
             }
         }
 

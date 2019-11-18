@@ -29,7 +29,7 @@ namespace Slicer.slyce.GCode
         private double filament_diam;
         private bool first_start;
 
-        private static readonly Comment header_comment   = new Comment() { Text = "Generated with Pancakes - Lieven Libberecht, William Thenaers" };
+        private static readonly Comment header_comment   = new Comment() { Text = "Generated with Pancakes - © 2019 Lieven Libberecht, William Thenaers" };
         private static readonly Comment startup_comment  = new Comment() { Text = "\nSetup" };
         private static readonly Comment print_comment    = new Comment() { Text = "\nPrint" };
         private static readonly Comment teardown_comment = new Comment() { Text = "\nTeardown" };
@@ -177,7 +177,7 @@ namespace Slicer.slyce.GCode
             foreach (var p in s.Polygons)
             {
                 // Skip if only one line in poly?
-                if (p.Lines.First.Next == null)
+                if (p.Lines.First == null || p.Lines.First.Next == null)
                     continue;
 
                 // Move to position of first point
@@ -238,7 +238,7 @@ namespace Slicer.slyce.GCode
 
                 // Start layer 0
                 this.Add(new Comment() { Text = String.Format(layer_fmt, layer++) });
-                this.Add(new FanOn() { FanSpeed = 85 });  // Fan on low for first layer?
+                this.Add(new FanOn() { FanSpeed = 85 });  // Fan on low for first layer or off?
                 this.AddSlice(it.Current);
                 this.Add(new FanOn() { FanSpeed = 170 });
 

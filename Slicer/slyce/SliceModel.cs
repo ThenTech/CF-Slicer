@@ -47,7 +47,7 @@ namespace Slicer.slyce
             else
             {
                 this.BuildSlice();
-                //this.ErodeSlice();
+                this.Slice.Erode(data.NozzleThickness / 2.0);
 
                 Console.WriteLine("Created new slice for " + this.data.CurrentSliceIdx + ".");
             }
@@ -66,11 +66,12 @@ namespace Slicer.slyce
             });
 
             this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
-            var bounds = Original.Bounds;
+            var bounds = this.data.CurrentModel.Bounds;
+            var transform = this.data.CurrentModel.Transform;
 
             this.SliceStore = new List<Slice>(this.data.MaxSliceIdx);
 
-            Construct obj = Construct.Create(this.Original);
+            Construct obj = Construct.Create(this.Original, transform);
 
             await Task.Run(() =>
             {
@@ -79,7 +80,7 @@ namespace Slicer.slyce
                     this.Slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                            data.NozzleThickness);
                     this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
-                    // this.Slice.Erode(data.NozzleThickness / 2.0);
+                    this.Slice.Erode(data.NozzleThickness / 2.0);
 
                     var min = Math.Min(bounds.X, bounds.Y);
                     var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
@@ -120,9 +121,6 @@ namespace Slicer.slyce
             var geom = ori as GeometryModel3D;
             var mesh = geom.Geometry as MeshGeometry3D;
 
-            // To polygon collection
-            var poly = Construct.Create(mesh);
-
             return mesh;
         }
  
@@ -160,9 +158,9 @@ namespace Slicer.slyce
         private void BuildSlice()
         {
             this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
-            var bounds = Original.Bounds;
+            var bounds = this.data.CurrentModel.Bounds;
 
-            Construct obj = Construct.Create(this.Original);
+            Construct obj = Construct.Create(this.Original, this.data.CurrentModel.Transform);
             //Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
             //Construct sli = obj.Intersect(box);
 
@@ -178,49 +176,6 @@ namespace Slicer.slyce
 
             this.data.SliceCanvas.Children.Clear();
             this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
-        }
-
-        private void ErodeSlice()
-        {
-            Paths paths = new Paths();
-            Path path = new Path();
-
-            foreach (var l in Slice.Lines)
-            {
-                path.Add(new IntPoint((long)(l.StartPoint.X * 1000), (long)(l.StartPoint.Y * 1000)));
-                path.Add(new IntPoint((long)(l.EndPoint.X * 1000), (long)(l.EndPoint.Y * 1000)));
-            }
-
-            paths.Add(path);
-
-            Paths result = ClipperLib.Clipper.OffsetPolygons(paths, -1000);
-            List<Line> polygonLines = new List<Line>();
-            Line lastLine = null;
-
-            foreach (var pol in result)
-            {
-                List<Point> points = new List<Point>();
-                foreach (var p in pol)
-                {
-                    if(lastLine == null || !lastLine.StartPoint.Equals(lastLine.EndPoint))
-                    {
-                        lastLine = new Line(p.X/1000.0, p.Y/1000.0, p.X/1000.0, p.Y/1000.0);
-                    }
-                    else
-                    {
-                        lastLine.EndPoint = new Point(p.X/1000.0, p.Y/1000.0);
-                        polygonLines.Add(lastLine);
-                        lastLine = new Line(p.X/1000.0, p.Y/1000.0, p.X/1000.0, p.Y/1000.0);
-                    }
-                }
-                //visualizer.DrawPolygon(points, 1, 0, 18);
-            }
-
-            if(polygonLines.Count > 0)
-            {
-                polygonLines.Add(new Line(polygonLines.Last().EndPoint, polygonLines.First().StartPoint));
-                //Slice.Lines.AddRange(polygonLines);
-            }
         }
     }
 }

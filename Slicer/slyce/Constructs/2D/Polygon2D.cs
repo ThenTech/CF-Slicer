@@ -60,6 +60,28 @@ namespace Slicer.slyce.Constructs._2D
             Lines.AddLast(firstLine);
         }
 
+        public Polygon2D(Path path)
+        {
+            //Lines = new LinkedList<Line>();
+            //Line lastLine = null;
+            _IntPoints = path;
+            UpdateLinesFromPoints();
+            //foreach (var x in path)
+            //{
+            //    if(lastLine != null)
+            //    {
+            //        lastLine.EndPoint = new Point(x.X/INT_POINT_FACTOR, x.Y/INT_POINT_FACTOR);
+            //        Lines.AddLast(lastLine);
+            //        lastLine = new Line(x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR, x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR);
+            //    }
+            //    else
+            //    {
+            //        lastLine = new Line(x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR, x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR);
+            //    }
+            //}
+            //Lines.AddLast(new Line(path.Last().X / INT_POINT_FACTOR, path.Last().Y / INT_POINT_FACTOR, path.First().X / INT_POINT_FACTOR, path.First().Y / INT_POINT_FACTOR));
+        }
+
         public Point FirstPoint()
         {
             return Lines.First().StartPoint;
@@ -309,7 +331,34 @@ namespace Slicer.slyce.Constructs._2D
         public bool Contains(Polygon2D other)
         {
             // ?? TODO
-            return GetClipperSolutionWith(other, ClipType.ctIntersection).ChildCount == 1;
+            //If difference is equal to the hole it is inside? 
+            var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
+            var intp = other.IntPoints;
+            if(intersection.ChildCount < 1)
+            {
+                return false;
+            }
+            else
+            {
+                var child = intersection.Childs[0];
+                var childIntp = child.Contour;
+                if(childIntp.Count == intp.Count)
+                {
+                    for(int i = 0; i < childIntp.Count; i++)
+                    {
+                        if(childIntp[i].X != intp[i].X || childIntp[i].Y != intp[i].Y)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            
+            return true;
         }
     }
 }

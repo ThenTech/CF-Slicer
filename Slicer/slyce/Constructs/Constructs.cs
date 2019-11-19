@@ -190,7 +190,7 @@ namespace Slicer.slyce
             for (int i = 0; i < polies.Count; i++)
             {
                 var p = polies[i];
-       
+
                 if (!p.IsComplete() && !p.WasTakenAway)
                 {
                     bool connectionFound = false;
@@ -224,7 +224,7 @@ namespace Slicer.slyce
                         completePolygons.Add(p);
                     }
                 }
-                else if(!p.WasTakenAway)
+                else if (!p.WasTakenAway)
                 {
                     // IsComplete => take away
                     p.WasTakenAway = true;
@@ -237,6 +237,39 @@ namespace Slicer.slyce
 
             // Simplify lines and reduce them to a minimum
             completePolygons.ForEach(p => p.CleanLines());
+            // Simplify the lines https://github.com/junmer/clipper-lib/blob/master/Documentation.md#clipperlibclippersimplifypolygon
+            List<Polygon2D> endPolygons = new List<Polygon2D>();
+            foreach (var p in completePolygons)
+            {
+                var simple = Clipper.SimplifyPolygon(p.IntPoints);
+                Polygon2D newPol = new Polygon2D(simple.First());
+                endPolygons.Add(newPol);
+            }
+            completePolygons = endPolygons;
+
+            for (int i = 0; i < completePolygons.Count(); i++)
+            {
+                var poly1 = completePolygons[i];
+                for (int j = 0; j < completePolygons.Count(); j++)
+                {
+                    var poly2 = completePolygons[j];
+                    if (i != j)
+                    {
+                        //Check if i contains j
+                        if(poly1.Contains(poly2))
+                        {
+                            if(poly1.IsHole)
+                            {
+                                poly2.IsHole = false;
+                            }
+                            else
+                            {
+                                poly2.IsHole = true;
+                            }
+                        }
+                    }
+                }
+            }
 
             return new Slice(completePolygons, slice_z_height);
         }

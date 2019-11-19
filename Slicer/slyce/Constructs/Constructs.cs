@@ -237,26 +237,18 @@ namespace Slicer.slyce
 
             // Simplify lines and reduce them to a minimum
             completePolygons.ForEach(p => p.CleanLines());
-            // Simplify the lines https://github.com/junmer/clipper-lib/blob/master/Documentation.md#clipperlibclippersimplifypolygon
-            List<Polygon2D> endPolygons = new List<Polygon2D>();
-            foreach (var p in completePolygons)
-            {
-                var simple = Clipper.SimplifyPolygon(p.IntPoints);
-                Polygon2D newPol = new Polygon2D(simple.First());
-                endPolygons.Add(newPol);
-            }
-            completePolygons = endPolygons;
 
             for (int i = 0; i < completePolygons.Count(); i++)
             {
-                var poly1 = completePolygons[i];
                 for (int j = 0; j < completePolygons.Count(); j++)
                 {
-                    var poly2 = completePolygons[j];
                     if (i != j)
                     {
+                        var poly1 = completePolygons[i];
+                        var poly2 = completePolygons[j];
+
                         //Check if i contains j
-                        if(poly1.Contains(poly2))
+                        if (poly1.Contains(poly2))
                         {
                             if(poly1.IsHole)
                             {

@@ -62,22 +62,24 @@ namespace Slicer.slyce.Constructs._2D
 
         public Polygon2D(Path path)
         {
-            Lines = new LinkedList<Line>();
-            Line lastLine = null;
-            foreach (var x in path)
-            {
-                if(lastLine != null)
-                {
-                    lastLine.EndPoint = new Point(x.X/INT_POINT_FACTOR, x.Y/INT_POINT_FACTOR);
-                    Lines.AddLast(lastLine);
-                    lastLine = new Line(x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR, x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR);
-                }
-                else
-                {
-                    lastLine = new Line(x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR, x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR);
-                }
-            }
-            Lines.AddLast(new Line(path.Last().X / INT_POINT_FACTOR, path.Last().Y / INT_POINT_FACTOR, path.First().X / INT_POINT_FACTOR, path.First().Y / INT_POINT_FACTOR));
+            //Lines = new LinkedList<Line>();
+            //Line lastLine = null;
+            _IntPoints = path;
+            UpdateLinesFromPoints();
+            //foreach (var x in path)
+            //{
+            //    if(lastLine != null)
+            //    {
+            //        lastLine.EndPoint = new Point(x.X/INT_POINT_FACTOR, x.Y/INT_POINT_FACTOR);
+            //        Lines.AddLast(lastLine);
+            //        lastLine = new Line(x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR, x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR);
+            //    }
+            //    else
+            //    {
+            //        lastLine = new Line(x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR, x.X / INT_POINT_FACTOR, x.Y / INT_POINT_FACTOR);
+            //    }
+            //}
+            //Lines.AddLast(new Line(path.Last().X / INT_POINT_FACTOR, path.Last().Y / INT_POINT_FACTOR, path.First().X / INT_POINT_FACTOR, path.First().Y / INT_POINT_FACTOR));
         }
 
         public Point FirstPoint()

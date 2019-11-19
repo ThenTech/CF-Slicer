@@ -6,10 +6,10 @@
 
 - [x] Program with input STL/OBJ file and output [gcode](https://reprap.org/wiki/G-code) file
 - [x] Basic GUI to go through slices step by step 
-- [ ] (+ render all paths in colors)
+- [x] (+ render all paths in colors)
 - [x] Basic GUI for configuring essential parameters e.g. layer height, nozzle diameter, number of shells,…
 - [ ] Support for Shells + infill (basic e.g. rectangular) + roofs/floors
-- [ ] Models can have holes!
+- [x] Models can have holes!
 - [ ] Support generation (basic zig-zag structure)
 - [ ] Optimize for print quality (not speed)
 
@@ -29,7 +29,7 @@
 - [x] Erode perimeter with half the nozzle thickness (otherwise print will be too large)
 - [x] **[Deadline 14/11]** Generate g-code for a perimeter of a single slice 
 - [ ] And try 3D printing
-- [ ] Extend data structure to support holes in object/polygon
+- [x] Extend data structure to support holes in object/polygon
 - [ ] Generate second shell
 - [ ] Generate basic rectangular infill structure (line per line intersection between grid and
   polygon slices)

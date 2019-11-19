@@ -183,13 +183,13 @@
                         </Button>
                     </Grid>
 
-                    <ProgressBar Grid.Row="22"  Grid.ColumnSpan="3" 
+                    <ProgressBar Grid.Row="23"  Grid.ColumnSpan="3" 
                                  Height="30" Panel.ZIndex="10"
                                  Visibility="{Binding SlicingProgressVisible}"
                                  Value="{Binding SlicingProgressValue}"
                                  Minimum="0"
                                  Maximum="{Binding MaxSliceIdx}"/>
-                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="22" Height="30" Click="Slice_Click"/>
+                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="23" Height="30" Click="Slice_Click"/>
                 </Grid>
             </DockPanel>
 

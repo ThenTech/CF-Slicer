@@ -42,13 +42,13 @@
 
 ## TODO
 
-- [ ] Scale slider naar 1 dim
+- [x] Scale slider naar 1 dim ==> 1.0 == 1 mm
 - [ ] ~~Sliders met textfield voor manual input~~ (of sliders weg en enkel [real scale; percentage])
 - [ ] Clipper (polygon intersection etc)?
 - [x] 2de viewport voor 1 slice te previewen => met slider voor slice te selecteren
 - [x] Slice preview met kleuraanduiding in object of bovenkant object wegnemen om slice te zien
 - [x] Nozzle thickness parameter
-- [ ] Indicatie van grootte
+- [x] Indicatie van grootte
 - [x] XY translate en rotate op object voor te slicen (=> transform individual polygons...)
 - [x] Slice opstellen door uinion van vlak met dikte NozzleThickness en object (met Clipper?)
 - [x] Slice opstellen door triangle en plane intersection ipv 3D intersection

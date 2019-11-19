@@ -35,7 +35,7 @@ namespace Slicer.slyce.Constructs
             Plane.Flip();
         }
 
-        public Line CutAtZ(double z)
+        public Shape2D CutAtZ(double z)
         {
             Line slice_line = null;
 
@@ -79,11 +79,11 @@ namespace Slicer.slyce.Constructs
                 }
                 else if (below.Count == 3 || above.Count == 3)
                 {
-                    // TODO What to do with these?
-                    //Polygon2D poly = new Polygon2D();
-                    //poly.Lines.AddLast(new Line(p.Vertices[0].Pos.X, p.Vertices[0].Pos.Y, p.Vertices[1].Pos.X, p.Vertices[1].Pos.Y));
-                    //poly.Lines.AddLast(new Line(p.Vertices[1].Pos.X, p.Vertices[1].Pos.Y, p.Vertices[2].Pos.X, p.Vertices[2].Pos.Y));
-                    //poly.Lines.AddLast(new Line(p.Vertices[2].Pos.X, p.Vertices[2].Pos.Y, p.Vertices[0].Pos.X, p.Vertices[0].Pos.Y));
+                    Polygon2D poly = new Polygon2D();
+                    poly.Lines.AddLast(new Line(Vertices[0].Pos.X, Vertices[0].Pos.Y, Vertices[1].Pos.X, Vertices[1].Pos.Y));
+                    poly.Lines.AddLast(new Line(Vertices[1].Pos.X, Vertices[1].Pos.Y, Vertices[2].Pos.X, Vertices[2].Pos.Y));
+                    poly.Lines.AddLast(new Line(Vertices[2].Pos.X, Vertices[2].Pos.Y, Vertices[0].Pos.X, Vertices[0].Pos.Y));
+                    return poly;
                     //polies.Add(poly);
                 }
             }

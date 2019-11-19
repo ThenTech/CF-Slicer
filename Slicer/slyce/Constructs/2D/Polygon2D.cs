@@ -10,7 +10,7 @@ namespace Slicer.slyce.Constructs._2D
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
-    public class Polygon2D
+    public class Polygon2D : Shape2D
     {
         public static readonly double INT_POINT_FACTOR = 1000.0;
 

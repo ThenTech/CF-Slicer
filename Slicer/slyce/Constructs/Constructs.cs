@@ -153,35 +153,43 @@ namespace Slicer.slyce
 
             foreach (var p in Polygons)
             {
-                var line = p.CutAtZ(slice_z_height);
-
-                if (line != null)
+                var cut = p.CutAtZ(slice_z_height);
+                if(cut != null && cut.GetType() == typeof(Line))
                 {
-                    // Got slice line
-                    if (polies.Count > 0)
+                    var line = (Line)cut;
+                    if (line != null)
                     {
-                        // Try to add it to a Polygon already
-                        Polygon2D connectionPolygon = null;
-                        foreach (var po in polies)
+                        // Got slice line
+                        if (polies.Count > 0)
                         {
-                            var connectType = po.CanConnect(line);
-                            if (connectType != Connection.NOT)
+                            // Try to add it to a Polygon already
+                            Polygon2D connectionPolygon = null;
+                            foreach (var po in polies)
                             {
-                                connectionPolygon = po;
-                                connectionPolygon.AddLine(line, connectType);
-                                break;
+                                var connectType = po.CanConnect(line);
+                                if (connectType != Connection.NOT)
+                                {
+                                    connectionPolygon = po;
+                                    connectionPolygon.AddLine(line, connectType);
+                                    break;
+                                }
+                            }
+
+                            if (connectionPolygon == null)
+                            {
+                                polies.Add(new Polygon2D(line));
                             }
                         }
-
-                        if (connectionPolygon == null)
+                        else
                         {
                             polies.Add(new Polygon2D(line));
                         }
                     }
-                    else
-                    {
-                        polies.Add(new Polygon2D(line));
-                    }
+                }
+                else if(cut != null && cut.GetType() == typeof(Polygon2D))
+                {
+                    Polygon2D polygon = (Polygon2D)cut;
+                    //Fill in polygon
                 }
             }
 

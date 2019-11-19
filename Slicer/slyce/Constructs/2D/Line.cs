@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace Slicer.slyce.Constructs._2D
 {
-    public class Line : IEquatable<Line>
+    public class Line : IEquatable<Line>, Shape2D
     {
         public static readonly Brush BrushContour = Brushes.Black;
         public static readonly Brush BrushInfill  = Brushes.Red;

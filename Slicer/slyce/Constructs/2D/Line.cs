@@ -10,13 +10,15 @@ namespace Slicer.slyce.Constructs._2D
     public class Line : IEquatable<Line>
     {
         public static readonly Brush BrushContour = Brushes.Black;
+        public static readonly Brush BrushHole    = Brushes.Blue;
         public static readonly Brush BrushInfill  = Brushes.Red;
 
         public Point StartPoint { get; set; }
         public Point EndPoint { get; set; }
 
         public bool IsContour { get; set; } = true;
-        public bool IsInfill  { get => !IsContour; set => IsContour = !value; }
+        public bool IsHole    { get => !IsContour; set => IsContour = !value; }
+        public bool IsInfill  { get; set; } = false;
 
         public Line(double X1, double Y1, double X2, double Y2)
         {
@@ -131,29 +133,38 @@ namespace Slicer.slyce.Constructs._2D
             return new Line(EndPoint, StartPoint);
         }
 
-        public System.Windows.Shapes.Shape ToShape(double minX, double minY, double scale, double stroke)
+        public System.Windows.Shapes.Shape ToShape(double minX, double minY, double scale, double arrow_scale, double stroke)
         {
-            // Line with arrow at end to give traverse/print direction
-            return this.DrawLinkArrow(minX, minY, scale, stroke,
-                                      this.IsContour ? Line.BrushContour : Line.BrushInfill);
-
-            //// Simple line
-            //return new System.Windows.Shapes.Line
-            //{
-            //    Stroke = this.IsContour ? Line.BrushContour : Line.BrushInfill,
-            //    X1 = (this.StartPoint.X - minX) * scale,
-            //    X2 = (this.EndPoint.X - minX) * scale,
-            //    Y1 = (this.StartPoint.Y - minY) * scale,
-            //    Y2 = (this.EndPoint.Y - minY) * scale,
-            //    HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
-            //    VerticalAlignment = System.Windows.VerticalAlignment.Top,
-            //    StrokeThickness = stroke,
-            //    StrokeStartLineCap = PenLineCap.Round,
-            //    StrokeEndLineCap = PenLineCap.Round,
-            //};
+            if (arrow_scale > 0.0)
+            {
+                // Line with arrow at end to give traverse/print direction
+                return this.DrawLinkArrow(minX, minY, scale, stroke, arrow_scale,
+                                          this.IsInfill ? Line.BrushInfill
+                                                        : this.IsContour
+                                                        ? Line.BrushContour : Line.BrushHole);
+            }
+            else
+            {
+                // Simple line
+                return new System.Windows.Shapes.Line
+                {
+                    Stroke = this.IsInfill ? Line.BrushInfill
+                                           : this.IsContour
+                                           ? Line.BrushContour : Line.BrushHole,
+                    X1 = (this.StartPoint.X - minX) * scale,
+                    X2 = (this.EndPoint.X - minX) * scale,
+                    Y1 = (this.StartPoint.Y - minY) * scale,
+                    Y2 = (this.EndPoint.Y - minY) * scale,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                    StrokeThickness = stroke,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                };
+            }
         }
 
-        private System.Windows.Shapes.Shape DrawLinkArrow(double minX, double minY, double scale, double stroke, Brush brush)
+        private System.Windows.Shapes.Shape DrawLinkArrow(double minX, double minY, double scale, double stroke, double arrow_scale, Brush brush)
         {
             System.Windows.Point p1 = new System.Windows.Point((this.StartPoint.X - minX) * scale,
                                                                (this.StartPoint.Y - minY) * scale);
@@ -168,11 +179,8 @@ namespace Slicer.slyce.Constructs._2D
                 StartPoint = p2
             };
 
-            // Temp exaggerate arrowhead
-            scale /= 50;
-
-            System.Windows.Point lpoint = new System.Windows.Point(p2.X + 2.1 / scale, p2.Y + 5.2 / scale);
-            System.Windows.Point rpoint = new System.Windows.Point(p2.X - 2.1 / scale, p2.Y + 5.2 / scale);
+            System.Windows.Point lpoint = new System.Windows.Point(p2.X + 2.1 * arrow_scale, p2.Y + 5.2 * arrow_scale);
+            System.Windows.Point rpoint = new System.Windows.Point(p2.X - 2.1 * arrow_scale, p2.Y + 5.2 * arrow_scale);
 
             pathFigure.Segments.Add(new LineSegment
             {

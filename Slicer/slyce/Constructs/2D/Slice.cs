@@ -32,7 +32,7 @@ namespace Slicer.slyce.Constructs._2D
                 {
                     foreach (var l in p.Lines)
                     {
-                        l.IsContour = true;
+                        l.IsContour = p.IsContour;
                         yield return l;
                     }
                 }
@@ -92,7 +92,7 @@ namespace Slicer.slyce.Constructs._2D
             }
         }
 
-        public List<Shape> ToShapes(double minX, double minY, double scale, double stroke = 1.0)
+        public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)
         {
             // Create Shapes for drawing the preview
             if (this.Shapes != null)
@@ -102,18 +102,18 @@ namespace Slicer.slyce.Constructs._2D
             this.MinY = minY;
 
             this.Shapes = new List<Shape>();
-            stroke = Math.Max(stroke / scale, 0.5);
+            stroke = Math.Max(stroke / scale, stroke);
 
             // Add contours
             foreach (var l in this.Lines)
             {
-                this.Shapes.Add(l.ToShape(minX, minY, scale, stroke));
+                this.Shapes.Add(l.ToShape(minX, minY, scale, arrow_scale, stroke));
             }
 
             // Add fillers
             foreach (var l in this.LinesForFilling)
             {
-                this.Shapes.Add(l.ToShape(minX, minY, scale, stroke));
+                this.Shapes.Add(l.ToShape(minX, minY, scale, arrow_scale, stroke));
             }
 
             return this.Shapes;

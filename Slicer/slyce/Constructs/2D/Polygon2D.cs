@@ -257,6 +257,14 @@ namespace Slicer.slyce.Constructs._2D
             {
                 // At least a triangle
                 this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
+
+                // Optionally also call simplify?
+                Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
+                if (simplified.Count > 0)
+                {
+                    this._IntPoints = simplified[0];
+                }
+
                 this.UpdateLinesFromPoints();
             }
         }

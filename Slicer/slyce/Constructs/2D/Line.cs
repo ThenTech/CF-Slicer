@@ -168,6 +168,9 @@ namespace Slicer.slyce.Constructs._2D
                 StartPoint = p2
             };
 
+            // Temp exaggerate arrowhead
+            scale /= 50;
+
             System.Windows.Point lpoint = new System.Windows.Point(p2.X + 2.1 / scale, p2.Y + 5.2 / scale);
             System.Windows.Point rpoint = new System.Windows.Point(p2.X - 2.1 / scale, p2.Y + 5.2 / scale);
 

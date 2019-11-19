@@ -135,22 +135,21 @@ namespace Slicer.slyce.Constructs._2D
 
         public System.Windows.Shapes.Shape ToShape(double minX, double minY, double scale, double arrow_scale, double stroke)
         {
+            Brush colour = this.IsInfill ? Line.BrushInfill
+                                         : this.IsContour
+                                         ? Line.BrushContour : Line.BrushHole;
+
             if (arrow_scale > 0.0)
             {
                 // Line with arrow at end to give traverse/print direction
-                return this.DrawLinkArrow(minX, minY, scale, stroke, arrow_scale,
-                                          this.IsInfill ? Line.BrushInfill
-                                                        : this.IsContour
-                                                        ? Line.BrushContour : Line.BrushHole);
+                return this.DrawLinkArrow(minX, minY, scale, stroke, arrow_scale, colour);
             }
             else
             {
                 // Simple line
                 return new System.Windows.Shapes.Line
                 {
-                    Stroke = this.IsInfill ? Line.BrushInfill
-                                           : this.IsContour
-                                           ? Line.BrushContour : Line.BrushHole,
+                    Stroke = colour,
                     X1 = (this.StartPoint.X - minX) * scale,
                     X2 = (this.EndPoint.X - minX) * scale,
                     Y1 = (this.StartPoint.Y - minY) * scale,

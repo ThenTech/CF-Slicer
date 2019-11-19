@@ -154,40 +154,40 @@ namespace Slicer.slyce
             foreach (var p in Polygons)
             {
                 var cut = p.CutAtZ(slice_z_height);
-                if(cut != null && cut.GetType() == typeof(Line))
-                {
-                    var line = (Line)cut;
-                    if (line != null)
-                    {
-                        // Got slice line
-                        if (polies.Count > 0)
-                        {
-                            // Try to add it to a Polygon already
-                            Polygon2D connectionPolygon = null;
-                            foreach (var po in polies)
-                            {
-                                var connectType = po.CanConnect(line);
-                                if (connectType != Connection.NOT)
-                                {
-                                    connectionPolygon = po;
-                                    connectionPolygon.AddLine(line, connectType);
-                                    break;
-                                }
-                            }
 
-                            if (connectionPolygon == null)
+                if (cut != null && cut.GetType() == typeof(Line))
+                {
+                    // Got slice line
+                    var line = (Line)cut;
+                
+                    if (polies.Count > 0)
+                    {
+                        // Try to add it to a Polygon already
+                        bool wasConnected = false;
+                        foreach (var po in polies)
+                        {
+                            var connectType = po.CanConnect(line);
+                            if (connectType != Connection.NOT)
                             {
-                                polies.Add(new Polygon2D(line));
+                                wasConnected = true;
+                                po.AddLine(line, connectType);
+                                break;
                             }
                         }
-                        else
+
+                        if (!wasConnected)
                         {
                             polies.Add(new Polygon2D(line));
                         }
                     }
+                    else
+                    {
+                        polies.Add(new Polygon2D(line));
+                    }
                 }
                 else if(cut != null && cut.GetType() == typeof(Polygon2D))
                 {
+                    // Got polygon surface
                     Polygon2D polygon = (Polygon2D)cut;
                     //Fill in polygon
                 }
@@ -246,9 +246,10 @@ namespace Slicer.slyce
             // Simplify lines and reduce them to a minimum
             completePolygons.ForEach(p => p.CleanLines());
 
-            for (int i = 0; i < completePolygons.Count(); i++)
+            // Check for containement and flag holes
+            for (int i = 0; i < completePolygons.Count; i++)
             {
-                for (int j = 0; j < completePolygons.Count(); j++)
+                for (int j = 0; j < completePolygons.Count; j++)
                 {
                     if (i != j)
                     {
@@ -258,7 +259,7 @@ namespace Slicer.slyce
                         //Check if i contains j
                         if (poly1.Contains(poly2))
                         {
-                            if(poly1.IsHole)
+                            if (poly1.IsHole)
                             {
                                 poly2.IsHole = false;
                             }

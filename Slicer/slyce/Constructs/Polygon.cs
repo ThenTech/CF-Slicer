@@ -84,7 +84,6 @@ namespace Slicer.slyce.Constructs
                     poly.Lines.AddLast(new Line(Vertices[1].Pos.X, Vertices[1].Pos.Y, Vertices[2].Pos.X, Vertices[2].Pos.Y));
                     poly.Lines.AddLast(new Line(Vertices[2].Pos.X, Vertices[2].Pos.Y, Vertices[0].Pos.X, Vertices[0].Pos.Y));
                     return poly;
-                    //polies.Add(poly);
                 }
             }
 

@@ -19,7 +19,7 @@ namespace Slicer.slyce.Constructs._2D
         // these should then be intersected with an infill structure (Clipper)
         // and the result would be a FillPolygons (only the segenmts required to print infill).
         // If a poly from Polygons.IsSurface, then a generated "surface" should also
-        // be created and added ti this list.
+        // be created and added to this list.
         public List<Polygon2D> FillPolygons { get; set; }
 
         public List<Shape> Shapes { get; set; }

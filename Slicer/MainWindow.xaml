@@ -16,7 +16,7 @@
     <DockPanel>
         <Menu Name="menuMain" DockPanel.Dock="Top">
             <MenuItem Header="File">
-                <MenuItem Header="Open..." Click="Open_Click"/>
+                <MenuItem Header="_Open..." Click="Open_Click"/>
                 <MenuItem Header="Save as..." IsEnabled="False"/>
                 <Separator/>
                 <MenuItem Header="Export..." Click="Export_Click"/>
@@ -80,7 +80,7 @@
 
                     <TextBlock Foreground="#f0f1f2" Text="Object settings" Grid.Row="0" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
                     <TextBlock Foreground="#f0f1f2" Text="Dimensions" Grid.Row="1" Height="22"/>
-                    <TextBlock Foreground="#f0f1f2" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Right"  Margin="0 2 0 0" Height="22">
+                    <TextBlock Foreground="#f0f1f2" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Right"  Margin="0 2 0 0" Height="22">
                         <TextBlock.Text>
                             <MultiBinding StringFormat="{}x: {0:N2}, y: {1:N2}, z: {2:N2} mm">
                                 <Binding Path="DimX" />
@@ -191,10 +191,10 @@
                     <TextBlock Foreground="#f0f1f2" Text="Preview settings" Grid.Row="23" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
                     
                     <TextBlock Foreground="#f0f1f2" Text="Stroke thickness" Grid.Row="24" Height="22"/>
-                    <Slider Name="slider11" Grid.Column="1" Grid.Row="24" Grid.ColumnSpan="2" Minimum="0.1" Maximum="10" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
+                    <Slider Name="slider11" Grid.Column="1" Grid.Row="24" Grid.ColumnSpan="2" Minimum="0.1" Maximum="5" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
 
                     <TextBlock Foreground="#f0f1f2" Text="Arrow size" Grid.Row="25" Height="22"/>
-                    <Slider Name="slider12" Grid.Column="1" Grid.Row="25" Grid.ColumnSpan="2" Minimum="0" Maximum="12" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
+                    <Slider Name="slider12" Grid.Column="1" Grid.Row="25" Grid.ColumnSpan="2" Minimum="0" Maximum="6" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
 
 
 

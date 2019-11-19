@@ -315,10 +315,10 @@ namespace Slicer.slyce.Constructs._2D
         public bool Contains(Polygon2D other)
         {
             // ?? TODO
-            //If difference is equal to the hole it is inside? 
+            // If difference is equal to the hole it is inside? 
             var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
-            var intp = other.IntPoints;
-            if(intersection.ChildCount < 1)
+
+            if (intersection.ChildCount < 1)
             {
                 return false;
             }
@@ -326,9 +326,10 @@ namespace Slicer.slyce.Constructs._2D
             {
                 var child = intersection.Childs[0];
                 var childIntp = child.Contour;
-                if(childIntp.Count == intp.Count)
+                var intp = other.IntPoints;
+                if (childIntp.Count == intp.Count)
                 {
-                    for(int i = 0; i < childIntp.Count; i++)
+                    for (int i = 0; i < childIntp.Count; i++)
                     {
                         if(childIntp[i].X != intp[i].X || childIntp[i].Y != intp[i].Y)
                         {

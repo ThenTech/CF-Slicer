@@ -315,6 +315,26 @@ namespace Slicer.GUI
             }
         }
 
+        private double _PreviewStrokeThickness = 0.5;
+        public double PreviewStrokeThickness {
+            get { return _PreviewStrokeThickness; }
+            set
+            {
+                _PreviewStrokeThickness = value;
+                OnPropertyChanged("PreviewStrokeThickness");
+            }
+        }
+
+        private double _PreviewArrowThickness = 1.0;
+        public double PreviewArrowThickness {
+            get { return _PreviewArrowThickness; }
+            set
+            {
+                _PreviewArrowThickness = value;
+                OnPropertyChanged("PreviewStrokeThickness");
+            }
+        }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -411,7 +431,14 @@ namespace Slicer.GUI
             {
                 ShellThickness = NozzleDiameter * NumberOfShells;
             }
-        }
+            else if (propertyName == "PreviewStrokeThickness" || propertyName == "PreviewArrowThickness")
+            {
+                if (Slicer != null)
+                {
+                    Slicer.RedrawAllSlices();
+                }
+            }
+        }                              
 
         public event PropertyChangedEventHandler PropertyChanged;
     }

@@ -53,6 +53,33 @@ namespace Slicer.slyce
             }
         }
 
+        public void RedrawAllSlices()
+        {
+            var bounds = this.data.CurrentModel.Bounds;
+            var min = Math.Min(bounds.X, bounds.Y);
+            var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
+            var size = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
+            var scale = size / (max - min);
+
+            if (this.SliceStore.Count == this.data.MaxSliceIdx + 1)
+            {
+                foreach (var slice in this.SliceStore)
+                {
+                    slice.Shapes = null;
+                    slice.ToShapes(bounds.X, bounds.Y, scale,
+                                   this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
+
+                }
+                this.UpdateSlice();
+            }
+            else if (this.Slice != null)
+            {
+                this.Slice.Shapes = null;
+                this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale,
+                                                            this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
+            }
+        }
+
         public async void BuildAllSlices()
         {
             // Main task is run on another thread, 
@@ -89,7 +116,8 @@ namespace Slicer.slyce
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale);
+                        this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale, 
+                                                                    this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
 
                         this.data.SliceCanvas.Children.Clear();
                         this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));

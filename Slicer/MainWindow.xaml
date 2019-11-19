@@ -70,6 +70,10 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -183,13 +187,24 @@
                         </Button>
                     </Grid>
 
-                    <ProgressBar Grid.Row="23"  Grid.ColumnSpan="3" 
+                    <Separator Grid.Row="22" Grid.ColumnSpan="4" Height="5"/>
+                    <TextBlock Foreground="#f0f1f2" Text="Preview settings" Grid.Row="23" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
+                    
+                    <TextBlock Foreground="#f0f1f2" Text="Stroke thickness" Grid.Row="24" Height="22"/>
+                    <Slider Name="slider11" Grid.Column="1" Grid.Row="24" Grid.ColumnSpan="2" Minimum="0.1" Maximum="10" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
+
+                    <TextBlock Foreground="#f0f1f2" Text="Arrow size" Grid.Row="25" Height="22"/>
+                    <Slider Name="slider12" Grid.Column="1" Grid.Row="25" Grid.ColumnSpan="2" Minimum="0" Maximum="12" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
+
+
+
+                    <ProgressBar Grid.Row="27"  Grid.ColumnSpan="3" 
                                  Height="30" Panel.ZIndex="10"
                                  Visibility="{Binding SlicingProgressVisible}"
                                  Value="{Binding SlicingProgressValue}"
                                  Minimum="0"
                                  Maximum="{Binding MaxSliceIdx}"/>
-                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="23" Height="30" Click="Slice_Click"/>
+                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="27" Height="30" Click="Slice_Click"/>
                 </Grid>
             </DockPanel>
 

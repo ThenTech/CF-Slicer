@@ -35,7 +35,7 @@ namespace Slicer.slyce
 
         public Construct()
         {
-         
+
         }
 
         public static Construct Create(Polygon[] polygons)
@@ -69,7 +69,7 @@ namespace Slicer.slyce
                 i => Tuple.Create(new Vector(pointClone[i]),
                                   new Vector(nrmlClone[i]))
             );
-            
+
             // Take next 3 points and create a Triangle polygon to add
             foreach (var p in points.Chunks(3))
             {
@@ -159,7 +159,7 @@ namespace Slicer.slyce
                 {
                     // Got slice line
                     var line = (Line)cut;
-                
+
                     if (polies.Count > 0)
                     {
                         // Try to add it to a Polygon already
@@ -246,7 +246,7 @@ namespace Slicer.slyce
             // Simplify lines and reduce them to a minimum
             completePolygons.ForEach(p => p.CleanLines());
 
-            // Check for containement and flag holes
+            // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)
             {
                 for (int j = 0; j < completePolygons.Count; j++)

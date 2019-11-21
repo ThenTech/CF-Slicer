@@ -81,19 +81,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="slyce\Constructs\2D\Connection.cs" />
+    <Compile Include="slyce\Constructs\2D\ConnectionType.cs" />
+    <Compile Include="slyce\Constructs\2D\InfillType.cs" />
     <Compile Include="slyce\Constructs\2D\Polygon2D.cs" />
     <Compile Include="slyce\Constructs\2D\Line.cs" />
     <Compile Include="slyce\Constructs\2D\Point.cs" />
     <Compile Include="slyce\Constructs\2D\Shape2D.cs" />
-    <Compile Include="slyce\Constructs\2D\Triangle.cs" />
     <Compile Include="slyce\Constructs\Constructs.cs" />
-    <Compile Include="slyce\Constructs\Node.cs" />
-    <Compile Include="slyce\Constructs\Plane.cs" />
-    <Compile Include="slyce\Constructs\Polygon.cs" />
+    <Compile Include="slyce\Constructs\3D\Polygon3D.cs" />
     <Compile Include="slyce\Constructs\2D\Slice.cs" />
-    <Compile Include="slyce\Constructs\Vector.cs" />
-    <Compile Include="slyce\Constructs\Vertex.cs" />
+    <Compile Include="slyce\Constructs\3D\Vector.cs" />
+    <Compile Include="slyce\Constructs\3D\Vertex.cs" />
     <Compile Include="slyce\GCode\Commands\G\ControlledArcMoveClockwise.cs" />
     <Compile Include="slyce\GCode\Commands\G\ControlledArcMoveCounterClockwise.cs" />
     <Compile Include="slyce\GCode\Commands\G\Dwell.cs" />

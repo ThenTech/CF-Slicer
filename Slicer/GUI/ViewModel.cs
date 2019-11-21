@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Controls;
 using System.Windows;
+using Slicer.slyce.Constructs;
 
 namespace Slicer.GUI
 {
@@ -159,7 +160,7 @@ namespace Slicer.GUI
             }
         }
         
-        int _NumberOfShells = 5;
+        int _NumberOfShells = 3;
         public int NumberOfShells
         {
             get { return _NumberOfShells; }
@@ -335,6 +336,8 @@ namespace Slicer.GUI
             }
         }
 
+        public InfillType UseInfill { get; set; } = InfillType.SQUARE;
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -429,6 +432,7 @@ namespace Slicer.GUI
             }
             else if (propertyName == "NumberOfShells")
             {
+                _NumberOfShells = Math.Max(1, NumberOfShells);
                 ShellThickness = NozzleDiameter * NumberOfShells;
             }
             else if (propertyName == "PreviewStrokeThickness" || propertyName == "PreviewArrowThickness")

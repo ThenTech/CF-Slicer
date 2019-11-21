@@ -1,5 +1,4 @@
-﻿using Slicer.slyce.Constructs._2D;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,35 +6,22 @@ using System.Threading.Tasks;
 
 namespace Slicer.slyce.Constructs
 {
-    public class Polygon
+    public class Polygon3D
     {
         public Vertex[] Vertices { get; private set; }
-        public object Shared     { get; private set; }
-        public Plane Plane       { get; private set; }
 
-        public Polygon(Vertex[] vertices, object shared = null)
+        public Polygon3D(Vertex[] vertices)
         {
             Vertices = vertices;
-            Shared = shared;
-            Plane = Plane.FromPoints(vertices[0].Pos, vertices[1].Pos, vertices[2].Pos);
         }
 
-        public Polygon Clone()
+        public Polygon3D Clone()
         {
             var vertices = Vertices.Select(v => v.Clone()).ToArray();
-            return new Polygon(vertices, Shared);
-        }
-        
-        public void Flip()
-        {
-            var vertices = Vertices.Reverse();
-            vertices.ToList().ForEach(v => v.Flip());
-
-            Vertices = vertices.ToArray();
-            Plane.Flip();
+            return new Polygon3D(vertices);
         }
 
-        public Shape2D CutAtZ(double z)
+        public IShape2D CutAtZ(double z)
         {
             Line slice_line = null;
 

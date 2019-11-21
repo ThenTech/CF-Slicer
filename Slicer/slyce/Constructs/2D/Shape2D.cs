@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Slicer.slyce.Constructs._2D
+﻿namespace Slicer.slyce.Constructs
 {
-    public interface Shape2D
+    public interface IShape2D
     {
     }
 }

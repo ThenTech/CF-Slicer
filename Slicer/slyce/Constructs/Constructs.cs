@@ -5,7 +5,6 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using ClipperLib;
 using Slicer.slyce.Constructs;
-using Slicer.slyce.Constructs._2D;
 
 namespace Slicer.slyce
 {
@@ -31,14 +30,14 @@ namespace Slicer.slyce
 
     public class Construct
     {
-        public Polygon[] Polygons { get; private set; }
+        public Polygon3D[] Polygons { get; private set; }
 
         public Construct()
         {
 
         }
 
-        public static Construct Create(Polygon[] polygons)
+        public static Construct Create(Polygon3D[] polygons)
         {
             var obj = new Construct()
             {
@@ -47,14 +46,9 @@ namespace Slicer.slyce
             return obj;
         }
 
-        public static Slice Create(List<Polygon2D> polygons, double z)
-        {
-            return new Slice(polygons, z);
-        }
-
         public static Construct Create(MeshGeometry3D source, Transform3D transform)
         {
-            var polies = new List<Polygon>();
+            var polies = new List<Polygon3D>();
 
             // Apply transfomation to all triangles
             var matr = transform.Value;
@@ -80,7 +74,7 @@ namespace Slicer.slyce
                     triangle.Add(new Vertex(t.Item1, t.Item2));
                 }
 
-                polies.Add(new Polygon(triangle.ToArray()));
+                polies.Add(new Polygon3D(triangle.ToArray()));
             }
 
             return Construct.Create(polies.ToArray());
@@ -119,34 +113,6 @@ namespace Slicer.slyce
             return obj;
         }
 
-        public Construct Union(Construct other)
-        {
-            var a = new Node(Clone().Polygons);
-            var b = new Node(other.Clone().Polygons);
-            a.ClipTo(b);
-            b.ClipTo(a);
-            b.Invert();
-            b.ClipTo(a);
-            b.Invert();
-            a.Build(b.AllPolygons());
-            return Construct.Create(a.AllPolygons());
-        }
-
-        public Construct Subtract(Construct other)
-        {
-            var a = new Node(Clone().Polygons);
-            var b = new Node(other.Clone().Polygons);
-            a.Invert();
-            a.ClipTo(b);
-            b.ClipTo(a);
-            b.Invert();
-            b.ClipTo(a);
-            b.Invert();
-            a.Build(b.AllPolygons());
-            a.Invert();
-            return Construct.Create(a.AllPolygons());
-        }
-
         public Slice Slice(double slice_z_height, double perSlice)
         {
             var polies = new List<Polygon2D>();
@@ -167,7 +133,7 @@ namespace Slicer.slyce
                         foreach (var po in polies)
                         {
                             var connectType = po.CanConnect(line);
-                            if (connectType != Connection.NOT)
+                            if (connectType != ConnectionType.NOT)
                             {
                                 wasConnected = true;
                                 po.AddLine(line, connectType);
@@ -185,7 +151,7 @@ namespace Slicer.slyce
                         polies.Add(new Polygon2D(line));
                     }
                 }
-                else if(cut != null && cut.GetType() == typeof(Polygon2D))
+                else if (cut != null && cut.GetType() == typeof(Polygon2D))
                 {
                     // Got polygon surface
                     Polygon2D polygon = (Polygon2D)cut;
@@ -273,27 +239,6 @@ namespace Slicer.slyce
             }
 
             return new Slice(completePolygons, slice_z_height);
-        }
-
-        public Construct Intersect(Construct other)
-        {
-            var a = new Node(Clone().Polygons);
-            var b = new Node(other.Clone().Polygons);
-            a.Invert();
-            b.ClipTo(a);
-            b.Invert();
-            a.ClipTo(b);
-            b.ClipTo(a);
-            a.Build(b.AllPolygons());
-            a.Invert();
-            return Construct.Create(a.AllPolygons());
-        }
-
-        public Construct Inverse()
-        {
-            var obj = this.Clone();
-            obj.Polygons.ToList().ForEach(p => p.Flip());
-            return obj;
         }
     }
 }

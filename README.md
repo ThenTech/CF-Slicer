@@ -8,7 +8,8 @@
 - [x] Basic GUI to go through slices step by step 
 - [x] (+ render all paths in colors)
 - [x] Basic GUI for configuring essential parameters e.g. layer height, nozzle diameter, number of shells,…
-- [ ] Support for Shells + infill (basic e.g. rectangular) + roofs/floors
+- [x] Support for Shells + infill (basic e.g. rectangular) 
+- [ ] (+ roofs/floors)
 - [x] Models can have holes!
 - [ ] Support generation (basic zig-zag structure)
 - [ ] Optimize for print quality (not speed)
@@ -30,8 +31,8 @@
 - [x] **[Deadline 14/11]** Generate g-code for a perimeter of a single slice 
 - [ ] And try 3D printing
 - [x] Extend data structure to support holes in object/polygon
-- [ ] Generate second shell
-- [ ] Generate basic rectangular infill structure (line per line intersection between grid and
+- [x] Generate second shell
+- [x] Generate basic rectangular infill structure (line per line intersection between grid and
   polygon slices)
 - [ ] **[Deadline 7/12]** Extend g-code generation and 3D print simple object that does not require support 
   structure
@@ -44,7 +45,7 @@
 
 - [x] Scale slider naar 1 dim ==> 1.0 == 1 mm
 - [ ] ~~Sliders met textfield voor manual input~~ (of sliders weg en enkel [real scale; percentage])
-- [ ] Clipper (polygon intersection etc)?
+- [x] Clipper (polygon intersection etc)?
 - [x] 2de viewport voor 1 slice te previewen => met slider voor slice te selecteren
 - [x] Slice preview met kleuraanduiding in object of bovenkant object wegnemen om slice te zien
 - [x] Nozzle thickness parameter

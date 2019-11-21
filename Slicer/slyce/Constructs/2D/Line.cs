@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-namespace Slicer.slyce.Constructs._2D
+namespace Slicer.slyce.Constructs
 {
-    public class Line : IEquatable<Line>, Shape2D
+    public class Line : IEquatable<Line>, IShape2D
     {
         public static readonly Brush BrushContour = Brushes.Black;
         public static readonly Brush BrushHole    = Brushes.Blue;
@@ -43,6 +43,39 @@ namespace Slicer.slyce.Constructs._2D
             points.Add(EndPoint);
         }
 
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+                return false;
+
+            var l = (Line)obj;
+            return EqualityComparer<Point>.Default.Equals(this.StartPoint, l.StartPoint)
+                && EqualityComparer<Point>.Default.Equals(this.EndPoint, l.EndPoint);
+        }
+
+        public bool Equals(Line obj)
+        {
+            return this.Equals((object)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1140990155;
+            hashCode = hashCode * -1521134295 + EqualityComparer<Point>.Default.GetHashCode(this.StartPoint);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Point>.Default.GetHashCode(this.EndPoint);
+            return hashCode;
+        }
+
+        public static bool operator ==(Line line1, Line line2)
+        {
+            return EqualityComparer<Line>.Default.Equals(line1, line2);
+        }
+
+        public static bool operator !=(Line line1, Line line2)
+        {
+            return !(line1 == line2);
+        }
+
         public override string ToString()
         {
             return StartPoint + " -> " + EndPoint;
@@ -76,22 +109,9 @@ namespace Slicer.slyce.Constructs._2D
             return l2.EndPoint.Equals(this.StartPoint);
         }
 
-        public override bool Equals(object obj)
-        {
-            var l = (Line)obj;
-            return l.StartPoint.Equals(this.StartPoint) && l.EndPoint.Equals(this.EndPoint);
-        }
-
         public Line GetConnection(Line line2)
         {
             return new Line(this.EndPoint, line2.StartPoint);
-        }
-
-        public bool Equals(Line other)
-        {
-            return other != null &&
-                   EqualityComparer<Point>.Default.Equals(this.StartPoint, other.StartPoint) &&
-                   EqualityComparer<Point>.Default.Equals(this.EndPoint, other.EndPoint);
         }
 
         public bool CanConnect(Line line)
@@ -100,24 +120,6 @@ namespace Slicer.slyce.Constructs._2D
                 || this.StartPoint.Equals(line.EndPoint) 
                 || this.EndPoint.Equals(line.StartPoint) 
                 || this.EndPoint.Equals(line.EndPoint);
-        }
-
-        public override int GetHashCode()
-        {
-            var hashCode = 1140990155;
-            hashCode = hashCode * -1521134295 + EqualityComparer<Point>.Default.GetHashCode(this.StartPoint);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Point>.Default.GetHashCode(this.EndPoint);
-            return hashCode;
-        }
-
-        public static bool operator ==(Line line1, Line line2)
-        {
-            return EqualityComparer<Line>.Default.Equals(line1, line2);
-        }
-
-        public static bool operator !=(Line line1, Line line2)
-        {
-            return !(line1 == line2);
         }
 
         public double GetLength()

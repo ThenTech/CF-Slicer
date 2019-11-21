@@ -1,12 +1,16 @@
-﻿using System.Windows.Media.Media3D;
+﻿using System;
+using System.Windows.Media.Media3D;
 
 namespace Slicer.slyce.Constructs
 {
     /*
      *  Vector3D adapter. 
      */
-    public class Vector
+    public class Vector : IEquatable<Vector>
     {
+        // Vector equality tolerance
+        public static readonly double EPSILON = 1e-6;
+
         public static Vector Backward { get { return new Vector(0, 0, 1); } }
         public static Vector Down     { get { return new Vector(0, -1, 0); } }
         public static Vector Forward  { get { return new Vector(0, 0, -1); } }
@@ -19,20 +23,20 @@ namespace Slicer.slyce.Constructs
         public static Vector Up       { get { return new Vector(0, 1, 0); } }
         public static Vector Zero     { get { return new Vector(0, 0, 0); } }
 
-        private Vector3D vec;
+        public double X { get; private set; }
+        public double Y { get; private set; }
+        public double Z { get; private set; }
 
-        public double X { get { return vec.X; } private set { vec.X = value; } }
-        public double Y { get { return vec.Y; } private set { vec.Y = value; } }
-        public double Z { get { return vec.Z; } private set { vec.Z = value; } }
-
-        public Vector(Vector3D v)  : this(v.X, v.Y, v.Z) { }
+        public Vector(Vector3D v) : this(v.X, v.Y, v.Z) { }
         public Vector(Point3D v)   : this(v.X, v.Y, v.Z) { }
         public Vector(Vector v)    : this(v.X, v.Y, v.Z) { }
-        public Vector(_2D.Point v) : this(v.X, v.Y, 0) { }
+        public Vector(Point v) : this(v.X, v.Y, 0) { }
 
         public Vector(double x, double y, double z)
         {
-            this.vec = new Vector3D(x, y, z);
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
         }
 
         public Vector Clone()
@@ -40,70 +44,21 @@ namespace Slicer.slyce.Constructs
             return new Vector(this);
         }
 
-        public Vector Negated()
-        {
-            var v = this.Clone();
-            v.vec.Negate();
-            return v;
-        }
-
-        public Vector Plus(Vector a)
-        {
-            return new Vector(this.vec + a.vec);
-        }
-
-        public Vector Minus(Vector a)
-        {
-            return new Vector(this.vec - a.vec);
-        }
-
-        public Vector Times(double a)
-        {
-            return new Vector(this.vec * a);
-        }
-
-        public Vector DividedBy(double a)
-        {
-            return new Vector(this.vec / a);
-        }
-
-        public double Dot(Vector a)
-        {
-            return Vector3D.DotProduct(this.vec, a.vec);
-        }
-
-        public Vector Lerp(Vector a, double t)
-        {
-            return Plus(a.Minus(this).Times(t));
-        }
-
-        public double Length()
-        {
-            return this.vec.Length;
-        }
-
-        public Vector Unit()
-        {
-            return DividedBy(Length());
-        }
-
-        public Vector Cross(Vector a)
-        {
-            return new Vector(Vector3D.CrossProduct(this.vec, a.vec));
-        }
-
         public override string ToString()
         {
             return string.Format("({0},{1},{2})", X, Y, Z);
         }
 
-        public static bool operator !=(Vector v1, Vector v2)
-        {
-            return v1.vec != v2.vec;
-        }
         public static bool operator ==(Vector v1, Vector v2)
         {
-            return v1.vec == v2.vec;
+            return Math.Abs(v1.X - v2.X) < EPSILON
+                && Math.Abs(v1.Y - v2.Y) < EPSILON
+                && Math.Abs(v1.Y - v2.Y) < EPSILON;
+        }
+
+        public static bool operator !=(Vector v1, Vector v2)
+        {
+            return !(v1 == v2);
         }
 
         public override bool Equals(object obj)
@@ -114,9 +69,18 @@ namespace Slicer.slyce.Constructs
             return this == (Vector)obj;
         }
 
+        public bool Equals(Vector obj)
+        {
+            return this.Equals((object) obj);
+        }
+
         public override int GetHashCode()
         {
-            return this.vec.GetHashCode();
+            var hashCode = -307843816;
+            hashCode = hashCode * -1521134295 + this.X.GetHashCode();
+            hashCode = hashCode * -1521134295 + this.Y.GetHashCode();
+            hashCode = hashCode * -1521134295 + this.Z.GetHashCode();
+            return hashCode;
         }
 
         public Point3D ToPoint3D()

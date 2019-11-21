@@ -7,12 +7,11 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using Slicer.GUI;
-using Slicer.slyce.Constructs._2D;
+using Slicer.slyce.Constructs;
 using ClipperLib;
 using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
 using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
-using System.Diagnostics;
-using System.Threading;
+
 
 namespace Slicer.slyce
 {
@@ -42,14 +41,12 @@ namespace Slicer.slyce
                 this.data.SliceShapes = this.Slice.Shapes;
                 this.data.SliceCanvas.Children.Clear();
                 this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
-                Console.WriteLine("Retreived slice " + this.data.CurrentSliceIdx + " from cache.");
+                //Console.WriteLine("Retreived slice " + this.data.CurrentSliceIdx + " from cache.");
             }
             else
             {
                 this.BuildSlice();
-                this.Slice.Erode(data.NozzleThickness / 2.0);
-
-                Console.WriteLine("Created new slice for " + this.data.CurrentSliceIdx + ".");
+                //Console.WriteLine("Created new slice for " + this.data.CurrentSliceIdx + ".");
             }
         }
 
@@ -100,15 +97,39 @@ namespace Slicer.slyce
 
             Construct obj = Construct.Create(this.Original, transform);
 
+            // Genarate infills
+            var infill_struct = Polygon2D.GenerateInfill(
+                bounds.X, bounds.Y,
+                bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
+                this.data.NozzleDiameter, this.data.UseInfill
+            );
+
+            var surface_struct = Polygon2D.GenerateInfill(
+                bounds.X, bounds.Y,
+                bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
+                this.data.NozzleDiameter, InfillType.SURFACE
+            );
+
+            var surface_struct_alt = Polygon2D.GenerateInfill(
+                bounds.X, bounds.Y,
+                bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
+                this.data.NozzleDiameter, InfillType.SURFACE_ALT
+            );
+
+            // Execute slicing
             await Task.Run(() =>
             {
                 for (int i = 0; i < this.data.MaxSliceIdx + 1; i++)
                 {
+                    // Construct slice
                     this.Slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                            data.NozzleThickness);
                     this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
                     this.Slice.Erode(data.NozzleThickness / 2.0);
+                    this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness);
+                    this.Slice.AddInfill(infill_struct);
 
+                    // Add shapes
                     var min = Math.Min(bounds.X, bounds.Y);
                     var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
                     var size = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
@@ -192,8 +213,20 @@ namespace Slicer.slyce
             //Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
             //Construct sli = obj.Intersect(box);
 
+            // Genarate infills
+            var infill_struct = Polygon2D.GenerateInfill(
+                bounds.X, bounds.Y,
+                bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
+                this.data.NozzleDiameter, this.data.UseInfill
+            );
+
+            // Construct slice
             this.Slice = obj.Slice(bounds.Z + data.CurrentSliceIdx * data.NozzleThickness, 
                                    data.NozzleThickness);
+            this.Slice.SetNozzleHeight(data.CurrentSliceIdx * data.NozzleThickness);
+            this.Slice.Erode(data.NozzleThickness / 2.0);
+            this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness);
+            this.Slice.AddInfill(infill_struct);
 
             var min = Math.Min(bounds.X, bounds.Y);
             var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);

@@ -11,7 +11,7 @@ using Paths = System.Collections.Generic.List<System.Collections.Generic.List<Cl
 
 
 using Slicer.slyce.GCode.Commands;
-using Slicer.slyce.Constructs._2D;
+using Slicer.slyce.Constructs;
 
 
 namespace Slicer.slyce.GCode

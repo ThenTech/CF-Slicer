@@ -22,6 +22,7 @@ using System.Windows.Shapes;
 using HelixToolkit.Wpf;
 using Microsoft.Win32;
 using Slicer.GUI;
+using Slicer.slyce.Constructs;
 using Path = System.IO.Path;
 
 namespace Slicer
@@ -51,7 +52,32 @@ namespace Slicer
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            CommandBindings.Add(new CommandBinding(new RoutedCommand() {
+                InputGestures = { new KeyGesture(Key.O, ModifierKeys.Control) }
+            }, Open_Click));
 
+            CommandBindings.Add(new CommandBinding(new RoutedCommand()
+            {
+                InputGestures = { new KeyGesture(Key.S, ModifierKeys.Control) }
+            }, Export_Click));
+
+            CommandBindings.Add(new CommandBinding(new RoutedCommand()
+            {
+                InputGestures = { new KeyGesture(Key.P, ModifierKeys.Control) }
+            }, ExportGCode_Click));
+
+            CommandBindings.Add(new CommandBinding(new RoutedCommand()
+            {
+                InputGestures = { new KeyGesture(Key.R, ModifierKeys.Control) }
+            }, ResetCamera_Click));
+            
+            CommandBindings.Add(new CommandBinding(new RoutedCommand()
+            {
+                InputGestures = { new KeyGesture(Key.Z, ModifierKeys.Control) }
+            }, Reset_Click));
+
+            cboxInfillType.ItemsSource = Enum.GetValues(typeof(InfillType)).Cast<InfillType>();
+            cboxInfillType.SelectedItem = InfillType.SQUARE;
         }
 
         private void Load(string p)

@@ -5,10 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Shape = System.Windows.Shapes.Shape;
 
-using Slicer.slyce.GCode;
-using System.Windows.Media;
-
-namespace Slicer.slyce.Constructs._2D
+namespace Slicer.slyce.Constructs
 {
     public class Slice
     {
@@ -87,9 +84,72 @@ namespace Slicer.slyce.Constructs._2D
                 else // if (poly.IsHole)
                 {
                     // Expand outwards == inwards into object
-                    poly.Offset(delta, miter_limit);
+                    poly.Offset(+delta, miter_limit);
                 }
             }
+        }
+
+        public void AddShells(int nShells, double thickness)
+        {
+            // WARNING Does not take into account if shell poly intersects with other parts of the layer...
+            foreach (var poly in this.Polygons)
+            {
+                // Note: inner most shells will be removed for infil, so add one more.
+                for (int shell = 1; shell <= nShells /* -1 */; shell++)
+                {
+                    var contour = poly.Clone();
+                    contour.Shell = shell;
+
+                    if (poly.IsContour)
+                    {
+                        contour.Offset(-thickness * (double)shell, 10);
+                    }
+                    else
+                    {
+                        contour.Offset(+thickness * (double)shell, 10);
+                    }
+
+                    this.FillPolygons.Add(contour);
+                }
+            }
+        }
+
+        public void AddInfill(List<Polygon2D> infill_struct)
+        {
+            // Intersect infill_struct with contours and subtract holes from it.
+            var infill = infill_struct.Select(p => p.Clone());
+
+            var tmp_fill = new List<Polygon2D>();
+
+            IEnumerable<Polygon2D> inner_shell = null;
+            IEnumerable<Polygon2D> other_shell = null;
+
+            if (this.FillPolygons.Count > 0)
+            {
+                // Has shell
+                var most_inner_shell = this.FillPolygons.Max(p => p.Shell);
+                inner_shell = this.FillPolygons.Where(p => p.Shell == most_inner_shell);
+                other_shell = this.FillPolygons.Where(p => p.Shell < most_inner_shell);
+            }
+            else
+            {
+                inner_shell = this.Polygons;
+                other_shell = new List<Polygon2D>();
+            }
+
+            // Intersect each poly from infill with each one of inner shells
+            foreach (var inf in infill)
+            {
+                tmp_fill.AddRange(inf.Intersect(inner_shell));
+            }
+
+            this.FillPolygons = other_shell.ToList();
+            //tmp_fill.AddRange(inner_shell);
+            //tmp_fill = tmp_fill[0].Union(tmp_fill).ToList();
+            //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
+
+            this.FillPolygons.AddRange(tmp_fill);
+            this.FillPolygons.ForEach(p => p.CleanLines());
         }
 
         public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)

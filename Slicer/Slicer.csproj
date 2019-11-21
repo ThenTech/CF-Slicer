@@ -40,7 +40,7 @@
     <StartupObject>Slicer.App</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>pancakes.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\pancakes.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="clipper_library, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -165,10 +165,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\slycer.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="pancakes.ico" />
+    <Resource Include="Resources\pancakes.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

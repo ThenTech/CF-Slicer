@@ -72,6 +72,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -87,14 +88,14 @@
                             </MultiBinding>
                         </TextBlock.Text>
                     </TextBlock>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="X scale" Grid.Row="3"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Y scale" Grid.Row="4"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Z scale" Grid.Row="5"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="X scale" Grid.Row="3" Padding="0 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Y scale" Grid.Row="4" Padding="0 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Z scale" Grid.Row="5" Padding="0 2"/>
                     <Separator Grid.Row="6" Grid.ColumnSpan="4" Height="5"/>
 
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="X rot" Grid.Row="7"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Y rot" Grid.Row="8"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Z rot" Grid.Row="9"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="X rot" Grid.Row="7" Padding="0 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Y rot" Grid.Row="8" Padding="0 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Z rot" Grid.Row="9" Padding="0 2"/>
                     <Separator Grid.Row="10" Grid.ColumnSpan="4" Height="5"/>
 
                     <Button Content="Reset" Grid.Column="2" Grid.Row="0" Click="Reset_Click"/>
@@ -105,19 +106,19 @@
                     <Slider Name="slider5" Grid.Column="1" Grid.Row="8" Minimum="0.0" Maximum="1.0" Value="{Binding RotationY}" Margin="10 2 10 2"/>
                     <Slider Name="slider6" Grid.Column="1" Grid.Row="9" Minimum="0.0" Maximum="1.0" Value="{Binding RotationZ}" Margin="10 2 10 2"/>
 
-                    <TextBox Foreground="Black" Text="{Binding ScaleX, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="3" Width="50" />
-                    <TextBox Foreground="Black" Text="{Binding ScaleY, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="4"/>
-                    <TextBox Foreground="Black" Text="{Binding ScaleZ, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="5"/>
-                    <TextBox Foreground="Black" Text="{Binding RotationX, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="7" Width="50" />
-                    <TextBox Foreground="Black" Text="{Binding RotationY, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="8"/>
-                    <TextBox Foreground="Black" Text="{Binding RotationZ, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="9"/>
+                    <TextBox Foreground="Black" Text="{Binding ScaleX, StringFormat={}{0:N4}}" Grid.Column="2" Grid.Row="3" Width="50" />
+                    <TextBox Foreground="Black" Text="{Binding ScaleY, StringFormat={}{0:N4}}" Grid.Column="2" Grid.Row="4"/>
+                    <TextBox Foreground="Black" Text="{Binding ScaleZ, StringFormat={}{0:N4}}" Grid.Column="2" Grid.Row="5"/>
+                    <TextBox Foreground="Black" Text="{Binding RotationX, StringFormat={}{0:N4}}" Grid.Column="2" Grid.Row="7" Width="50" />
+                    <TextBox Foreground="Black" Text="{Binding RotationY, StringFormat={}{0:N4}}" Grid.Column="2" Grid.Row="8"/>
+                    <TextBox Foreground="Black" Text="{Binding RotationZ, StringFormat={}{0:N4}}" Grid.Column="2" Grid.Row="9"/>
 
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Slicing settings" Grid.Row="11" Grid.ColumnSpan="3" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Nozzle thickness (mm)" Grid.Row="12" Grid.ColumnSpan="2"/>
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Nozzle diameter (mm)" Grid.Row="13" Grid.ColumnSpan="2"/>
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Filament diameter (mm)" Grid.Row="14" Grid.ColumnSpan="2"/>
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Number of Shells" Grid.Row="15" Grid.ColumnSpan="2"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Current slice layer" Grid.Row="17" Grid.ColumnSpan="2" Margin="0 5 0 0"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Current slice layer" Grid.Row="18" Grid.ColumnSpan="2" Margin="0 5 0 0"/>
 
                     <TextBox Foreground="Black" Text="{Binding NozzleThickness, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="12" />
                     <TextBox Foreground="Black" Text="{Binding NozzleDiameter, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="13" />
@@ -128,7 +129,11 @@
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Infill type" Grid.Row="16" Height="22" Margin="0 5 0 0"/>
                     <ComboBox x:Name="cboxInfillType" Grid.Row="16" Grid.Column="1" Grid.ColumnSpan="2" SelectedItem="{Binding UseInfill}" VerticalAlignment="Center"/>
 
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Grid.Column="1" Grid.Row="17" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0 5 0 0">
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Infill size" Grid.Row="17" Height="22" Padding="0 2"/>
+                    <TextBox Foreground="Black" Text="{Binding InfillSpacing, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="17"/>
+                    <Slider Name="slider9" Grid.Column="1" Grid.Row="17" Minimum="1" Maximum="20" Value="{Binding InfillSpacing}" Margin="10 2 10 2"/>
+                    
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Grid.Column="1" Grid.Row="18" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0 5 0 0">
                         <TextBlock.Text>
                             <MultiBinding StringFormat="{}{0} of {1}">
                                 <Binding Path="CurrentSliceIdx" />
@@ -137,7 +142,7 @@
                         </TextBlock.Text>
                     </TextBlock>
 
-                    <Grid Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid Grid.Row="19" Grid.Column="0" Grid.ColumnSpan="3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -176,24 +181,24 @@
                         </Button>
                     </Grid>
 
-                    <Separator Grid.Row="19" Grid.ColumnSpan="4" Height="5"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Preview settings" Grid.Row="20" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
+                    <Separator Grid.Row="20" Grid.ColumnSpan="4" Height="5"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Preview settings" Grid.Row="21" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
 
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Stroke thickness" Grid.Row="21" Height="22"/>
-                    <Slider Name="slider11" Grid.Column="1" Grid.Row="21" Grid.ColumnSpan="2" Minimum="0.1" Maximum="5" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Stroke thickness" Grid.Row="22" Height="22"/>
+                    <Slider Name="slider11" Grid.Column="1" Grid.Row="22" Grid.ColumnSpan="2" Minimum="0.1" Maximum="5" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
 
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Arrow size" Grid.Row="22" Height="22"/>
-                    <Slider Name="slider12" Grid.Column="1" Grid.Row="22" Grid.ColumnSpan="2" Minimum="0" Maximum="6" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Arrow size" Grid.Row="23" Height="22"/>
+                    <Slider Name="slider12" Grid.Column="1" Grid.Row="23" Grid.ColumnSpan="2" Minimum="0" Maximum="6" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
 
 
 
-                    <ProgressBar Grid.Row="24"  Grid.ColumnSpan="3" 
+                    <ProgressBar Grid.Row="25"  Grid.ColumnSpan="3" 
                                  Height="30" Panel.ZIndex="10"
                                  Visibility="{Binding SlicingProgressVisible}"
                                  Value="{Binding SlicingProgressValue}"
                                  Minimum="0"
                                  Maximum="{Binding MaxSliceIdx}"/>
-                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="24" Height="30" Click="Slice_Click"/>
+                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="25" Height="30" Click="Slice_Click"/>
                 </Grid>
             </DockPanel>
 

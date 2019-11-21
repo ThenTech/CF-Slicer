@@ -15,7 +15,7 @@
 - [ ] Optimize for print quality (not speed)
 
 ## Possible extras
-- [ ] Other types of infill
+- [x] Other types of infill
 - [ ] Adaptive slicing
 - [ ] Support for bridges (not requiring support) => nozzle cannot start in a void
 - [ ] Optimizing paths for speed
@@ -40,12 +40,12 @@
 - [ ] Calculate regions + generate paths (+ g-code) for floors and roofs
 - [ ] Try 3D printing a closed object (roofs + floors) that does not require support
 - [ ] Features + algorithms for support structure generation
-- [ ] Implement all other minimal requirements (e.g. basic UI controls for settings)
+- [ ] **[Deadline 6/01]** Implement all other minimal requirements (e.g. basic UI controls for settings)
 
 ## TODO
 
 - [x] Scale slider naar 1 dim ==> 1.0 == 1 mm
-- [ ] ~~Sliders met textfield voor manual input~~ (of sliders weg en enkel [real scale; percentage])
+- [x] ~~Sliders met textfield voor manual input~~ (of sliders weg en enkel [real scale; percentage])
 - [x] Clipper (polygon intersection etc)?
 - [x] 2de viewport voor 1 slice te previewen => met slider voor slice te selecteren
 - [x] Slice preview met kleuraanduiding in object of bovenkant object wegnemen om slice te zien
@@ -56,3 +56,8 @@
 - [x] Slice opstellen door triangle en plane intersection ipv 3D intersection
 - [x] Add ambient light ~~
 - [x] Basic SliceModel class with slice plane and sliced model preview
+- [ ] Report schrijven
+- [ ] Surface herkenning
+- [ ] Surface invullen met patroon
+- [ ] Overhang herkenning
+- [ ] Support toevoegen voor overgang

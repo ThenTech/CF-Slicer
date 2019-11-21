@@ -2,6 +2,6 @@
 {
     public enum InfillType
     {
-        NONE, SURFACE, SURFACE_ALT, SQUARE
+        NONE, SINGLE, SINGLE_ROTATED, SQUARE, DIAMOND, TRIANGLES, TRI_HEXAGONS
     }
 }

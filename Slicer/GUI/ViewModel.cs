@@ -326,6 +326,16 @@ namespace Slicer.GUI
 
         public InfillType UseInfill { get; set; } = InfillType.SQUARE;
 
+        private double _InfillSpacing = 7;
+        public double InfillSpacing {
+            get { return _InfillSpacing; }
+            set
+            {
+                _InfillSpacing = value;
+                OnPropertyChanged("InfillSpacing");
+            }
+        } 
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;

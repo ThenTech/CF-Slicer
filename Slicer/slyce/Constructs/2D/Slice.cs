@@ -145,6 +145,7 @@ namespace Slicer.slyce.Constructs
 
             this.FillPolygons = other_shell.ToList();
             //tmp_fill.AddRange(inner_shell);
+            //tmp_fill.AddRange(infill);  // Force draw infill
             //tmp_fill = tmp_fill[0].Union(tmp_fill).ToList();
             //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
 

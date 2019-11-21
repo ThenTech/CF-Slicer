@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace Slicer.slyce.Constructs
 {
@@ -234,11 +235,19 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        public Polygon3D ToPolygon3D()
+        public Polygon2D Transform(Matrix tranformation)
         {
-            // TODO? Convert to triangles?
-            return null;
+            // Convert to Windows points
+            var points = this.IntPoints.Select(po => new System.Windows.Point(po.X / INT_POINT_FACTOR, po.Y / INT_POINT_FACTOR)).ToArray();
+
+            // Apply transformation
+            tranformation.Transform(points);
+
+            // Converty back to IntPoints
+            return new Polygon2D(points.Select(po => new IntPoint((long)(po.X * INT_POINT_FACTOR),
+                                                                  (long)(po.Y * INT_POINT_FACTOR))).ToList());
         }
+
 
         //*******************************************************************************
         // Clipper utils
@@ -409,7 +418,8 @@ namespace Slicer.slyce.Constructs
 
         // (X, Y) -> (X2, Y2) is bounding box corners
         // linethickness == one print line 
-        public static List<Polygon2D> GenerateInfill(double X, double Y, double X2, double Y2, double linethickness, InfillType type = InfillType.SQUARE)
+        // pattern_distribution == Every n printlines, draw pattern
+        public static List<Polygon2D> GenerateInfill(double X, double Y, double X2, double Y2, double linethickness, double pattern_spacing = 7.0, InfillType type = InfillType.SQUARE)
         {
             // ?? Single poly with unconnected lines, or List of polys consisting of 1 line?
             List<Polygon2D> polies = new List<Polygon2D>();
@@ -421,61 +431,182 @@ namespace Slicer.slyce.Constructs
             {
                 case InfillType.NONE:
                     break;
-                case InfillType.SURFACE:
-                    // TODO Surface infill zigzag in one direction
-                    break;
-                case InfillType.SURFACE_ALT:
-                    // TODO Surface infill zigzag in other direction
-                    break;
+                case InfillType.SINGLE:
+                    {
+                        // Generate infill rectangles, every length distance, in both X and Y.
+                        var x_length = linethickness * pattern_spacing;
+                        var y_length = x_length;
+
+                        // Calculate final length of segments to center them in slice
+                        var x_amount = (int)Math.Ceiling((size_x - 2.0 * x_length) / x_length);
+                        var x_total_length = (x_amount % 2 == 0 ? x_amount - 1 : x_amount) * x_length;
+
+                        var y_amount = (int)Math.Ceiling((size_y - 2.0 * y_length) / y_length);
+                        var y_total_length = (y_amount % 2 == 0 ? y_amount - 1 : y_amount) * y_length;
+
+                        // Create pattern going in x-dir  Y + y_offset 
+                        for (double offset = Y + ((size_y - y_total_length) / 2.0); offset <= Y2 - y_length;)
+                        {
+                            var next_y = offset + y_length;
+                            var poly = new Polygon2D();
+
+                            poly.AddLine(new Line(X  - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(X2 + x_length, offset, X2 + x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(X2 + x_length, next_y, X  - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(X  - x_length, next_y, X  - x_length, offset), ConnectionType.LAST);
+
+                            polies.Add(poly);
+
+                            offset = next_y + y_length;
+                        }
+
+                        break;
+                    }
+                case InfillType.SINGLE_ROTATED:
+                    {
+                        // TODO Surface infill zigzag in other direction
+
+                        // Or just lines
+                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var XStart   = X  - diagonal / 2.0;
+                        var XEnd     = X2 + diagonal / 2.0;
+                        var Ystart   = Y  - diagonal / 2.0;
+                        var YEnd     = Y2 + diagonal / 2.0;
+
+                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
+
+                        // Transform pattern and add to infill
+                        Matrix matr = Matrix.Identity;
+                        matr.RotateAt(90, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
+                    }
                 case InfillType.SQUARE:
-                    // Generate infill rectangles, every length distance, in both X and Y.
-                    var length = 7;
-                    var x_length = linethickness * length;
-                    var y_length = x_length;
-
-                    // Calculate final length of segments to center them in slice
-                    var x_amount = (int)Math.Ceiling((size_x - 2.0 * x_length) / x_length);
-                    var x_total_length = (x_amount % 2 == 0 ? x_amount - 1 : x_amount) * x_length;
-
-                    var y_amount = (int)Math.Ceiling((size_y - 2.0 * y_length) / y_length);
-                    var y_total_length = (y_amount % 2 == 0 ? y_amount - 1 : y_amount) * y_length;
-
-                    double offset;
-                    
-                    // Create pattern going in x-dir  Y + y_offset 
-                    for (offset = Y + ((size_y - y_total_length) / 2.0); offset <= Y2 - y_length;)
                     {
-                        var next_y = offset + y_length;
-                        var poly = new Polygon2D();
-                        
-                        poly.AddLine(new Line(X  - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
-                        poly.AddLine(new Line(X2 + x_length, offset, X2 + x_length, next_y), ConnectionType.LAST);
-                        poly.AddLine(new Line(X2 + x_length, next_y, X  - x_length, next_y), ConnectionType.LAST);
-                        poly.AddLine(new Line(X  - x_length, next_y, X  - x_length, offset), ConnectionType.LAST);
-                        
-                        polies.Add(poly);
+                        //// Simple square pattern
+                        //polies.AddRange(Polygon2D.GenerateInfill(X, Y, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE));
+                        //polies.AddRange(Polygon2D.GenerateInfill(X, Y + (linethickness * pattern_spacing) / 2.0, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE_ROTATED));
+                        //break;
 
-                        offset = next_y + y_length;
+                        // Optimized square pattern
+                        var x_length = linethickness * pattern_spacing;
+                        var y_length = x_length;
+
+                        // Calculate final length of segments to center them in slice
+                        var x_amount = (int)Math.Ceiling((size_x - 2.0 * x_length) / x_length);
+                        var x_total_length = (x_amount % 2 == 0 ? x_amount - 1 : x_amount) * x_length;
+
+                        var y_amount = (int)Math.Ceiling((size_y - 2.0 * y_length) / y_length);
+                        var y_total_length = (y_amount % 2 == 0 ? y_amount - 1 : y_amount) * y_length;
+
+                        double offset;
+
+                        // Create pattern going in x-dir  Y + y_offset 
+                        for (offset = Y + ((size_y - y_total_length) / 2.0); offset <= Y2 - y_length;)
+                        {
+                            var next_y = offset + y_length;
+                            var poly = new Polygon2D();
+
+                            poly.AddLine(new Line(X - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(X2 + x_length, offset, X2 + x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(X2 + x_length, next_y, X - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(X - x_length, next_y, X - x_length, offset), ConnectionType.LAST);
+
+                            polies.Add(poly);
+
+                            offset = next_y + y_length;
+                        }
+
+                        // Create pattern going in y-dir
+                        for (offset = X + ((size_x - x_total_length) / 2.0); offset <= X2 - x_length;)
+                        {
+                            var next_x = offset + x_length;
+                            var poly = new Polygon2D();
+
+                            poly.AddLine(new Line(offset, Y - y_length, offset, Y2 + y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(offset, Y2 + y_length, next_x, Y2 + y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(next_x, Y2 + y_length, next_x, Y - y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(next_x, Y - y_length, offset, Y - y_length), ConnectionType.LAST);
+
+                            polies.Add(poly);
+
+                            offset = next_x + x_length;
+                        }
+
+                        break;
                     }
-
-                    // Create pattern going in y-dir
-                    for (offset = X + ((size_x - x_total_length) / 2.0); offset <= X2 - x_length;)
+                case InfillType.DIAMOND:
                     {
-                        var next_x = offset + x_length;
-                        var poly = new Polygon2D();
+                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var XStart = X  - diagonal / 2.0;
+                        var XEnd   = X2 + diagonal / 2.0;
+                        var Ystart = Y  - diagonal / 2.0;
+                        var YEnd   = Y2 + diagonal / 2.0;
 
-                        poly.AddLine(new Line(offset, Y  - y_length, offset, Y2 + y_length), ConnectionType.LAST);
-                        poly.AddLine(new Line(offset, Y2 + y_length, next_x, Y2 + y_length), ConnectionType.LAST);
-                        poly.AddLine(new Line(next_x, Y2 + y_length, next_x, Y  - y_length), ConnectionType.LAST);
-                        poly.AddLine(new Line(next_x, Y  - y_length, offset, Y  - y_length), ConnectionType.LAST);
+                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
 
-                        polies.Add(poly);
+                        // Transform pattern and add to infill
+                        Matrix matr = Matrix.Identity;
 
-                        offset = next_x + x_length;
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
                     }
+                case InfillType.TRIANGLES:
+                    {
+                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var XStart   = X  - diagonal / 2.0;
+                        var XEnd     = X2 + diagonal / 2.0;
+                        var Ystart   = Y  - diagonal / 2.0;
+                        var YEnd     = Y2 + diagonal / 2.0;
 
-                    break;
-            }
+                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
+
+                        // Transform pattern and add to infill
+                        Matrix matr = Matrix.Identity;
+
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        matr.Translate(0, (linethickness * pattern_spacing) / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
+                    }
+                case InfillType.TRI_HEXAGONS:
+                    {
+                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var XStart   = X  - diagonal / 2.0;
+                        var XEnd     = X2 + diagonal / 2.0;
+                        var Ystart   = Y  - diagonal / 2.0;
+                        var YEnd     = Y2 + diagonal / 2.0;
+
+                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
+
+                        // Transform pattern and add to infill
+                        Matrix matr = Matrix.Identity;
+
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+                        
+                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
+                    }
+                }
 
             return polies;
         }

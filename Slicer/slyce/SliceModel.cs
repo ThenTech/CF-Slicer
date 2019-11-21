@@ -101,19 +101,19 @@ namespace Slicer.slyce
             var infill_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.UseInfill
+                this.data.NozzleDiameter, this.data.InfillSpacing, this.data.UseInfill
             );
 
             var surface_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, InfillType.SURFACE
+                this.data.NozzleDiameter, this.data.NozzleDiameter, InfillType.SINGLE
             );
 
             var surface_struct_alt = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, InfillType.SURFACE_ALT
+                this.data.NozzleDiameter, this.data.NozzleDiameter, InfillType.SINGLE_ROTATED
             );
 
             // Execute slicing
@@ -127,7 +127,17 @@ namespace Slicer.slyce
                     this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
                     this.Slice.Erode(data.NozzleThickness / 2.0);
                     this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness);
-                    this.Slice.AddInfill(infill_struct);
+
+                    // Check if bottom or top
+                    if (i < this.data.NumberOfShells || i > this.data.MaxSliceIdx - this.data.NumberOfShells)
+                    {
+                        this.Slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
+                    }
+                    else
+                    {
+                        // TODO determine individual surfaces in a slice
+                        this.Slice.AddInfill(infill_struct);
+                    }
 
                     // Add shapes
                     var min = Math.Min(bounds.X, bounds.Y);
@@ -217,7 +227,7 @@ namespace Slicer.slyce
             var infill_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.UseInfill
+                this.data.NozzleDiameter, this.data.InfillSpacing, this.data.UseInfill
             );
 
             // Construct slice

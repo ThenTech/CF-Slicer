@@ -49,6 +49,12 @@ namespace Slicer
             _viewModel.TextDimensionsColour = _viewModel.TextForegroundColour;
             _viewModel.PrinterCenter = new Point3D(_viewModel.PrinterDimX / 2, _viewModel.PrinterDimY / 2, 0);
 
+            var test_location = "./../../../TestModels";
+            if (Directory.Exists(test_location))
+            {
+                _viewModel.ModelFolder = Path.GetFullPath(test_location);
+            }
+
             Loaded += MainWindow_Loaded;
         }
 

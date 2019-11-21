@@ -46,6 +46,8 @@ namespace Slicer
             _viewModel.Brush = Brushes.Yellow;
             _viewModel.SliceCanvas = canvas_slice;
             _viewModel.NumberOfShells = 3;
+            _viewModel.TextDimensionsColour = _viewModel.TextForegroundColour;
+            _viewModel.PrinterCenter = new Point3D(_viewModel.PrinterDimX / 2, _viewModel.PrinterDimY / 2, 0);
 
             Loaded += MainWindow_Loaded;
         }
@@ -254,13 +256,10 @@ namespace Slicer
             _viewModel.ScaleZ = 1.0;
             _viewModel.RotationX = 0.0;
             _viewModel.RotationY = 0.0;
-            _viewModel.RotationZ = 0.0;
-            _viewModel.PositionX = 0.0;
-            _viewModel.PositionY = 0.0;
 
             // Set to false so next call will update viewmodel
             _viewModel.ResetInProgress = false;
-            _viewModel.PositionZ = 0.0;
+            _viewModel.RotationZ = 0.0;
         }
 
 

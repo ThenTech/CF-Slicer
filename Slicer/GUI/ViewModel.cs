@@ -11,6 +11,12 @@ namespace Slicer.GUI
 {
     public class ViewModel : INotifyPropertyChanged
     {
+        public SolidColorBrush TextForegroundColour { get; } = new SolidColorBrush(Color.FromRgb(0xF0, 0xF1, 0xF2));
+        public SolidColorBrush TextErrorColour      { get; } = new SolidColorBrush(Color.FromRgb(0xFF, 0x20, 0x20));
+        public SolidColorBrush TextWarningColour    { get; } = new SolidColorBrush(Color.FromRgb(0xF7, 0x77, 0x00));
+
+        public Brush TextDimensionsColour { get; set; }
+
         Brush _Brush;
         public Brush Brush
         {
@@ -27,6 +33,21 @@ namespace Slicer.GUI
         public double DimX { get => HasModel ? this.CurrentModel.Bounds.SizeX : 0.0; }
         public double DimY { get => HasModel ? this.CurrentModel.Bounds.SizeY : 0.0; }
         public double DimZ { get => HasModel ? this.CurrentModel.Bounds.SizeZ : 0.0; }
+
+        public double PrinterDimX { get => 220; }
+        public double PrinterDimY { get => 220; }
+        public double PrinterDimZ { get => 250; }
+
+        private Point3D _PrinterCenter;
+        public Point3D PrinterCenter {
+            get {
+                return _PrinterCenter;
+            }
+            set {
+                _PrinterCenter = value;
+                OnPropertyChanged("PrinterCenter");
+            }
+        }
 
         double _ScaleX = 1;
         public double ScaleX
@@ -91,39 +112,6 @@ namespace Slicer.GUI
             {
                 _RotationZ = value;
                 OnPropertyChanged("RotationZ");
-            }
-        }
-
-        double _PositionX = 0;
-        public double PositionX
-        {
-            get { return _PositionX; }
-            set
-            {
-                _PositionX = value;
-                OnPropertyChanged("PositionX");
-            }
-        }
-
-        double _PositionY = 0;
-        public double PositionY
-        {
-            get { return _PositionY; }
-            set
-            {
-                _PositionY = value;
-                OnPropertyChanged("PositionY");
-            }
-        }
-
-        double _PositionZ = 0;
-        public double PositionZ
-        {
-            get { return _PositionZ; }
-            set
-            {
-                _PositionZ = value;
-                OnPropertyChanged("PositionZ");
             }
         }
 
@@ -352,6 +340,12 @@ namespace Slicer.GUI
                 OnPropertyChanged("DimY");
                 OnPropertyChanged("DimZ");
             }
+            else if (propertyName == "PrinterCenter")
+            {
+                OnPropertyChanged("PrinterDimX");
+                OnPropertyChanged("PrinterDimY");
+                OnPropertyChanged("PrinterDimZ");
+            }
             else if (HasModel && !ResetInProgress
                 && (propertyName == "ScaleX" || propertyName == "ScaleY" || propertyName == "ScaleZ"
                  || propertyName == "RotationX" || propertyName == "RotationY" || propertyName == "RotationZ"
@@ -398,12 +392,17 @@ namespace Slicer.GUI
                     }
                 });
 
+                CurrentModel.Transform = combined;
+
+                // Refit onto printing plane
+                var b = CurrentModel.Bounds;
+
                 // Translate (is done first)
                 combined.Children.Add(new TranslateTransform3D()
                 {
-                    OffsetX = PositionX,
-                    OffsetY = PositionY,
-                    OffsetZ = PositionZ
+                    OffsetX = (PrinterDimX - (b.SizeX)) / 2.0 - b.X,
+                    OffsetY = (PrinterDimY - (b.SizeY)) / 2.0 - b.Y,
+                    OffsetZ = 0 - b.Z,
                 });
 
                 CurrentModel.Transform = combined;
@@ -442,8 +441,21 @@ namespace Slicer.GUI
                     Slicer.RedrawAllSlices();
                 }
             }
-        }                              
+            else if (propertyName == "DimX" || propertyName == "DimY" || propertyName == "DimZ")
+            {
+                if (DimX >= PrinterDimX || DimY >= PrinterDimY || DimZ >= PrinterDimZ)
+                {
+                    TextDimensionsColour = this.TextErrorColour;
+                }
+                else
+                {
+                    TextDimensionsColour = this.TextForegroundColour;
+                }
 
+                OnPropertyChanged("TextDimensionsColour");
+            }
+        }                              
+                                     
         public event PropertyChangedEventHandler PropertyChanged;
     }
 }

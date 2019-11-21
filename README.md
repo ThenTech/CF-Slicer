@@ -20,7 +20,8 @@
 - [ ] Support for bridges (not requiring support) => nozzle cannot start in a void
 - [ ] Optimizing paths for speed
 - [ ] Support structures to avoid toppling of objects (e.g. cube standing on 1 corner)
-- [ ] Automatic orientation of model (optimization)
+- [ ] Automatic orientation of model (XY rotation; optimization)
+- [x] Automatic centring of model (XY position)
 - [ ] Optimized support structures
 
 ## Progress

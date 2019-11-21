@@ -169,19 +169,16 @@ namespace Slicer.slyce.GCode
             }
         }
 
-        private void AddSlice(Slice s)
+        private decimal AddPolys(List<Polygon2D> polygons, double zheight, decimal accumulated_extrusion = 0.0m)
         {
-            this.first_start = true;
-            decimal accumulated_extrusion = 0.0m;
-
-            foreach (var p in s.Polygons)
+            foreach (var p in polygons)
             {
                 // Skip if only one line in poly?
                 if (p.Lines.First == null || p.Lines.First.Next == null)
                     continue;
 
                 // Move to position of first point
-                this.MoveToNextStart(p.Lines.First.Value.StartPoint, s.ZHeight);
+                this.MoveToNextStart(p.Lines.First.Value.StartPoint, zheight);
 
                 // Extrude from first and follow next points
                 for (LinkedListNode<Line> it = p.Lines.First; it != null; it = it.Next)
@@ -202,24 +199,16 @@ namespace Slicer.slyce.GCode
                 }
             }
 
-            /*
-            // foreach (var p in s.FillPolygons)
-            {
-                // Generate filling for surface of these polies          
-                var obj         = new Paths();  // Current FillPoly to fill with infill
-                var filler_grid = new Paths();  // Infill grid structure
+            return accumulated_extrusion;
+        }
 
-                Paths solution = new Paths();
-                Clipper c = new Clipper();
-                c.AddPolygons(obj, PolyType.ptSubject);
-                c.AddPolygons(filler_grid, PolyType.ptClip);
+        private void AddSlice(Slice s)
+        {
+            this.first_start = true;
+            decimal accumulated_extrusion = 0.0m;
 
-                // Intersect fill poly with infill
-                c.Execute(ClipType.ctIntersection, solution);
-
-                // Add solution to gcode?
-            }
-            */
+            accumulated_extrusion = this.AddPolys(s.Polygons, s.ZHeight, accumulated_extrusion);
+            accumulated_extrusion = this.AddPolys(s.FillPolygons, s.ZHeight, accumulated_extrusion);
 
             // Move nozzle back up a little to clear current layer and reset extrusion
             this.MoveNozzleUp(s.ZHeight);

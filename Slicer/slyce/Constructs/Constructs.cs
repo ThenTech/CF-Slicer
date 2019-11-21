@@ -67,14 +67,7 @@ namespace Slicer.slyce
             // Take next 3 points and create a Triangle polygon to add
             foreach (var p in points.Chunks(3))
             {
-                var triangle = new List<Vertex>();
-
-                foreach (var t in p)
-                {
-                    triangle.Add(new Vertex(t.Item1, t.Item2));
-                }
-
-                polies.Add(new Polygon3D(triangle.ToArray()));
+                polies.Add(new Polygon3D(p.Select(t => new Vertex(t.Item1, t.Item2)).ToArray()));
             }
 
             return Construct.Create(polies.ToArray());

@@ -265,11 +265,14 @@ namespace Slicer.slyce.Constructs
                 lines.AddLast(new Line((double)start.X / INT_POINT_FACTOR, (double)start.Y / INT_POINT_FACTOR,
                                        (double)end.X / INT_POINT_FACTOR, (double)end.Y / INT_POINT_FACTOR));
             }
-
-            var first = this._IntPoints.First();
-            var last = this._IntPoints.Last();
-            lines.AddLast(new Line((double)last.X / INT_POINT_FACTOR, (double)last.Y / INT_POINT_FACTOR,
-                                   (double)first.X / INT_POINT_FACTOR, (double)first.Y / INT_POINT_FACTOR));
+            if(this._IntPoints.Count > 0)
+            {
+                var first = this._IntPoints.First();
+                var last = this._IntPoints.Last();
+                lines.AddLast(new Line((double)last.X / INT_POINT_FACTOR, (double)last.Y / INT_POINT_FACTOR,
+                                       (double)first.X / INT_POINT_FACTOR, (double)first.Y / INT_POINT_FACTOR));
+            }
+            
 
             this.Lines = lines;
         }

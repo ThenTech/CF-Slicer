@@ -211,13 +211,19 @@
                 x:Name="viewport" Grid.Column="1" Grid.Row="0"
                 CameraRotationMode="Turntable"
                 Title="{Binding ModelTitle}"
+                
                 Background="White" 
+                InfoBackground="#0F000000"  
+                TitleBackground="#0F000000"
+                
                 ShowFrameRate="True" 
+                ShowCoordinateSystem="True"
+                IsHeadLightEnabled="True" 
+                
                 ZoomExtentsWhenLoaded="True" 
-                ZoomAroundMouseDownPoint="True" 
+                ZoomAroundMouseDownPoint="False" 
                 RotateAroundMouseDownPoint="False"
-                ShowCoordinateSystem="False"
-                IsHeadLightEnabled="True"
+                IsPanEnabled="False"
                 >
 
                 <!--<helix:SunLight/>-->

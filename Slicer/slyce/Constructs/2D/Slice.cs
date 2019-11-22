@@ -55,16 +55,19 @@ namespace Slicer.slyce.Constructs
         public double MinY { get; set; }
         public double MaxX { get; set; }
         public double MaxY { get; set; }
+        public bool HasSurface { get; set; }
+
 
         public double Z { get; set; }
         public double ZHeight { get; set; }
 
-        public Slice(List<Polygon2D> polies, double Z)
+        public Slice(List<Polygon2D> polies, double Z, bool hasSurface)
         {
             this.Polygons = polies;
             this.FillPolygons = new List<Polygon2D>();
             this.Z = Z;
             this.ZHeight = Z;
+            this.HasSurface = hasSurface;
         }
 
         public void SetNozzleHeight(double height)

@@ -136,7 +136,15 @@ namespace Slicer.slyce
                     else
                     {
                         // TODO determine individual surfaces in a slice
-                        this.Slice.AddInfill(infill_struct);
+                        if(Slice.HasSurface)
+                        {
+                            this.Slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
+                        }
+                        else
+                        {
+                            this.Slice.AddInfill(infill_struct);
+                        }
+                        
                     }
 
                     // Add shapes

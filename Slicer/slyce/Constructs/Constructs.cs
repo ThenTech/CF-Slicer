@@ -109,7 +109,7 @@ namespace Slicer.slyce
         public Slice Slice(double slice_z_height, double perSlice)
         {
             var polies = new List<Polygon2D>();
-
+            bool HasSurface = false;
             foreach (var p in Polygons)
             {
                 var cut = p.CutAtZ(slice_z_height);
@@ -148,6 +148,7 @@ namespace Slicer.slyce
                 {
                     // Got polygon surface
                     Polygon2D polygon = (Polygon2D)cut;
+                    HasSurface = true;
                     //Fill in polygon
                 }
             }
@@ -231,7 +232,7 @@ namespace Slicer.slyce
                 }
             }
 
-            return new Slice(completePolygons, slice_z_height);
+            return new Slice(completePolygons, slice_z_height, HasSurface);
         }
     }
 }

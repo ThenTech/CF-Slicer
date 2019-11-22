@@ -46,7 +46,7 @@ namespace Slicer.slyce.Constructs
 
         public override string ToString()
         {
-            return string.Format("({0},{1},{2})", X, Y, Z);
+            return string.Format("({0}, {1}, {2})", X, Y, Z);
         }
 
         public static bool operator ==(Vector v1, Vector v2)

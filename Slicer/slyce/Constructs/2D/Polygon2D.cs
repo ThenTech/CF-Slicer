@@ -177,7 +177,7 @@ namespace Slicer.slyce.Constructs
         public bool IsComplete()
         {
             return this.Lines.Count > 2
-                && (First().StartPoint.Equals(Last().EndPoint) 
+                && (First().StartPoint.Equals(Last().EndPoint)
                  || First().StartPoint.Equals(Last().StartPoint));
         }
 
@@ -265,14 +265,14 @@ namespace Slicer.slyce.Constructs
                 lines.AddLast(new Line((double)start.X / INT_POINT_FACTOR, (double)start.Y / INT_POINT_FACTOR,
                                        (double)end.X / INT_POINT_FACTOR, (double)end.Y / INT_POINT_FACTOR));
             }
-            if(this._IntPoints.Count > 0)
+
+            if (this._IntPoints.Count > 1)
             {
                 var first = this._IntPoints.First();
                 var last = this._IntPoints.Last();
                 lines.AddLast(new Line((double)last.X / INT_POINT_FACTOR, (double)last.Y / INT_POINT_FACTOR,
                                        (double)first.X / INT_POINT_FACTOR, (double)first.Y / INT_POINT_FACTOR));
             }
-            
 
             this.Lines = lines;
         }
@@ -357,7 +357,7 @@ namespace Slicer.slyce.Constructs
         public IEnumerable<Polygon2D> Intersect(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctIntersection);
-            return result.ChildCount > 0 
+            return result.ChildCount > 0
                  ? result.Childs.Select(p => new Polygon2D(p.Contour)).ToList()
                  : new List<Polygon2D>();
         }
@@ -388,7 +388,7 @@ namespace Slicer.slyce.Constructs
 
         public bool Contains(Polygon2D other)
         {
-            // If difference is equal to the hole it is inside? 
+            // If difference is equal to the hole it is inside?
             var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
 
             if (intersection.ChildCount < 1)
@@ -415,12 +415,12 @@ namespace Slicer.slyce.Constructs
                     return false;
                 }
             }
-            
+
             return true;
         }
 
         // (X, Y) -> (X2, Y2) is bounding box corners
-        // linethickness == one print line 
+        // linethickness == one print line
         // pattern_distribution == Every n printlines, draw pattern
         public static List<Polygon2D> GenerateInfill(double X, double Y, double X2, double Y2, double linethickness, double pattern_spacing = 7.0, InfillType type = InfillType.SQUARE)
         {
@@ -447,7 +447,7 @@ namespace Slicer.slyce.Constructs
                         var y_amount = (int)Math.Ceiling((size_y - 2.0 * y_length) / y_length);
                         var y_total_length = (y_amount % 2 == 0 ? y_amount - 1 : y_amount) * y_length;
 
-                        // Create pattern going in x-dir  Y + y_offset 
+                        // Create pattern going in x-dir  Y + y_offset
                         for (double offset = Y + ((size_y - y_total_length) / 2.0); offset <= Y2 - y_length;)
                         {
                             var next_y = offset + y_length;
@@ -505,7 +505,7 @@ namespace Slicer.slyce.Constructs
 
                         double offset;
 
-                        // Create pattern going in x-dir  Y + y_offset 
+                        // Create pattern going in x-dir  Y + y_offset
                         for (offset = Y + ((size_y - y_total_length) / 2.0); offset <= Y2 - y_length;)
                         {
                             var next_y = offset + y_length;
@@ -603,7 +603,7 @@ namespace Slicer.slyce.Constructs
 
                         matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
-                        
+
                         matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
 

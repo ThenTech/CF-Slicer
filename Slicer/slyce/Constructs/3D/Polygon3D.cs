@@ -21,18 +21,19 @@ namespace Slicer.slyce.Constructs
             return new Polygon3D(vertices);
         }
 
-        public IShape2D CutAtZ(double z)
+        public IShape2D CutAtZ(double z, double z2)
         {
-            Line slice_line = null;
+            IShape2D slice_cut = null;
 
             var minV = this.Vertices.Min(v => v.Pos.Z);
             var maxV = this.Vertices.Max(v => v.Pos.Z);
+            bool poly_within_layer = false;
 
-            if (minV <= z && maxV >= z)
+            if (SmallerOrEquals(minV, z) && LargerOrEquals(maxV, z))
             {
                 // Find all points above and below
                 var above = this.Vertices.Where(v => v.Pos.Z > z).ToList();
-                var below = this.Vertices.Where(v => v.Pos.Z <= z).ToList();
+                var below = this.Vertices.Where(v => SmallerOrEquals(v.Pos.Z, z)).ToList();
 
                 if (above.Count == 1 || below.Count == 1)
                 {
@@ -60,20 +61,42 @@ namespace Slicer.slyce.Constructs
                     // If points are different, slice line was found
                     if (!points[0].Equals(points[1]))
                     {
-                        slice_line = new Line(points[0], points[1]);
+                        slice_cut = new Line(points[0], points[1]);
                     }
                 }
                 else if (below.Count == 3 || above.Count == 3)
                 {
-                    Polygon2D poly = new Polygon2D();
-                    poly.Lines.AddLast(new Line(Vertices[0].Pos.X, Vertices[0].Pos.Y, Vertices[1].Pos.X, Vertices[1].Pos.Y));
-                    poly.Lines.AddLast(new Line(Vertices[1].Pos.X, Vertices[1].Pos.Y, Vertices[2].Pos.X, Vertices[2].Pos.Y));
-                    poly.Lines.AddLast(new Line(Vertices[2].Pos.X, Vertices[2].Pos.Y, Vertices[0].Pos.X, Vertices[0].Pos.Y));
-                    return poly;
+                    // Exactly on z
+                    poly_within_layer = true;
                 }
             }
+            else if (SmallerOrEquals(minV, z2) && LargerOrEquals(maxV, z))
+            {
+                // All points within z and z2
+                poly_within_layer = true;
+            }
 
-            return slice_line;
+            if (poly_within_layer)
+            {
+                Polygon2D poly = new Polygon2D();
+                poly.Lines.AddLast(new Line(Vertices[0].Pos.X, Vertices[0].Pos.Y, Vertices[1].Pos.X, Vertices[1].Pos.Y));
+                poly.Lines.AddLast(new Line(Vertices[1].Pos.X, Vertices[1].Pos.Y, Vertices[2].Pos.X, Vertices[2].Pos.Y));
+                poly.Lines.AddLast(new Line(Vertices[2].Pos.X, Vertices[2].Pos.Y, Vertices[0].Pos.X, Vertices[0].Pos.Y));
+                poly.IsSurface = true;
+                slice_cut = poly;
+            }
+
+            return slice_cut;
+        }
+
+        private static bool SmallerOrEquals(double x, double y)
+        {
+            return x < y || Math.Abs(x - y) < Point.EPSILON;
+        }
+
+        private static bool LargerOrEquals(double x, double y)
+        {
+            return x > y || Math.Abs(x - y) < Point.EPSILON;
         }
     }
 }

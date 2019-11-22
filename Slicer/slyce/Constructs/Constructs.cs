@@ -110,9 +110,10 @@ namespace Slicer.slyce
         {
             var polies = new List<Polygon2D>();
             bool HasSurface = false;
+
             foreach (var p in Polygons)
             {
-                var cut = p.CutAtZ(slice_z_height);
+                var cut = p.CutAtZ(slice_z_height, slice_z_height + perSlice);
 
                 if (cut != null && cut.GetType() == typeof(Line))
                 {
@@ -146,8 +147,8 @@ namespace Slicer.slyce
                 }
                 else if (cut != null && cut.GetType() == typeof(Polygon2D))
                 {
-                    // Got polygon surface
-                    Polygon2D polygon = (Polygon2D)cut;
+                    // Got polygon surface, so this _probably_ is a surface...
+                    //Polygon2D polygon = (Polygon2D)cut;
                     HasSurface = true;
                     //Fill in polygon
                 }

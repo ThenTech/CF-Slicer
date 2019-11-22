@@ -57,7 +57,6 @@ namespace Slicer.slyce.Constructs
         public double MaxY { get; set; }
         public bool HasSurface { get; set; }
 
-
         public double Z { get; set; }
         public double ZHeight { get; set; }
 
@@ -68,6 +67,12 @@ namespace Slicer.slyce.Constructs
             this.Z = Z;
             this.ZHeight = Z;
             this.HasSurface = hasSurface;
+
+            // Selective?
+            if (this.HasSurface)
+            {
+                this.Polygons.ForEach(p => p.IsSurface = true);
+            }
         }
 
         public void SetNozzleHeight(double height)

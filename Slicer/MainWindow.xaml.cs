@@ -199,7 +199,9 @@ namespace Slicer
 
         private void ResetCamera_Click(object sender, RoutedEventArgs e)
         {
+            viewport.IsPanEnabled = true;
             viewport.CameraController.ResetCamera();
+            viewport.IsPanEnabled = false;
             zoomBorder.Reset();
             zoomBorder.Fill();
         }

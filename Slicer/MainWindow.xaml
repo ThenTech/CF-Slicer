@@ -219,11 +219,13 @@
                 ShowFrameRate="True" 
                 ShowCoordinateSystem="True"
                 IsHeadLightEnabled="True" 
+                ShowCameraTarget="False"
                 
                 ZoomExtentsWhenLoaded="True" 
                 ZoomAroundMouseDownPoint="False" 
                 RotateAroundMouseDownPoint="False"
                 IsPanEnabled="False"
+                IsMoveEnabled ="False"
                 >
 
                 <!--<helix:SunLight/>-->
@@ -251,16 +253,9 @@
             <paz:ZoomBorder Name="zoomBorder" Stretch="None" ZoomSpeed="1.2" 
                         ClipToBounds="True" Focusable="True"
                         VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
-                        Margin="2 0 0 0" Cursor="SizeAll"
+                        Margin="2 0 0 0" Cursor="SizeAll" 
                         Grid.Column="2">
-                <Canvas x:Name="canvas_slice">
-                    <Canvas.RenderTransform>
-                        <TransformGroup>
-                            <TranslateTransform x:Name="canvas_slice_transform" />
-                            <ScaleTransform x:Name="canvas_slice_scale" />
-                        </TransformGroup>
-                    </Canvas.RenderTransform>
-                </Canvas>
+                <Canvas x:Name="canvas_slice"/>
             </paz:ZoomBorder>
         </Grid>
     </DockPanel>

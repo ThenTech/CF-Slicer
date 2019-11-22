@@ -129,22 +129,16 @@ namespace Slicer.slyce
                     this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness);
 
                     // Check if bottom or top
-                    if (i < this.data.NumberOfShells || i > this.data.MaxSliceIdx - this.data.NumberOfShells)
+                    if (   i < this.data.NumberOfShells 
+                        || i > this.data.MaxSliceIdx - this.data.NumberOfShells
+                        || this.Slice.HasSurface)
                     {
+                        // Fill intire slice with surface (For .HasSurface even if only part had to be surface...)
                         this.Slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
                     }
                     else
                     {
-                        // TODO determine individual surfaces in a slice
-                        if(Slice.HasSurface)
-                        {
-                            this.Slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
-                        }
-                        else
-                        {
-                            this.Slice.AddInfill(infill_struct);
-                        }
-                        
+                        this.Slice.AddInfill(infill_struct);
                     }
 
                     // Add shapes

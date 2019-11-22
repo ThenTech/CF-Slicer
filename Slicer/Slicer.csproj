@@ -86,7 +86,7 @@
     <Compile Include="slyce\Constructs\2D\Polygon2D.cs" />
     <Compile Include="slyce\Constructs\2D\Line.cs" />
     <Compile Include="slyce\Constructs\2D\Point.cs" />
-    <Compile Include="slyce\Constructs\2D\Shape2D.cs" />
+    <Compile Include="slyce\Constructs\2D\IShape2D.cs" />
     <Compile Include="slyce\Constructs\Constructs.cs" />
     <Compile Include="slyce\Constructs\3D\Polygon3D.cs" />
     <Compile Include="slyce\Constructs\2D\Slice.cs" />

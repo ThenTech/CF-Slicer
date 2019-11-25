@@ -224,7 +224,7 @@
                 ZoomExtentsWhenLoaded="True" 
                 ZoomAroundMouseDownPoint="False" 
                 RotateAroundMouseDownPoint="False"
-                IsPanEnabled="False"
+                IsPanEnabled="True"
                 IsMoveEnabled ="False"
                 >
 

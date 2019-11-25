@@ -193,15 +193,18 @@ namespace Slicer.slyce
 
             // Add box
             var b = this.data.CurrentModel.Bounds;
+            var offset = b.SizeX * 0.2;
+
             meshBuilder.AddBox(new Rect3D(
-                b.Location.X, b.Location.Y, 
+                b.Location.X - offset, b.Location.Y - offset, 
                 b.Location.Z + this.data.CurrentSliceIdx * this.data.NozzleThickness, 
-                b.SizeX, b.SizeY, this.data.NozzleThickness
+                b.SizeX + 2 * offset, b.SizeY + 2 * offset, 
+                this.data.NozzleThickness
             ));
 
 
             var mesh = meshBuilder.ToMesh(false);
-            var greenMaterial = MaterialHelper.CreateMaterial(Colors.Green);
+            var greenMaterial = MaterialHelper.CreateMaterial(Colors.LimeGreen, 50);
             var insideMaterial = MaterialHelper.CreateMaterial(Colors.Red);
 
             mesh.Normals = mesh.CalculateNormals();
@@ -210,7 +213,7 @@ namespace Slicer.slyce
             {
                 Geometry = mesh,
                 Material = greenMaterial,
-                BackMaterial = insideMaterial
+                BackMaterial = insideMaterial,
             };
 
             this.data.CurrentSlicePlane = this.SlicePlane;

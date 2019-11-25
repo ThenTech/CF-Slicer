@@ -16,7 +16,7 @@
 
 ## Possible extras
 - [x] Other types of infill
-- [ ] Adaptive slicing
+- [ ] Adaptive slicing (thinner slices for some parts)
 - [ ] Support for bridges (not requiring support) => nozzle cannot start in a void
 - [ ] Optimizing paths for speed
 - [ ] Support structures to avoid toppling of objects (e.g. cube standing on 1 corner)
@@ -30,12 +30,12 @@
   showing slices)
 - [x] Erode perimeter with half the nozzle thickness (otherwise print will be too large)
 - [x] **[Deadline 14/11]** Generate g-code for a perimeter of a single slice 
-- [ ] And try 3D printing
+- [x] And try 3D printing
 - [x] Extend data structure to support holes in object/polygon
 - [x] Generate second shell
 - [x] Generate basic rectangular infill structure (line per line intersection between grid and
   polygon slices)
-- [ ] **[Deadline 7/12]** Extend g-code generation and 3D print simple object that does not require support 
+- [x] **[Deadline 7/12]** Extend g-code generation and 3D print simple object that does not require support 
   structure
 - [ ] Calculate regions + generate paths (+ g-code) for floors and roofs
 - [ ] Try 3D printing a closed object (roofs + floors) that does not require support
@@ -57,7 +57,10 @@
 - [x] Add ambient light ~~
 - [x] Basic SliceModel class with slice plane and sliced model preview
 - [ ] Report schrijven
-- [ ] Surface herkenning
-- [ ] Surface invullen met patroon
-- [ ] Overhang herkenning
+- [ ] Surface (floor/roof) herkenning
+  - Subtract Layer+1 from Layer+0 for roofs
+  - Subtract Layer+0 from Layer+1 for floors
+  - Add to separate list
+- [ ] Surface invullen met patroon => denser infill, mss met offsets ipv rects or zigzag?
+- [ ] Overhang herkenning voor support (diff van subtraction > nozzle width => support needed)
 - [ ] Support toevoegen voor overgang

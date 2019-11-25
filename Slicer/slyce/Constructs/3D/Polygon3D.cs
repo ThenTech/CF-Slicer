@@ -25,6 +25,7 @@ namespace Slicer.slyce.Constructs
         {
             IShape2D slice_cut = null;
 
+            // Put Z slice height in middle of slice block
             z = (z2 - z) / 2 + z;
 
             var minV = this.Vertices.Min(v => v.Pos.Z);

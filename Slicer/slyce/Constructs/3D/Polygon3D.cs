@@ -25,6 +25,8 @@ namespace Slicer.slyce.Constructs
         {
             IShape2D slice_cut = null;
 
+            z = (z2 - z) / 2 + z;
+
             var minV = this.Vertices.Min(v => v.Pos.Z);
             var maxV = this.Vertices.Max(v => v.Pos.Z);
             bool poly_within_layer = false;

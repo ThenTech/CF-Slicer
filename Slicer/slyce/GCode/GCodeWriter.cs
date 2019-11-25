@@ -38,10 +38,9 @@ namespace Slicer.slyce.GCode
         {
             startup_comment,
             new SetBedTemperature() { Temperature = 50 },
-            new GetExtruderTemperature(),
-            new SetBedTemperatureAndWait() { MinTemperature = 50 },
             new SetExtruderTemperature() { Temperature = 200 },
             new GetExtruderTemperature(),
+            new SetBedTemperatureAndWait() { MinTemperature = 50 },
             new SetExtruderTemperatureAndWait() { MinTemperature = 200 },
 
             new SetExtruderToAbsolute(),

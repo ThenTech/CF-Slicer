@@ -115,7 +115,7 @@ namespace Slicer.GUI
             }
         }
 
-        double _NozzleThickness = 0.22;
+        double _NozzleThickness = 0.20;
         public double NozzleThickness
         {
             get { return _NozzleThickness; }

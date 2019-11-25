@@ -107,13 +107,13 @@ namespace Slicer.slyce
             var surface_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.NozzleDiameter, InfillType.SINGLE
+                this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE
             );
 
             var surface_struct_alt = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.NozzleDiameter, InfillType.SINGLE_ROTATED
+                this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE_ROTATED
             );
 
             // Execute slicing
@@ -125,8 +125,8 @@ namespace Slicer.slyce
                     this.Slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                            data.NozzleThickness);
                     this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
-                    this.Slice.Erode(data.NozzleThickness / 2.0);
-                    this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness);
+                    this.Slice.Erode(data.NozzleDiameter / 2.0);
+                    this.Slice.AddShells(data.NumberOfShells, data.NozzleDiameter);
 
                     // Check if bottom or top
                     if (   i < this.data.NumberOfShells 

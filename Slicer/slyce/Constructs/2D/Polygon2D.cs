@@ -436,6 +436,13 @@ namespace Slicer.slyce.Constructs
                     break;
                 case InfillType.SINGLE:
                     {
+                        List<Polygon2D> pattern = new List<Polygon2D>();
+                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var XStart = X - diagonal / 2.0;
+                        var XEnd = X2 + diagonal / 2.0;
+                        var Ystart = Y - diagonal / 2.0;
+                        var YEnd = Y2 + diagonal / 2.0;
+
                         // Generate infill rectangles, every length distance, in both X and Y.
                         var x_length = linethickness * pattern_spacing;
                         var y_length = x_length;
@@ -448,20 +455,24 @@ namespace Slicer.slyce.Constructs
                         var y_total_length = (y_amount % 2 == 0 ? y_amount - 1 : y_amount) * y_length;
 
                         // Create pattern going in x-dir  Y + y_offset
-                        for (double offset = Y + ((size_y - y_total_length) / 2.0); offset <= Y2 - y_length;)
+                        for (double offset = Ystart + ((size_y - y_total_length) / 2.0); offset <= YEnd - y_length;)
                         {
                             var next_y = offset + y_length;
                             var poly = new Polygon2D();
 
-                            poly.AddLine(new Line(X  - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
-                            poly.AddLine(new Line(X2 + x_length, offset, X2 + x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(X2 + x_length, next_y, X  - x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(X  - x_length, next_y, X  - x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(XStart  - x_length, offset, XEnd + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(XEnd + x_length, offset, XEnd + x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(XEnd + x_length, next_y, XStart  - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(XStart  - x_length, next_y, XStart  - x_length, offset), ConnectionType.LAST);
 
-                            polies.Add(poly);
+                            pattern.Add(poly);
 
                             offset = next_y + y_length;
                         }
+                        // Transform pattern and add to infill
+                        Matrix matr = Matrix.Identity;
+                        matr.RotateAt(-45, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
 
                         break;
                     }

@@ -562,8 +562,7 @@ namespace Slicer.slyce.Constructs
 
                         // Transform pattern and add to infill
                         Matrix matr = Matrix.Identity;
-
-                        matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        matr.RotateAt(60+45, X + size_x / 2.0, Y + size_y / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
 
                         matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);

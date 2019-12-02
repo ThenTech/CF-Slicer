@@ -107,13 +107,13 @@ namespace Slicer.slyce
             var surface_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.NozzleDiameter * 2, InfillType.SINGLE
+                this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE
             );
 
             var surface_struct_alt = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.NozzleDiameter * 2, InfillType.SINGLE_ROTATED
+                this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE_ROTATED
             );
 
             // Execute slicing

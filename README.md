@@ -23,6 +23,7 @@
 - [ ] Automatic orientation of model (XY rotation; optimization)
 - [x] Automatic centring of model (XY position)
 - [ ] Optimized support structures
+- [ ] Print time estimation (take speed per accumulated extrusion and sum them)
 
 ## Progress
 
@@ -56,11 +57,17 @@
 - [x] Slice opstellen door triangle en plane intersection ipv 3D intersection
 - [x] Add ambient light ~~
 - [x] Basic SliceModel class with slice plane and sliced model preview
-- [ ] Report schrijven
+- [ ] Add brim/skirt (erode to outer on slice 0)
 - [ ] Surface (floor/roof) herkenning
+  - Refactor code to split generation
   - Subtract Layer+1 from Layer+0 for roofs
   - Subtract Layer+0 from Layer+1 for floors
   - Add to separate list
 - [ ] Surface invullen met patroon => denser infill, mss met offsets ipv rects or zigzag?
+  - Shells en dense infill beter 1.5*nozzle thinkness => Cura
+  - Dense infill korte segmentjes verwijderen na clipping
+    - OF Line clipping in de plaats => Paths met lines clippen met inner shell
 - [ ] Overhang herkenning voor support (diff van subtraction > nozzle width => support needed)
 - [ ] Support toevoegen voor overgang
+
+- [ ] Report schrijven

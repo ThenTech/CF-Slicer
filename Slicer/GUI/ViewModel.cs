@@ -324,9 +324,9 @@ namespace Slicer.GUI
             }
         }
 
-        public InfillType UseInfill { get; set; } = InfillType.SQUARE;
+        public InfillType UseInfill { get; set; } = InfillType.DIAMOND;
 
-        private double _InfillSpacing = 7;
+        private double _InfillSpacing = 14;
         public double InfillSpacing {
             get { return _InfillSpacing; }
             set

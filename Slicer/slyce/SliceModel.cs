@@ -126,7 +126,7 @@ namespace Slicer.slyce
                                            data.NozzleThickness);
                     this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
                     this.Slice.Erode(data.NozzleDiameter / 2.0);
-                    this.Slice.AddShells(data.NumberOfShells, data.NozzleDiameter);
+                    this.Slice.AddShells(data.NumberOfShells, data.NozzleDiameter * 1.15);
 
                     // Check if bottom or top
                     if (   i < this.data.NumberOfShells 

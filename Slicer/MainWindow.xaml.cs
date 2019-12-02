@@ -85,7 +85,7 @@ namespace Slicer
             }, Reset_Click));
 
             cboxInfillType.ItemsSource = Enum.GetValues(typeof(InfillType)).Cast<InfillType>();
-            cboxInfillType.SelectedItem = InfillType.SQUARE;
+            cboxInfillType.SelectedItem = this._viewModel.UseInfill;
         }
 
         private void Load(string p)
@@ -119,6 +119,7 @@ namespace Slicer
             _viewModel.ScaleX = 1.0;
             
             this.ResetCamera_Click(null, null);
+            this.Reset_Click(null, null);
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)

@@ -314,7 +314,7 @@ namespace Slicer.GUI
             }
         }
 
-        private double _PreviewArrowThickness = 1.0;
+        private double _PreviewArrowThickness = 0.5;
         public double PreviewArrowThickness {
             get { return _PreviewArrowThickness; }
             set

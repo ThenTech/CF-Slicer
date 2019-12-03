@@ -97,6 +97,11 @@ namespace Slicer.slyce.Constructs
             }
         }
 
+        public void DetermineSurfaces(Slice above, Slice below)
+        {
+
+        }
+
         public void AddShells(int nShells, double thickness)
         {
             // WARNING Does not take into account if shell poly intersects with other parts of the layer...
@@ -122,8 +127,15 @@ namespace Slicer.slyce.Constructs
             }
         }
 
+        public void AddDenseInfill(List<Polygon2D> infill_struct)
+        {
+            // Add this infill only to surfaces like floors and roofs
+        }
+
         public void AddInfill(List<Polygon2D> infill_struct)
         {
+            // Add this infill to the insides
+
             // Intersect infill_struct with contours and subtract holes from it.
             var infill = infill_struct.Select(p => p.Clone());
 

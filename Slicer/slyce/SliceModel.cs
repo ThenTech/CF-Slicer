@@ -93,7 +93,12 @@ namespace Slicer.slyce
             var bounds = this.data.CurrentModel.Bounds;
             var transform = this.data.CurrentModel.Transform;
 
-            this.SliceStore = new List<Slice>(this.data.MaxSliceIdx);
+            var min   = Math.Min(bounds.X, bounds.Y);
+            var max   = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
+            var size  = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
+            var scale = size / (max - min);
+
+            this.SliceStore = Enumerable.Repeat<Slice>(null, this.data.MaxSliceIdx + 1).ToList();
 
             Construct obj = Construct.Create(this.Original, transform);
 
@@ -116,54 +121,70 @@ namespace Slicer.slyce
                 this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE_ROTATED
             );
 
-            // Execute slicing
             await Task.Run(() =>
             {
-                for (int i = 0; i < this.data.MaxSliceIdx + 1; i++)
-                {
+                // Execute slicing
+                // Step 1: Find contours by slicing with Z plane
+                Parallel.For(0, this.data.MaxSliceIdx + 1, (i) => {
                     // Construct slice
-                    this.Slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
+                    var slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                            data.NozzleThickness);
-                    this.Slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
-                    this.Slice.Erode(data.NozzleDiameter / 2.0);
-                    this.Slice.AddShells(data.NumberOfShells, data.NozzleDiameter * 1.15);
-
-                    // Check if bottom or top
-                    if (   i < this.data.NumberOfShells 
-                        || i > this.data.MaxSliceIdx - this.data.NumberOfShells
-                        || this.Slice.HasSurface)
-                    {
-                        // Fill intire slice with surface (For .HasSurface even if only part had to be surface...)
-                        this.Slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
-                    }
-                    else
-                    {
-                        this.Slice.AddInfill(infill_struct);
-                    }
-
-                    // Add shapes
-                    var min = Math.Min(bounds.X, bounds.Y);
-                    var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);
-                    var size = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
-                    var scale = size / (max - min);
+                    slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
+                    this.SliceStore[i] = slice;
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale, 
-                                                                    this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
-
-                        this.data.SliceCanvas.Children.Clear();
-                        this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
-
-                        this.SliceStore.Add(this.Slice);
-
-                        this.data.SlicingProgressValue = i;
+                        this.data.SlicingProgressValue++;
                     });
-                }
+                });
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    this.data.CurrentSliceIdx = 0;
+                    this.data.SlicingProgressValue = 0;
+                });
+
+                // Step 2: Compare with layer above and below to find and add floor/roofs
+                Parallel.For(0, this.data.MaxSliceIdx + 1, (i) => {
+                    // Check for floor/roofs
+                    var slice = this.SliceStore[i];
+                    slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),
+                                            this.SliceStore.ElementAtOrDefault(i + 1));
+                    slice.Erode(data.NozzleDiameter / 2.0);
+                    slice.AddShells(data.NumberOfShells, data.NozzleDiameter * 1.15);
+
+                    // Add infill for surfaces
+                    slice.AddDenseInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
+
+                    // Add infill for internals
+                    if (   i < this.data.NumberOfShells
+                        || i > this.data.MaxSliceIdx - this.data.NumberOfShells
+                        /* || this.Slice.HasSurface */)
+                    {
+                        // Fill entire slice with surface (For .HasSurface even if only part had to be surface...)
+                        slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
+                    }
+                    else
+                    {
+                        slice.AddInfill(infill_struct);
+                    }
+
+                    // Add shapes
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        slice.ToShapes(bounds.X, bounds.Y, scale, this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
+                        this.data.SlicingProgressValue++;
+                    });
+                });
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.Slice = this.SliceStore[0];
+                    this.data.SliceShapes = this.Slice.Shapes;
+
+                    this.data.SliceCanvas.Children.Clear();
+                    this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
+
+                    this.data.SlicingProgressValue = 0;
                     this.data.SlicingInProgress = false;
                 });
             });

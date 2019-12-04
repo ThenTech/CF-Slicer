@@ -44,13 +44,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="clipper_library, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Clipper.6.4.0\lib\net40\clipper_library.dll</HintPath>
+      <HintPath>packages\com.angusj.Clipper.6.4.2\lib\net40\clipper_library.dll</HintPath>
     </Reference>
-    <Reference Include="HelixToolkit, Version=2.9.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
-      <HintPath>packages\HelixToolkit.2.9.0\lib\netstandard1.1\HelixToolkit.dll</HintPath>
+    <Reference Include="HelixToolkit, Version=2.10.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
+      <HintPath>packages\HelixToolkit.2.10.0\lib\netstandard1.1\HelixToolkit.dll</HintPath>
     </Reference>
-    <Reference Include="HelixToolkit.Wpf, Version=2.9.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
-      <HintPath>packages\HelixToolkit.Wpf.2.9.0\lib\net45\HelixToolkit.Wpf.dll</HintPath>
+    <Reference Include="HelixToolkit.Wpf, Version=2.10.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
+      <HintPath>packages\HelixToolkit.Wpf.2.10.0\lib\net45\HelixToolkit.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="PanAndZoom, Version=2.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\PanAndZoom.2.2.1\lib\net461\PanAndZoom.dll</HintPath>

@@ -37,13 +37,27 @@ namespace Slicer.slyce.Constructs
         {
             get
             {
-                if (_IntPoints == null || _IntPoints.Count != Lines.Count)
+                // Cache list
+                if (this.IsComplete() && (_IntPoints == null || _IntPoints.Count != Lines.Count))
                 {
-                    // Cache list
+                    // Closed poly
                     this._IntPoints = this.Lines.Select(
                         l => new IntPoint((long)(l.StartPoint.X * INT_POINT_FACTOR),
                                           (long)(l.StartPoint.Y * INT_POINT_FACTOR))
                     ).ToList();
+                } 
+                else if (!this.IsComplete() && (_IntPoints == null || _IntPoints.Count != Lines.Count * 2))
+                {
+                    // Open poly
+                    this._IntPoints = new Path(Lines.Count * 2);
+
+                    foreach (var l in Lines)
+                    {
+                        this._IntPoints.Add(new IntPoint((long)(l.StartPoint.X * INT_POINT_FACTOR),
+                                                         (long)(l.StartPoint.Y * INT_POINT_FACTOR)));
+                        this._IntPoints.Add(new IntPoint((long)(l.EndPoint.X * INT_POINT_FACTOR),
+                                                         (long)(l.EndPoint.Y * INT_POINT_FACTOR)));
+                    }
                 }
 
                 return this._IntPoints;
@@ -260,16 +274,16 @@ namespace Slicer.slyce.Constructs
             for (var i = 1; i < this._IntPoints.Count; i++)
             {
                 var start = this._IntPoints[i - 1];
-                var end = this._IntPoints[i];
+                var end   = this._IntPoints[i];
 
                 lines.AddLast(new Line((double)start.X / INT_POINT_FACTOR, (double)start.Y / INT_POINT_FACTOR,
                                        (double)end.X / INT_POINT_FACTOR, (double)end.Y / INT_POINT_FACTOR));
             }
 
-            if (this._IntPoints.Count > 1)
+            if (this._IntPoints.Count > 3)
             {
                 var first = this._IntPoints.First();
-                var last = this._IntPoints.Last();
+                var last  = this._IntPoints.Last();
                 lines.AddLast(new Line((double)last.X / INT_POINT_FACTOR, (double)last.Y / INT_POINT_FACTOR,
                                        (double)first.X / INT_POINT_FACTOR, (double)first.Y / INT_POINT_FACTOR));
             }
@@ -297,12 +311,11 @@ namespace Slicer.slyce.Constructs
 
         public void Offset(double delta, double miter_limit = 3)
         {
-            Paths li = new Paths
-            {
-                this.IntPoints
-            };
+            var paths = new Paths();
 
-            var paths = Clipper.OffsetPolygons(li, delta * INT_POINT_FACTOR, JoinType.jtMiter, miter_limit);
+            var c = new ClipperOffset(miter_limit);
+            c.AddPath(this.IntPoints, JoinType.jtMiter, EndType.etClosedPolygon);
+            c.Execute(ref paths, delta * INT_POINT_FACTOR);
 
             if (paths.Count > 0)
             {
@@ -316,13 +329,19 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        private PolyTree GetClipperSolutionWith(Polygon2D other, ClipType type)
+        private PolyTree GetClipperSolutionWith(IEnumerable<Polygon2D> others, ClipType type)
         {
             // https://github.com/junmer/clipper-lib/blob/master/Documentation.md#clipperlibcliptype
-
             Clipper c = new Clipper();
-            c.AddPolygon(this.IntPoints, PolyType.ptSubject);
-            c.AddPolygon(other.IntPoints, PolyType.ptClip);
+
+            c.AddPath(this.IntPoints, PolyType.ptSubject, this.IsComplete());
+
+            foreach (var other in others)
+            {
+                // Only closed polys can be used to clip
+                if (other.IsComplete())
+                    c.AddPath(other.IntPoints, PolyType.ptClip, true);
+            }
 
             PolyTree solution = new PolyTree();
 
@@ -332,19 +351,9 @@ namespace Slicer.slyce.Constructs
             return solution;
         }
 
-        private PolyTree GetClipperSolutionWith(IEnumerable<Polygon2D> others, ClipType type)
+        private PolyTree GetClipperSolutionWith(Polygon2D other, ClipType type)
         {
-            Clipper c = new Clipper();
-            c.AddPolygon(this.IntPoints, PolyType.ptSubject);
-            foreach (var other in others)
-                c.AddPolygon(other.IntPoints, PolyType.ptClip);
-
-            PolyTree solution = new PolyTree();
-
-            // intersection, union, difference or XOR
-            c.Execute(type, solution);
-
-            return solution;
+            return this.GetClipperSolutionWith(new Polygon2D[1] { other }, type);
         }
 
         public bool Intersects(Polygon2D others)
@@ -357,63 +366,50 @@ namespace Slicer.slyce.Constructs
         public IEnumerable<Polygon2D> Intersect(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctIntersection);
-            return result.ChildCount > 0
-                 ? result.Childs.Select(p => new Polygon2D(p.Contour)).ToList()
-                 : new List<Polygon2D>();
+            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
         }
 
         public IEnumerable<Polygon2D> Subtract(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctDifference);
-            return result.ChildCount > 0
-                 ? result.Childs.Select(p => new Polygon2D(p.Contour)).ToList()
-                 : new List<Polygon2D>();
+            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
         }
 
         public IEnumerable<Polygon2D> Union(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctUnion);
-            return result.ChildCount > 0
-                 ? result.Childs.Select(p => new Polygon2D(p.Contour)).ToList()
-                 : new List<Polygon2D>();
+            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
         }
 
         public IEnumerable<Polygon2D> Xor(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctXor);
-            return result.ChildCount > 0
-                 ? result.Childs.Select(p => new Polygon2D(p.Contour)).ToList()
-                 : new List<Polygon2D>();
+            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
+        }
+
+        public bool ContainsOrOverlaps(Polygon2D other)
+        {
+            if (other.Lines.Count == 0) return false;
+
+            foreach (var p in other.IntPoints)
+            {
+                // PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
+                if (Clipper.PointInPolygon(p, this.IntPoints) > 0)
+                    return true;
+            }
+
+            return false;
         }
 
         public bool Contains(Polygon2D other)
         {
-            // If difference is equal to the hole it is inside?
-            var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
+            if (other.Lines.Count == 0) return false;
 
-            if (intersection.ChildCount < 1)
+            foreach (var p in other.IntPoints)
             {
-                return false;
-            }
-            else
-            {
-                var child = intersection.Childs[0];
-                var childIntp = child.Contour;
-                var intp = other.IntPoints;
-                if (childIntp.Count == intp.Count)
-                {
-                    for (int i = 0; i < childIntp.Count; i++)
-                    {
-                        if (childIntp[i].X != intp[i].X || childIntp[i].Y != intp[i].Y)
-                        {
-                            return false;
-                        }
-                    }
-                }
-                else
-                {
+                // PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
+                if (Clipper.PointInPolygon(p, this.IntPoints) == 0)
                     return false;
-                }
             }
 
             return true;
@@ -438,10 +434,59 @@ namespace Slicer.slyce.Constructs
                     {
                         List<Polygon2D> pattern = new List<Polygon2D>();
                         var diagonal = new Line(X, Y, X2, Y2).GetLength();
-                        var XStart = X - diagonal / 2.0;
-                        var XEnd = X2 + diagonal / 2.0;
-                        var Ystart = Y - diagonal / 2.0;
-                        var YEnd = Y2 + diagonal / 2.0;
+                        var XStart   = X  - diagonal / 2.0;
+                        var XEnd     = X2 + diagonal / 2.0;
+                        var Ystart   = Y  - diagonal / 2.0;
+                        var YEnd     = Y2 + diagonal / 2.0;
+
+                        // Generate infill rectangles, every length distance, in both X and Y.
+                        var x_length = linethickness * pattern_spacing;
+                        var y_length = x_length;
+
+                        // Calculate final length of segments to center them in slice
+                        var x_amount = (int)Math.Ceiling((size_x - 2.0 * x_length) / x_length);
+                        var x_total_length = (x_amount % 2 == 0 ? x_amount - 1 : x_amount) * x_length;
+
+                        var y_amount = (int)Math.Ceiling((size_y - 2.0 * y_length) / y_length);
+                        var y_total_length = (y_amount % 2 == 0 ? y_amount - 1 : y_amount) * y_length;
+
+                        // Create pattern going in x-dir  Y + y_offset
+                        for (double offset = Ystart + ((size_y - y_total_length) / 2.0); offset <= YEnd - y_length;)
+                        {
+                            var next_y = offset + y_length;
+                            
+                            pattern.Add(new Polygon2D(new Line(XStart - x_length, offset, XEnd   + x_length, offset)));
+                            pattern.Add(new Polygon2D(new Line(XEnd   + x_length, next_y, XStart - x_length, next_y)));
+
+                            offset = next_y + y_length;
+                        }
+                        
+                        // Transform pattern
+                        Matrix matr = Matrix.Identity;
+                        matr.RotateAt(-45, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
+                    }
+                case InfillType.SINGLE_ROTATED:
+                    {
+                        var pattern = Polygon2D.GenerateInfill(X, Y, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE);
+
+                        // Transform pattern and add to infill
+                        Matrix matr = Matrix.Identity;
+                        matr.RotateAt(90, X + size_x / 2.0, Y + size_y / 2.0);
+                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
+                    }
+                case InfillType.RECTANGLE:
+                    {
+                        List<Polygon2D> pattern = new List<Polygon2D>();
+                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var XStart   = X  - diagonal / 2.0;
+                        var XEnd     = X2 + diagonal / 2.0;
+                        var Ystart   = Y  - diagonal / 2.0;
+                        var YEnd     = Y2 + diagonal / 2.0;
 
                         // Generate infill rectangles, every length distance, in both X and Y.
                         var x_length = linethickness * pattern_spacing;
@@ -459,39 +504,20 @@ namespace Slicer.slyce.Constructs
                         {
                             var next_y = offset + y_length;
                             var poly = new Polygon2D();
-
-                            poly.AddLine(new Line(XStart  - x_length, offset, XEnd + x_length, offset), ConnectionType.LAST);
-                            poly.AddLine(new Line(XEnd + x_length, offset, XEnd + x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(XEnd + x_length, next_y, XStart  - x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(XStart  - x_length, next_y, XStart  - x_length, offset), ConnectionType.LAST);
+                            
+                            poly.AddLine(new Line(XStart - x_length, offset, XEnd   + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(XEnd   + x_length, offset, XEnd   + x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(XEnd   + x_length, next_y, XStart - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(XStart - x_length, next_y, XStart - x_length, offset), ConnectionType.LAST);
 
                             pattern.Add(poly);
 
                             offset = next_y + y_length;
                         }
-                        // Transform pattern and add to infill
+
+                        // Transform pattern
                         Matrix matr = Matrix.Identity;
                         matr.RotateAt(-45, X + size_x / 2.0, Y + size_y / 2.0);
-                        polies.AddRange(pattern.Select(p => p.Transform(matr)));
-
-                        break;
-                    }
-                case InfillType.SINGLE_ROTATED:
-                    {
-                        // TODO Surface infill zigzag in other direction
-
-                        // Or just lines
-                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
-                        var XStart   = X  - diagonal / 2.0;
-                        var XEnd     = X2 + diagonal / 2.0;
-                        var Ystart   = Y  - diagonal / 2.0;
-                        var YEnd     = Y2 + diagonal / 2.0;
-
-                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
-
-                        // Transform pattern and add to infill
-                        Matrix matr = Matrix.Identity;
-                        matr.RotateAt(90, X + size_x / 2.0, Y + size_y / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
 
                         break;
@@ -522,10 +548,10 @@ namespace Slicer.slyce.Constructs
                             var next_y = offset + y_length;
                             var poly = new Polygon2D();
 
-                            poly.AddLine(new Line(X - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(X  - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
                             poly.AddLine(new Line(X2 + x_length, offset, X2 + x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(X2 + x_length, next_y, X - x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(X - x_length, next_y, X - x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(X2 + x_length, next_y, X  - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(X  - x_length, next_y, X  - x_length, offset), ConnectionType.LAST);
 
                             polies.Add(poly);
 
@@ -538,10 +564,10 @@ namespace Slicer.slyce.Constructs
                             var next_x = offset + x_length;
                             var poly = new Polygon2D();
 
-                            poly.AddLine(new Line(offset, Y - y_length, offset, Y2 + y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(offset, Y  - y_length, offset, Y2 + y_length), ConnectionType.LAST);
                             poly.AddLine(new Line(offset, Y2 + y_length, next_x, Y2 + y_length), ConnectionType.LAST);
-                            poly.AddLine(new Line(next_x, Y2 + y_length, next_x, Y - y_length), ConnectionType.LAST);
-                            poly.AddLine(new Line(next_x, Y - y_length, offset, Y - y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(next_x, Y2 + y_length, next_x, Y  - y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(next_x, Y  - y_length, offset, Y  - y_length), ConnectionType.LAST);
 
                             polies.Add(poly);
 
@@ -552,13 +578,7 @@ namespace Slicer.slyce.Constructs
                     }
                 case InfillType.DIAMOND:
                     {
-                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
-                        var XStart = X  - diagonal / 2.0;
-                        var XEnd   = X2 + diagonal / 2.0;
-                        var Ystart = Y  - diagonal / 2.0;
-                        var YEnd   = Y2 + diagonal / 2.0;
-
-                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
+                        var pattern = Polygon2D.GenerateInfill(X, Y, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE);
 
                         // Transform pattern and add to infill
                         Matrix matr = Matrix.Identity;
@@ -572,13 +592,7 @@ namespace Slicer.slyce.Constructs
                     }
                 case InfillType.TRIANGLES:
                     {
-                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
-                        var XStart   = X  - diagonal / 2.0;
-                        var XEnd     = X2 + diagonal / 2.0;
-                        var Ystart   = Y  - diagonal / 2.0;
-                        var YEnd     = Y2 + diagonal / 2.0;
-
-                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
+                        var pattern = Polygon2D.GenerateInfill(X, Y, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE);
 
                         // Transform pattern and add to infill
                         Matrix matr = Matrix.Identity;
@@ -597,13 +611,7 @@ namespace Slicer.slyce.Constructs
                     }
                 case InfillType.TRI_HEXAGONS:
                     {
-                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
-                        var XStart   = X  - diagonal / 2.0;
-                        var XEnd     = X2 + diagonal / 2.0;
-                        var Ystart   = Y  - diagonal / 2.0;
-                        var YEnd     = Y2 + diagonal / 2.0;
-
-                        var pattern = Polygon2D.GenerateInfill(XStart, Ystart, XEnd, YEnd, linethickness, pattern_spacing, InfillType.SINGLE);
+                        var pattern = Polygon2D.GenerateInfill(X, Y, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE);
 
                         // Transform pattern and add to infill
                         Matrix matr = Matrix.Identity;
@@ -615,6 +623,7 @@ namespace Slicer.slyce.Constructs
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
 
                         matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
+                        //matr.Translate(0, (linethickness * pattern_spacing) / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
 
                         break;

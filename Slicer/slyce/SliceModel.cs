@@ -98,6 +98,8 @@ namespace Slicer.slyce
             var size  = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
             var scale = size / (max - min);
 
+            var dense_spacing = this.data.NozzleDiameter * 2.875;  // Default dense_spacing == 1.15
+
             this.SliceStore = Enumerable.Repeat<Slice>(null, this.data.MaxSliceIdx + 1).ToList();
 
             Construct obj = Construct.Create(this.Original, transform);
@@ -112,23 +114,26 @@ namespace Slicer.slyce
             var surface_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE
+                this.data.NozzleDiameter, dense_spacing, InfillType.SINGLE
             );
 
             var surface_struct_alt = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
                 bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
-                this.data.NozzleDiameter, this.data.NozzleDiameter * 4, InfillType.SINGLE_ROTATED
+                this.data.NozzleDiameter, dense_spacing, InfillType.SINGLE_ROTATED
             );
 
             await Task.Run(() =>
             {
+                //// For debug, add `opt` as 3rd parameter to Parallel.For
+                //var opt = new ParallelOptions() { MaxDegreeOfParallelism = 1 };
+
                 // Execute slicing
                 // Step 1: Find contours by slicing with Z plane
                 Parallel.For(0, this.data.MaxSliceIdx + 1, (i) => {
                     // Construct slice
                     var slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
-                                           data.NozzleThickness);
+                                          data.NozzleThickness);
                     slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
                     this.SliceStore[i] = slice;
 
@@ -138,19 +143,30 @@ namespace Slicer.slyce
                     });
                 });
 
+                // Adjust Nozzle height to ignore empty bottom layers
+                var first_index = this.SliceStore.FindIndex(s => s.Polygons.Count > 0);
+                if (first_index > 0)
+                {
+                    for (int i = 0; i < this.data.MaxSliceIdx + 1 - first_index; i++)
+                    {
+                        this.SliceStore[i + first_index].SetNozzleHeight((i + 1) * data.NozzleThickness);
+                    }
+                }
+                
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
                 });
 
-                // Step 2: Compare with layer above and below to find and add floor/roofs
+                // Step 2: Compare with layer above and below to find and add floor/roofs,
+                //         Erode, add shells and infill
                 Parallel.For(0, this.data.MaxSliceIdx + 1, (i) => {
                     // Check for floor/roofs
                     var slice = this.SliceStore[i];
                     slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),
                                             this.SliceStore.ElementAtOrDefault(i + 1));
                     slice.Erode(data.NozzleDiameter / 2.0);
-                    slice.AddShells(data.NumberOfShells, data.NozzleDiameter * 1.15);
+                    slice.AddShells(data.NumberOfShells, data.NozzleDiameter * dense_spacing);
 
                     // Add infill for surfaces
                     slice.AddDenseInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
@@ -158,7 +174,7 @@ namespace Slicer.slyce
                     // Add infill for internals
                     if (   i < this.data.NumberOfShells
                         || i > this.data.MaxSliceIdx - this.data.NumberOfShells
-                        /* || this.Slice.HasSurface */)
+                        /* || slice.HasSurface */)
                     {
                         // Fill entire slice with surface (For .HasSurface even if only part had to be surface...)
                         slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
@@ -186,6 +202,7 @@ namespace Slicer.slyce
 
                     this.data.SlicingProgressValue = 0;
                     this.data.SlicingInProgress = false;
+                    this.data.CurrentSliceIdx = 0;
                 });
             });
         }
@@ -249,6 +266,8 @@ namespace Slicer.slyce
             //Construct box = Construct.Create(this.SlicePlane.Geometry as MeshGeometry3D);
             //Construct sli = obj.Intersect(box);
 
+            var dense_spacing = this.data.NozzleDiameter * 2.875;  // Default == 1.15
+
             // Genarate infills
             var infill_struct = Polygon2D.GenerateInfill(
                 bounds.X, bounds.Y,
@@ -261,7 +280,7 @@ namespace Slicer.slyce
                                    data.NozzleThickness);
             this.Slice.SetNozzleHeight(data.CurrentSliceIdx * data.NozzleThickness);
             this.Slice.Erode(data.NozzleThickness / 2.0);
-            this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness);
+            this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness * dense_spacing);
             this.Slice.AddInfill(infill_struct);
 
             var min = Math.Min(bounds.X, bounds.Y);

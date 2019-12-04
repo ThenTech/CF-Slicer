@@ -173,7 +173,7 @@ namespace Slicer.slyce
 
                     // Add infill for internals
                     if (   i < this.data.NumberOfShells
-                        || i > this.data.MaxSliceIdx - this.data.NumberOfShells
+                        || i >= this.data.MaxSliceIdx - this.data.NumberOfShells
                         /* || slice.HasSurface */)
                     {
                         // Fill entire slice with surface (For .HasSurface even if only part had to be surface...)

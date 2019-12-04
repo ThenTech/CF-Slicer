@@ -172,8 +172,7 @@ namespace Slicer.slyce.GCode
         {
             foreach (var p in polygons)
             {
-                // Skip if only one line in poly?
-                if (p.Lines.First == null || p.Lines.First.Next == null)
+                if (p.Lines.First == null)
                     continue;
 
                 // Move to position of first point

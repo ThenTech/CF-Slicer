@@ -105,6 +105,8 @@ namespace Slicer.slyce.Constructs
         public void AddShells(int nShells, double thickness)
         {
             // WARNING Does not take into account if shell poly intersects with other parts of the layer...
+            // EDIT Now ignores shells that would overlap
+
             foreach (var poly in this.Polygons)
             {
                 // Note: inner most shells will be removed for infil, so add one more.
@@ -116,13 +118,77 @@ namespace Slicer.slyce.Constructs
                     if (poly.IsContour)
                     {
                         contour.Offset(-thickness * (double)shell, 10);
+
+                        //foreach (var p in this.Polygons)
+                        //{
+                        //    var result = p.Intersects(contour);
+                        //    if (result.Item1)
+                        //    {
+                        //        var res = result.Item2.FirstOrDefault();
+                        //        if (res != null)
+                        //        {
+                        //            contour = res.Union(result.Item2).First();
+                        //        }
+                        //    }
+                        //}
+
+                        //this.FillPolygons.Add(contour);
+
+                        if (this.Polygons.Any(p => p.Intersects(contour).Item1))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            this.FillPolygons.Add(contour);
+                        }
                     }
                     else
                     {
                         contour.Offset(+thickness * (double)shell, 10);
-                    }
 
-                    this.FillPolygons.Add(contour);
+                        //foreach (var p in this.Polygons)
+                        //{
+                        //    var result = p.Intersects(contour);
+                        //    if (result.Item1)
+                        //    {
+                        //        var res = result.Item2.FirstOrDefault();
+                        //        if (res != null)
+                        //        {
+                        //            contour = res.Union(result.Item2).First();
+                        //        }
+                        //    }
+                        //}
+
+                        //foreach (var p in this.FillPolygons)
+                        //{
+                        //    var result = p.Intersects(contour);
+                        //    if (result.Item1)
+                        //    {
+                        //        var res = result.Item2.FirstOrDefault();
+                        //        if (res != null)
+                        //        {
+                        //            contour = res.Union(result.Item2).First();
+                        //        }
+                        //    }
+                        //}
+
+                        //this.FillPolygons.Add(contour);
+
+
+
+                        if (   this.Polygons.Any(p => p.Intersects(contour).Item1)
+                            || this.FillPolygons.Any(p => p.Intersects(contour).Item1))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            this.FillPolygons.Add(contour);
+                        }
+                    }
+                    
+                    //this.FillPolygons.Add(contour);
                 }
             }
         }

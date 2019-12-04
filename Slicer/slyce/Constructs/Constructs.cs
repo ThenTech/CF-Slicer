@@ -204,8 +204,11 @@ namespace Slicer.slyce
             // TODO? Sort created polies with their distance to the middle, so we can print the middle one first?
             //  ==> Probably not needed..
 
-            // Simplify lines and reduce them to a minimum
-            completePolygons.ForEach(p => p.CleanLines());
+            // Simplify lines and reduce them to a minimum, and sort by area, largest first
+            completePolygons = completePolygons.Select(p => { p.CleanLines(); return Tuple.Create(p, p.Area()); })
+                                               .OrderByDescending(t => t.Item2)
+                                               .Select(t => t.Item1)
+                                               .ToList();
 
             // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)

@@ -356,63 +356,90 @@ namespace Slicer.slyce.Constructs
             return this.GetClipperSolutionWith(new Polygon2D[1] { other }, type);
         }
 
-        public bool Intersects(Polygon2D others)
+        // *******
+        internal static void AddPolyNodeToPolies(PolyNode polynode, List<Polygon2D> polies)
         {
-            // Test me
-            var result = GetClipperSolutionWith(others, ClipType.ctIntersection);
-            return result.Contour.Count != 0;
+            if (polynode.Contour.Count > 0)
+            {
+                polies.Add(new Polygon2D(polynode.Contour)
+                {
+                    IsHole = polynode.IsHole
+                });
+            }
+                
+            foreach (PolyNode pn in polynode.Childs)
+            {
+                AddPolyNodeToPolies(pn, polies);
+            }
+        }
+ 
+        public static IEnumerable<Polygon2D> PolyNodeToPolies(PolyTree polytree)
+        {
+            var polies = new List<Polygon2D>(polytree.Total);
+            AddPolyNodeToPolies(polytree, polies);
+            return polies;
+        }
+        // *******
+
+        public Tuple<bool, IEnumerable<Polygon2D>> Intersects(Polygon2D other)
+        {
+            if (other.Lines.Count == 0) return Tuple.Create(false, Enumerable.Empty<Polygon2D>());
+
+            var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
+            return Tuple.Create(intersection.ChildCount > 0 && !this.Contains(other) && !other.Contains(this),
+                                PolyNodeToPolies(intersection));
         }
 
         public IEnumerable<Polygon2D> Intersect(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctIntersection);
-            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
+            return PolyNodeToPolies(result);
         }
 
         public IEnumerable<Polygon2D> Subtract(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctDifference);
-            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
+            return PolyNodeToPolies(result);
         }
 
         public IEnumerable<Polygon2D> Union(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctUnion);
-            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
+            return PolyNodeToPolies(result);
         }
 
         public IEnumerable<Polygon2D> Xor(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctXor);
-            return Clipper.PolyTreeToPaths(result).Select(p => new Polygon2D(p));
+            return PolyNodeToPolies(result);
         }
 
         public bool ContainsOrOverlaps(Polygon2D other)
         {
             if (other.Lines.Count == 0) return false;
 
-            foreach (var p in other.IntPoints)
-            {
-                // PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
-                if (Clipper.PointInPolygon(p, this.IntPoints) > 0)
-                    return true;
-            }
-
-            return false;
+            var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
+            return intersection.ChildCount > 0;
         }
 
         public bool Contains(Polygon2D other)
         {
             if (other.Lines.Count == 0) return false;
 
+            // Check if all points are inside this polygon
             foreach (var p in other.IntPoints)
             {
                 // PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
-                if (Clipper.PointInPolygon(p, this.IntPoints) == 0)
+                if (Clipper.PointInPolygon(p, this.IntPoints) <= 0)
                     return false;
             }
 
             return true;
+        }
+
+        public double Area()
+        {
+            return Clipper.Area(this.IntPoints);
         }
 
         // (X, Y) -> (X2, Y2) is bounding box corners

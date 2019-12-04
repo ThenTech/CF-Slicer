@@ -125,12 +125,12 @@ namespace Slicer.slyce
 
             await Task.Run(() =>
             {
-                //// For debug, add `opt` as 3rd parameter to Parallel.For
-                //var opt = new ParallelOptions() { MaxDegreeOfParallelism = 1 };
+                //// For debug, set `opt` to 1, else -1 for unlimited
+                var opt = new ParallelOptions() { MaxDegreeOfParallelism = -1 };
 
                 // Execute slicing
                 // Step 1: Find contours by slicing with Z plane
-                Parallel.For(0, this.data.MaxSliceIdx + 1, (i) => {
+                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Construct slice
                     var slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                           data.NozzleThickness);
@@ -160,7 +160,7 @@ namespace Slicer.slyce
 
                 // Step 2: Compare with layer above and below to find and add floor/roofs,
                 //         Erode, add shells and infill
-                Parallel.For(0, this.data.MaxSliceIdx + 1, (i) => {
+                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Check for floor/roofs
                     var slice = this.SliceStore[i];
                     slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),

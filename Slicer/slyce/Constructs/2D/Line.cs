@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
+using ClipperLib;
 
 namespace Slicer.slyce.Constructs
 {
@@ -13,23 +14,33 @@ namespace Slicer.slyce.Constructs
         public static readonly Brush BrushHole    = Brushes.Blue;
         public static readonly Brush BrushInfill  = Brushes.Red;
 
+        public static readonly Brush BrushContourShell = Brushes.SlateGray;
+        public static readonly Brush BrushHoleShell    = Brushes.DodgerBlue;
+
         public Point StartPoint { get; set; }
         public Point EndPoint { get; set; }
 
         public bool IsContour { get; set; } = true;
         public bool IsHole    { get => !IsContour; set => IsContour = !value; }
         public bool IsInfill  { get; set; } = false;
+        public bool IsShell   { get; set; } = false;
 
         public Line(double X1, double Y1, double X2, double Y2)
         {
-            StartPoint = new Point(X1, Y1);
-            EndPoint = new Point(X2, Y2);
+            this.StartPoint = new Point(X1, Y1);
+            this.EndPoint   = new Point(X2, Y2);
         }
 
         public Line(Point p1, Point p2)
         {
             this.StartPoint = p1;
-            this.EndPoint = p2;
+            this.EndPoint   = p2;
+        }
+
+        public Line(IntPoint p1, IntPoint p2)
+        {
+            this.StartPoint = new Point(p1);
+            this.EndPoint   = new Point(p2);
         }
 
         public static Line ConvertToLine(Vertex v, Vertex w)
@@ -122,12 +133,22 @@ namespace Slicer.slyce.Constructs
                 || this.EndPoint.Equals(line.EndPoint);
         }
 
-        public double GetLength()
+        public static double Distance(double x1, double y1, double x2, double y2)
         {
-            double x = this.StartPoint.X - this.EndPoint.X;
-            double y = this.StartPoint.Y - this.EndPoint.Y;
+            double x = x1 - x2;
+            double y = y1 - y2;
 
             return Math.Sqrt(x * x + y * y);
+        }
+
+        public static double Distance(Point first, Point second)
+        {
+            return Distance(first.X, first.Y, second.X, second.Y);
+        }
+
+        public double GetLength()
+        {
+            return Distance(this.StartPoint, this.EndPoint);
         }
 
         public Line Reversed()
@@ -137,9 +158,14 @@ namespace Slicer.slyce.Constructs
 
         public System.Windows.Shapes.Shape ToShape(double minX, double minY, double scale, double arrow_scale, double stroke)
         {
-            Brush colour = this.IsInfill ? Line.BrushInfill
-                                         : this.IsContour
-                                         ? Line.BrushContour : Line.BrushHole;
+            Brush colour = this.IsInfill 
+                         ? this.IsShell
+                           ? this.IsContour
+                             ? Line.BrushContourShell
+                             : Line.BrushHoleShell
+                           : Line.BrushInfill
+                         : this.IsContour
+                           ? Line.BrushContour : Line.BrushHole;
 
             if (arrow_scale > 0.0)
             {

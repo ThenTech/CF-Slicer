@@ -137,7 +137,7 @@ namespace Slicer.GUI
             }
         }
 
-        double _FilamentDiameter = 1.75;    // 2.6477
+        double _FilamentDiameter = 2.6477;    // 1.75 actual or 2.6477?
         public double FilamentDiameter
         {
             get { return _FilamentDiameter; }

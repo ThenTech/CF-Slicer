@@ -288,7 +288,7 @@ namespace Slicer.slyce
             var size = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
             var scale = size / (max - min);
 
-            this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale);
+            this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale, this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
 
             this.data.SliceCanvas.Children.Clear();
             this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));

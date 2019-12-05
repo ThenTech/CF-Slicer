@@ -13,8 +13,6 @@ namespace Slicer.slyce.Constructs
 
     public class Polygon2D : IShape2D
     {
-        public static readonly double INT_POINT_FACTOR = 1000.0;
-
         // The connected (!) line segments that creates this polygon.
         public LinkedList<Line> Lines { get; set; }
 
@@ -31,6 +29,9 @@ namespace Slicer.slyce.Constructs
         // Indicates whether this is an inside edge (hole)
         public bool IsHole { get => !IsContour; set => IsContour = !value; }
 
+        public bool IsInfill { get; set; } = false;
+        public bool IsShell  { get; set; } = false;
+
         // List of seperate points in the Polygon for ClipperLib
         private Path _IntPoints = null;
         public Path IntPoints
@@ -41,10 +42,7 @@ namespace Slicer.slyce.Constructs
                 if (this.IsComplete() && (_IntPoints == null || _IntPoints.Count != Lines.Count))
                 {
                     // Closed poly
-                    this._IntPoints = this.Lines.Select(
-                        l => new IntPoint((long)(l.StartPoint.X * INT_POINT_FACTOR),
-                                          (long)(l.StartPoint.Y * INT_POINT_FACTOR))
-                    ).ToList();
+                    this._IntPoints = this.Lines.Select(l => l.StartPoint.ToIntPoint()).ToList();
                 } 
                 else if (!this.IsComplete() && (_IntPoints == null || _IntPoints.Count != Lines.Count * 2))
                 {
@@ -53,10 +51,8 @@ namespace Slicer.slyce.Constructs
 
                     foreach (var l in Lines)
                     {
-                        this._IntPoints.Add(new IntPoint((long)(l.StartPoint.X * INT_POINT_FACTOR),
-                                                         (long)(l.StartPoint.Y * INT_POINT_FACTOR)));
-                        this._IntPoints.Add(new IntPoint((long)(l.EndPoint.X * INT_POINT_FACTOR),
-                                                         (long)(l.EndPoint.Y * INT_POINT_FACTOR)));
+                        this._IntPoints.Add(l.StartPoint.ToIntPoint());
+                        this._IntPoints.Add(l.EndPoint.ToIntPoint());
                     }
                 }
 
@@ -64,7 +60,22 @@ namespace Slicer.slyce.Constructs
             }
         }
 
+        // Indication of shell offset, higher is mor inwards inside object
         public int Shell { get; set; } = 1;
+
+        private Point _Center = null;
+        public Point Center
+        {
+            get
+            {
+                if (this._Center == null)
+                    this._Center = this.GetCenter();
+                return this._Center;
+            }
+        }
+
+        // Used to indicate depth inside slice, i.e. higher is smaller surface area and possibly inside other polies
+        public int Hierarchy { get; set; } = 0;
 
         public Polygon2D()
         {
@@ -80,7 +91,14 @@ namespace Slicer.slyce.Constructs
         public Polygon2D Clone()
         {
             Path points = this.IntPoints.Select(p => new IntPoint(p.X, p.Y)).ToList();
-            return new Polygon2D(points) { IsContour = this.IsContour };
+            return new Polygon2D(points) {
+                IsSurface = this.IsSurface,
+                IsContour = this.IsContour,
+                Shell     = this.Shell,
+                Hierarchy = this.Hierarchy,
+                IsInfill  = this.IsInfill,
+                IsShell   = this.IsShell
+            };
         }
 
         public Polygon2D(Path path)
@@ -91,22 +109,22 @@ namespace Slicer.slyce.Constructs
 
         public Point FirstPoint()
         {
-            return Lines.First().StartPoint;
+            return Lines.First.Value.StartPoint;
         }
 
         public Point LastPoint()
         {
-            return Lines.Last().EndPoint;
+            return Lines.Last.Value.EndPoint;
         }
 
         public Line First()
         {
-            return Lines.First();
+            return Lines.First.Value;
         }
 
         public Line Last()
         {
-            return Lines.Last();
+            return Lines.Last.Value;
         }
 
         public ConnectionType CanConnect(Line line)
@@ -252,14 +270,13 @@ namespace Slicer.slyce.Constructs
         public Polygon2D Transform(Matrix tranformation)
         {
             // Convert to Windows points
-            var points = this.IntPoints.Select(po => new System.Windows.Point(po.X / INT_POINT_FACTOR, po.Y / INT_POINT_FACTOR)).ToArray();
+            var points = this.IntPoints.Select(po => Point.IntToWinPoint(po)).ToArray();
 
             // Apply transformation
             tranformation.Transform(points);
 
             // Converty back to IntPoints
-            return new Polygon2D(points.Select(po => new IntPoint((long)(po.X * INT_POINT_FACTOR),
-                                                                  (long)(po.Y * INT_POINT_FACTOR))).ToList());
+            return new Polygon2D(points.Select(po => Point.WinToIntPoint(po)).ToList());
         }
 
 
@@ -275,17 +292,22 @@ namespace Slicer.slyce.Constructs
             {
                 var start = this._IntPoints[i - 1];
                 var end   = this._IntPoints[i];
-
-                lines.AddLast(new Line((double)start.X / INT_POINT_FACTOR, (double)start.Y / INT_POINT_FACTOR,
-                                       (double)end.X / INT_POINT_FACTOR, (double)end.Y / INT_POINT_FACTOR));
+                lines.AddLast(new Line(start, end) {
+                    IsContour = this.IsContour,
+                    IsInfill  = this.IsInfill,
+                    IsShell   = this.IsShell
+                });
             }
 
             if (this._IntPoints.Count > 3)
             {
                 var first = this._IntPoints.First();
                 var last  = this._IntPoints.Last();
-                lines.AddLast(new Line((double)last.X / INT_POINT_FACTOR, (double)last.Y / INT_POINT_FACTOR,
-                                       (double)first.X / INT_POINT_FACTOR, (double)first.Y / INT_POINT_FACTOR));
+                lines.AddLast(new Line(last, first) {
+                    IsContour = this.IsContour,
+                    IsInfill  = this.IsInfill,
+                    IsShell   = this.IsShell
+                });
             }
 
             this.Lines = lines;
@@ -315,7 +337,7 @@ namespace Slicer.slyce.Constructs
 
             var c = new ClipperOffset(miter_limit);
             c.AddPath(this.IntPoints, JoinType.jtMiter, EndType.etClosedPolygon);
-            c.Execute(ref paths, delta * INT_POINT_FACTOR);
+            c.Execute(ref paths, delta * Point.INT_POINT_FACTOR);
 
             if (paths.Count > 0)
             {
@@ -439,7 +461,105 @@ namespace Slicer.slyce.Constructs
 
         public double Area()
         {
-            return Clipper.Area(this.IntPoints);
+            return Clipper.Area(this.IntPoints) / (Point.INT_POINT_FACTOR * Point.INT_POINT_FACTOR);
+        }
+
+        private Point GetCenter()
+        {
+            // Adapted from https://stackoverflow.com/a/2792459/6608855
+
+            Point centroid = new Point(0, 0);
+            double signedArea = 0.0;
+
+            // For all vertices except last
+            foreach (var v in this.Lines)
+            {
+                var p1 = v.StartPoint;
+                var p2 = v.EndPoint;
+                var a  = p1.X * p2.Y - p2.X * p1.Y;  // Partial signed area
+                signedArea += a;
+                centroid.X += (p1.X + p2.X) * a;
+                centroid.Y += (p1.Y + p2.Y) * a;
+            }
+
+            signedArea /= 2.0;
+            centroid.X /= (6.0 * signedArea);
+            centroid.Y /= (6.0 * signedArea);
+
+            return centroid;
+        }
+
+        public double DistanceTo(Polygon2D other)
+        {
+            return Line.Distance(this.Center, other.Center);
+        }
+
+        public Tuple<bool, double> ResemblesCircle(double tolerance = 1e-5)
+        {
+            var numPoints = this.IntPoints.Count;
+
+            if (numPoints < 8) return Tuple.Create(false, -1.0);
+
+            Point centroid = this.Center;
+            double poly_area = this.Area() * 1.07;  // Adjust for circle
+            
+            var p1 = new Point(this.IntPoints[0]);
+            var p2 = new Point(this.IntPoints[(int)(numPoints * 1.0 / 3.0)]);
+            var p3 = new Point(this.IntPoints[(int)(numPoints * 2.0 / 3.0)]);
+            var radius = (Line.Distance(centroid, p1) + Line.Distance(centroid, p2) + Line.Distance(centroid, p2)) / 3.0;
+
+            // May be a circle
+            return Tuple.Create(poly_area.EpsilonEquals(Math.PI * radius * radius, 0.8), radius);
+        }
+
+        public static int FindClosest(List<Polygon2D> input, Polygon2D from = null) {
+            var current = from ?? input[0];
+            var start   = from == null ? 1 : 0;
+
+            int closest_index = -1;
+            double shortest_dist = Double.MaxValue;
+
+            for (var i = start; i < input.Count; i++)
+            {
+                var dist_to = current.DistanceTo(input[i]);
+                if (dist_to < shortest_dist)
+                {
+                    shortest_dist = dist_to;
+                    closest_index = i;
+                }
+            }
+
+            return closest_index;
+        }
+
+        public static IEnumerable<Polygon2D> OrderByClosest(List<Polygon2D> input, Polygon2D start = null)
+        {
+            if (input.Count > 1)
+            {
+                // Add first
+                var current = start ?? input[0];
+                yield return current;
+
+                while (input.Count > 1)
+                {
+                    int closest_index = FindClosest(input, current);
+
+                    if (closest_index >= 0)
+                    {
+                        current = input[closest_index];
+
+                        // Put last on old index, and remove
+                        input[closest_index] = input[input.Count - 1];
+                        input.RemoveAt(input.Count - 1);
+
+                        // Add next
+                        yield return current;
+                    }
+                }
+
+                // Add last
+                yield return input[0];
+            }
         }
 
         // (X, Y) -> (X2, Y2) is bounding box corners
@@ -460,7 +580,7 @@ namespace Slicer.slyce.Constructs
                 case InfillType.SINGLE:
                     {
                         List<Polygon2D> pattern = new List<Polygon2D>();
-                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var diagonal = Line.Distance(X, Y, X2, Y2);
                         var XStart   = X  - diagonal / 2.0;
                         var XEnd     = X2 + diagonal / 2.0;
                         var Ystart   = Y  - diagonal / 2.0;
@@ -509,7 +629,7 @@ namespace Slicer.slyce.Constructs
                 case InfillType.RECTANGLE:
                     {
                         List<Polygon2D> pattern = new List<Polygon2D>();
-                        var diagonal = new Line(X, Y, X2, Y2).GetLength();
+                        var diagonal = Line.Distance(X, Y, X2, Y2);
                         var XStart   = X  - diagonal / 2.0;
                         var XEnd     = X2 + diagonal / 2.0;
                         var Ystart   = Y  - diagonal / 2.0;
@@ -657,6 +777,8 @@ namespace Slicer.slyce.Constructs
                     }
                 }
 
+
+            polies.ForEach(p => { p.IsInfill = true; });
             return polies;
         }
     }

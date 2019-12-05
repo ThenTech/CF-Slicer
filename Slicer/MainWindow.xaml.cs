@@ -86,6 +86,9 @@ namespace Slicer
 
             cboxInfillType.ItemsSource = Enum.GetValues(typeof(InfillType)).Cast<InfillType>();
             cboxInfillType.SelectedItem = this._viewModel.UseInfill;
+
+            this.ResetCamera_Click(null, null);
+            this.Reset_Click(null, null);
         }
 
         private void Load(string p)
@@ -201,6 +204,7 @@ namespace Slicer
         private void ResetCamera_Click(object sender, RoutedEventArgs e)
         {
             viewport.CameraController.ResetCamera();
+            viewport.CameraController.ChangeDirection(new Vector3D(152, 263, -213), new Vector3D(0.287, 0.497, 0.819), 0);
             zoomBorder.Reset();
             zoomBorder.Fill();
         }

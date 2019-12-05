@@ -26,6 +26,22 @@ namespace Slicer.slyce
                 }
             }
         }
+
+        public static bool EpsilonEquals(this double x, double y, double epsilon = 1e-15)
+        {
+            //// Normal
+            //return Math.Abs(x - y) < epsilon;
+
+            // About the same with lower epsilon
+            double eps = Math.Max(Math.Abs(x), Math.Abs(y)) * epsilon;
+            return Math.Abs(x - y) < eps;
+
+            //// Compare to 1
+            //if (x == y) return true;
+            //var diff = (x + epsilon) / (y + epsilon);
+            //var mid = epsilon / 2.0;
+            //return diff >= (1.0 - mid) && diff <= (1.0 + mid);
+        }
     }
 
     public class Construct
@@ -213,11 +229,13 @@ namespace Slicer.slyce
             // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)
             {
+                var poly1 = completePolygons[i];
+                poly1.Hierarchy = i;
+
                 for (int j = 0; j < completePolygons.Count; j++)
                 {
                     if (i != j)
                     {
-                        var poly1 = completePolygons[i];
                         var poly2 = completePolygons[j];
 
                         //Check if i contains j

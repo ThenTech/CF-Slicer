@@ -1,6 +1,6 @@
 # Computational Fabrication 3D model Slicer
 
-> **Lieven Libberecht, William Thenaers**
+> Group 3 - **Lieven Libberecht, William Thenaers**
 
 ## Minimal requirements
 
@@ -63,10 +63,10 @@
   - Subtract Layer+1 from Layer+0 for roofs
   - Subtract Layer+0 from Layer+1 for floors
   - Add to separate list
-- [ ] Surface invullen met patroon => denser infill, mss met offsets ipv rects or zigzag?
-  - Shells en dense infill beter 1.5*nozzle thinkness => Cura
-  - Dense infill korte segmentjes verwijderen na clipping
-    - OF Line clipping in de plaats => Paths met lines clippen met inner shell
+- [x] Surface invullen met patroon => denser infill, ~~mss met offsets ipv rects or zigzag?~~
+  - ✔ Shells en dense infill beter 1.5*nozzle thinkness => Cura
+  - ✔ Dense infill korte segmentjes verwijderen na clipping
+    - ✔ OF Line clipping in de plaats => Paths met lines clippen met inner shell
 - [ ] Overhang herkenning voor support (diff van subtraction > nozzle width => support needed)
 - [ ] Support toevoegen voor overgang
 

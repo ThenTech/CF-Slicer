@@ -130,28 +130,35 @@ namespace Slicer.slyce.GCode
             {
                 first_start = false;
 
-                // Move to XYZ
-                this.Add(new RapidLinearMove()
-                {
-                    MoveX = (decimal)start_point.X,
-                    MoveY = (decimal)start_point.Y,
-                    MoveZ = (decimal)(start_z - 0.02),
-                    Feedrate = 6000
-                });
-
-                // Set feed
                 this.Add(new LinearMove()
                 {
                     Extrude = 0,
                     Feedrate = 2700,
                 });
+
+                // Move to XYZ
+                this.Add(new RapidLinearMove()
+                {
+                    MoveX = (decimal)start_point.X,
+                    MoveY = (decimal)start_point.Y,
+                    MoveZ = (decimal)(start_z /*- 0.02*/),  // TODO ??
+                    Feedrate = 6000
+                });
+
+                // Set feed
                 this.Add(new LinearMove()
                 {
-                    Feedrate = 1200,
+                    Feedrate = 1500,    // TODO At wich rate?  changed from 1200
                 });
             }
             else
             {
+                this.Add(new LinearMove()
+                {
+                    Extrude = 0,
+                    Feedrate = 2700,
+                });
+
                 // Move to XYZ
                 this.Add(new RapidLinearMove()
                 {
@@ -163,7 +170,7 @@ namespace Slicer.slyce.GCode
                 // Set feed
                 this.Add(new LinearMove()
                 {
-                    Feedrate = 1200,
+                    Feedrate = 1500,    // TODO At wich rate?  changed from 1200
                 });
             }
         }
@@ -176,24 +183,52 @@ namespace Slicer.slyce.GCode
                     continue;
 
                 // Move to position of first point
-                this.MoveToNextStart(p.Lines.First.Value.StartPoint, zheight);
+                this.MoveToNextStart(p.FirstPoint(), zheight);
 
-                // Extrude from first and follow next points
-                for (LinkedListNode<Line> it = p.Lines.First; it != null; it = it.Next)
+                // TODO possibly optimize for circles
+                // NOTE Arc support for printer MUST be enabled first...
+                //// Test if arc
+                //var maybe_circle = p.ResemblesCircle();
+                //if (maybe_circle.Item1)
+                //{
+                //    var rad = maybe_circle.Item2;
+                //    var circumference = Math.PI * 2.0 * rad;
+
+                //    accumulated_extrusion += (decimal)((this.layer_height * this.nozzle_diam * circumference)
+                //                                        / this.filament_diam);
+
+                //    var relative_x = p.Center.X - p.FirstPoint().X;
+                //    var relative_y = p.Center.Y - p.FirstPoint().Y;
+
+                //    // Move and extrude
+                //    this.Add(new ControlledArcMoveClockwise()
+                //    {
+                //        MoveX = (decimal)p.FirstPoint().X,
+                //        MoveY = (decimal)p.FirstPoint().Y,
+                //        CenterX = (decimal)relative_x,
+                //        CenterY = (decimal)relative_y,
+                //        Extrude = accumulated_extrusion
+                //    });
+                //}
+                //else
                 {
-                    var next_point = it.Value.EndPoint;
-
-                    // Get extrusion for prev line segment (next_point == EndPoint of prev)
-                    accumulated_extrusion += (decimal)((this.layer_height * this.nozzle_diam * it.Value.GetLength())
-                                                        / this.filament_diam);
-
-                    // Move and extrude
-                    this.Add(new LinearMove()
+                    // Extrude from first and follow next points
+                    for (LinkedListNode<Line> it = p.Lines.First; it != null; it = it.Next)
                     {
-                        MoveX = (decimal)next_point.X,
-                        MoveY = (decimal)next_point.Y,
-                        Extrude = accumulated_extrusion
-                    });
+                        var next_point = it.Value.EndPoint;
+
+                        // Get extrusion for prev line segment (next_point == EndPoint of prev)
+                        accumulated_extrusion += (decimal)((this.layer_height * this.nozzle_diam * it.Value.GetLength())
+                                                            / this.filament_diam);
+
+                        // Move and extrude
+                        this.Add(new LinearMove()
+                        {
+                            MoveX = (decimal)next_point.X,
+                            MoveY = (decimal)next_point.Y,
+                            Extrude = accumulated_extrusion
+                        });
+                    }
                 }
             }
 

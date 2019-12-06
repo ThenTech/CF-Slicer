@@ -11,7 +11,7 @@ namespace Slicer.slyce.Constructs
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
-    public class Polygon2D : IShape2D, IComparable
+    public class Polygon2D : IShape2D
     {
         // The connected (!) line segments that creates this polygon.
         public LinkedList<Line> Lines { get; set; }
@@ -533,11 +533,11 @@ namespace Slicer.slyce.Constructs
         }
 
         public static IEnumerable<Polygon2D> OrderByClosest(List<Polygon2D> input, Polygon2D start = null)
-        {
+        {           
             if (input.Count > 1)
             {
                 // Add first
-                var current = start ?? input[0];
+                var current = start ?? input.GetAndRemoveAt(0);
                 yield return current;
 
                 while (input.Count > 1)
@@ -546,11 +546,7 @@ namespace Slicer.slyce.Constructs
 
                     if (closest_index >= 0)
                     {
-                        current = input[closest_index];
-
-                        // Put last on old index, and remove
-                        input[closest_index] = input[input.Count - 1];
-                        input.RemoveAt(input.Count - 1);
+                        current = input.GetAndRemoveAt(closest_index);
 
                         // Add next
                         yield return current;
@@ -782,42 +778,31 @@ namespace Slicer.slyce.Constructs
             return polies;
         }
 
-        public int CompareTo(object obj)
+        public static IEnumerable<Polygon2D> OrderByArea(IEnumerable<Polygon2D> list, bool bigger_to_small = true, bool clean_first = false)
         {
-            
-            var other = (Polygon2D)obj;
-            if(other.Contains(this))
+            var prepare = list.Select(p =>
             {
-                return 1;
-            }
-            else if(this.Contains(other))
+                if (clean_first) p.CleanLines();
+                return Tuple.Create(p, p.Area());
+            });
+
+            if (bigger_to_small)
             {
-                return -1;
+                return prepare.OrderByDescending(t => t.Item2)
+                              .Select(t => t.Item1);
             }
-            int order1 = this.GetOrderNumber();
-            int order2 = other.GetOrderNumber();
-            return order1 - order2;
+            else
+            {
+                return prepare.OrderBy(t => t.Item2)
+                              .Select(t => t.Item1);
+            }
         }
 
-        public int GetOrderNumber()
+        public static IEnumerable<Polygon2D> OrderByHierarchy(IEnumerable<Polygon2D> list, bool outer_to_inner = false)
         {
-            if(this.IsInfill)
-            {
-                return 5;
-            }
-            if(this.IsShell)
-            {
-                return 4;
-            }
-            if(this.IsHole)
-            {
-                return 3;
-            }
-            if(this.IsContour)
-            {
-                return 1;
-            }
-            return 0;
+            return outer_to_inner
+                 ? list.OrderBy(p => p.Hierarchy)
+                 : list.OrderByDescending(p => p.Hierarchy);
         }
     }
 }

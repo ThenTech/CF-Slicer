@@ -183,7 +183,10 @@ namespace Slicer.slyce
                     {
                         slice.AddInfill(infill_struct);
                     }
+
+                    // Reverse order polies
                     slice.SortPolygons();
+
                     // Add shapes
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {

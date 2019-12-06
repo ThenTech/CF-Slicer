@@ -42,6 +42,17 @@ namespace Slicer.slyce
             //var mid = epsilon / 2.0;
             //return diff >= (1.0 - mid) && diff <= (1.0 + mid);
         }
+
+        public static T GetAndRemoveAt<T>(this List<T> input, int index)
+        {
+            var item = input[index];
+
+            // Put last on old index, and remove
+            input[index] = input[input.Count - 1];
+            input.RemoveAt(input.Count - 1);
+
+            return item;
+        }
     }
 
     public class Construct
@@ -221,10 +232,7 @@ namespace Slicer.slyce
             //  ==> Probably not needed..
 
             // Simplify lines and reduce them to a minimum, and sort by area, largest first
-            completePolygons = completePolygons.Select(p => { p.CleanLines(); return Tuple.Create(p, p.Area()); })
-                                               .OrderByDescending(t => t.Item2)
-                                               .Select(t => t.Item1)
-                                               .ToList();
+            completePolygons = Polygon2D.OrderByArea(completePolygons, true, true).ToList();
 
             // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)

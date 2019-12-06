@@ -170,7 +170,7 @@ namespace Slicer.slyce.GCode
                 // Set feed
                 this.Add(new LinearMove()
                 {
-                    Feedrate = 1500,    // TODO At wich rate?  changed from 1200
+                    Feedrate = 1200,    // TODO At wich rate?  changed from 1200
                 });
             }
         }
@@ -240,8 +240,8 @@ namespace Slicer.slyce.GCode
             this.first_start = true;
             decimal accumulated_extrusion = 0.0m;
 
-            accumulated_extrusion = this.AddPolys(s.FillPolygons, s.ZHeight, accumulated_extrusion);
             accumulated_extrusion = this.AddPolys(s.Polygons, s.ZHeight, accumulated_extrusion);
+            accumulated_extrusion = this.AddPolys(s.FillPolygons, s.ZHeight, accumulated_extrusion);
             
             // Move nozzle back up a little to clear current layer and reset extrusion
             this.MoveNozzleUp(s.ZHeight);

@@ -275,17 +275,18 @@ namespace Slicer.slyce.Constructs
                 tmp_fill.AddRange(intersected);
             }
 
+            // Add shells from inside to outside
+            this.FillPolygons = other_shell.ToList();  // .Reverse()
+
             // Sort infill on closest by
             var sorted = Polygon2D.OrderByClosest(tmp_fill);
-            this.FillPolygons = sorted.ToList();
 
             //tmp_fill.AddRange(inner_shell);   // Force draw infill clip polies
             //tmp_fill.AddRange(infill);        // Force draw infill
             //tmp_fill = tmp_fill[0].Union(tmp_fill).ToList();
             //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
-
-            // Add shells from inside to outside
-            this.FillPolygons.AddRange(other_shell.Reverse());
+            
+            this.FillPolygons.AddRange(sorted);
         }
 
         public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)

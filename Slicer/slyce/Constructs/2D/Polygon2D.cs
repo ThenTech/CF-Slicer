@@ -43,7 +43,7 @@ namespace Slicer.slyce.Constructs
                 {
                     // Closed poly
                     this._IntPoints = this.Lines.Select(l => l.StartPoint.ToIntPoint()).ToList();
-                } 
+                }
                 else if (!this.IsComplete() && (_IntPoints == null || _IntPoints.Count != Lines.Count * 2))
                 {
                     // Open poly
@@ -327,6 +327,45 @@ namespace Slicer.slyce.Constructs
                     this._IntPoints = simplified[0];
                 }
 
+                this.UpdateLinesFromPoints();
+            }
+        }
+
+        public void FilterShorts()
+        {
+            if (this.Lines.Count > 3)
+            {
+                // Only include consecutive points if their distance is greater than a threshold
+                IntPoint p1 = this._IntPoints[0];
+                var filtered = new Path(this._IntPoints.Count) { p1 };
+
+                for (var i = 1; i < this._IntPoints.Count; i++)
+                {
+                    do
+                    {
+                        // Skip next if too close
+                        IntPoint p2 = this._IntPoints[i];
+
+                        if (Line.Distance(p1, p2) < Line.MIN_LENGTH)
+                        {
+                            i++;
+                        }
+                        else
+                        {
+                            p1 = p2;
+                            filtered.Add(p2);
+                            break;
+                        }
+                    } while (i < this._IntPoints.Count - 1);
+                }
+
+                // Check between last and first points
+                if (Line.Distance(filtered[0], filtered[filtered.Count - 1]) < Line.MIN_LENGTH)
+                {
+                    this._IntPoints.RemoveAt(filtered.Count - 1);
+                }
+
+                this._IntPoints = filtered;
                 this.UpdateLinesFromPoints();
             }
         }

@@ -98,7 +98,7 @@ namespace Slicer.slyce
             var size  = Math.Min(this.data.SliceCanvas.ActualWidth, this.data.SliceCanvas.ActualHeight);
             var scale = size / (max - min);
 
-            var dense_spacing = this.data.NozzleDiameter * 2.875;  // Default dense_spacing == 1.15
+            var dense_spacing = this.data.NozzleDiameter * 2.375;  // Default dense_spacing == 0.95
 
             this.SliceStore = Enumerable.Repeat<Slice>(null, this.data.MaxSliceIdx + 1).ToList();
 

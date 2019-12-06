@@ -16,6 +16,10 @@ namespace Slicer.slyce.Constructs
 
         public static readonly Brush BrushContourShell = Brushes.SlateGray;
         public static readonly Brush BrushHoleShell    = Brushes.DodgerBlue;
+        public static readonly Brush BrushLengthWarn   = Brushes.Orange;
+
+        // Minimal line length, shorter gets ignored
+        public static readonly double MIN_LENGTH = 0.10;
 
         public Point StartPoint { get; set; }
         public Point EndPoint { get; set; }
@@ -146,6 +150,11 @@ namespace Slicer.slyce.Constructs
             return Distance(first.X, first.Y, second.X, second.Y);
         }
 
+        public static double Distance(IntPoint first, IntPoint second)
+        {
+            return Distance(new Point(first), new Point(second));
+        }
+
         public double GetLength()
         {
             return Distance(this.StartPoint, this.EndPoint);
@@ -166,6 +175,12 @@ namespace Slicer.slyce.Constructs
                            : Line.BrushInfill
                          : this.IsContour
                            ? Line.BrushContour : Line.BrushHole;
+
+            if (this.GetLength() < Line.MIN_LENGTH)
+            {
+                colour = Line.BrushLengthWarn;
+                arrow_scale *= 4.0;
+            }
 
             if (arrow_scale > 0.0)
             {

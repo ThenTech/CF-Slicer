@@ -130,11 +130,11 @@ namespace Slicer.slyce.GCode
             {
                 first_start = false;
 
-                //this.Add(new LinearMove()
-                //{
-                //    Extrude = 0,
-                //    Feedrate = 2700,
-                //});
+                this.Add(new LinearMove()
+                {
+                    Extrude = 0,
+                    Feedrate = 2700,
+                });
 
                 // Move to XYZ
                 this.Add(new RapidLinearMove()

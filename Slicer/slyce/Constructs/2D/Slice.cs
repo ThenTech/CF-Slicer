@@ -94,6 +94,8 @@ namespace Slicer.slyce.Constructs
                     // Expand outwards == inwards into object
                     poly.Offset(+delta, miter_limit);
                 }
+
+                poly.FilterShorts();
             }
         }
 
@@ -190,6 +192,10 @@ namespace Slicer.slyce.Constructs
                     }
                 }
 
+                // Amount of overlap between infill and walls, expressed in terms of infill line width
+                var infill_overlap_percentage = 0.3; // Same as Cura
+                var overlapp_offset = thickness * infill_overlap_percentage;
+
                 // Add a dummy to clip infill, move it closer to the previous shell
                 inner_most = inner_most == null ? poly.Clone() : inner_most.Clone();
                 inner_most.Shell = nShells;
@@ -197,7 +203,7 @@ namespace Slicer.slyce.Constructs
 
                 if (inner_most.IsContour)
                 {
-                    inner_most.Offset(-thickness / 2.0, shell_miter);
+                    inner_most.Offset(-overlapp_offset, shell_miter);
 
                     //if ( !(this.Polygons.Any(p => p.Intersects(inner_most).Item1
                     //                          || (p.Hierarchy >= inner_most.Hierarchy && p.IsHole && p.Contains(inner_most)))
@@ -208,7 +214,7 @@ namespace Slicer.slyce.Constructs
                 }
                 else
                 {
-                    inner_most.Offset(+thickness / 2.0, shell_miter);
+                    inner_most.Offset(+overlapp_offset, shell_miter);
 
                     //if ( !(this.Polygons.Any(p => p.Intersects(inner_most).Item1)
                     //    || this.FillPolygons.Any(p => p.Intersects(inner_most).Item1
@@ -218,6 +224,8 @@ namespace Slicer.slyce.Constructs
                     }
                 }
             }
+
+            this.FillPolygons.ForEach(p => p.FilterShorts());
         }
 
         public void AddDenseInfill(List<Polygon2D> infill_struct)
@@ -271,6 +279,7 @@ namespace Slicer.slyce.Constructs
                 {
                     p.IsInfill = true;
                     p.CleanLines();
+                    p.FilterShorts();
                 }
                 tmp_fill.AddRange(intersected);
             }

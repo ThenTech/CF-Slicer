@@ -240,8 +240,9 @@ namespace Slicer.slyce.GCode
             this.first_start = true;
             decimal accumulated_extrusion = 0.0m;
 
-            accumulated_extrusion = this.AddPolys(s.Polygons, s.ZHeight, accumulated_extrusion);
             accumulated_extrusion = this.AddPolys(s.FillPolygons, s.ZHeight, accumulated_extrusion);
+            accumulated_extrusion = this.AddPolys(s.Polygons, s.ZHeight, accumulated_extrusion);
+            
 
             // Move nozzle back up a little to clear current layer and reset extrusion
             this.MoveNozzleUp(s.ZHeight);

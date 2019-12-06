@@ -183,7 +183,7 @@ namespace Slicer.slyce
                     {
                         slice.AddInfill(infill_struct);
                     }
-
+                    slice.SortPolygons();
                     // Add shapes
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
@@ -282,6 +282,7 @@ namespace Slicer.slyce
             this.Slice.Erode(data.NozzleThickness / 2.0);
             this.Slice.AddShells(data.NumberOfShells, data.NozzleThickness * dense_spacing);
             this.Slice.AddInfill(infill_struct);
+            this.Slice.SortPolygons();
 
             var min = Math.Min(bounds.X, bounds.Y);
             var max = Math.Max(bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY);

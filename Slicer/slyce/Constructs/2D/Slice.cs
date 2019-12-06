@@ -273,14 +273,15 @@ namespace Slicer.slyce.Constructs
 
             // Sort infill on closest by
             var sorted = Polygon2D.OrderByClosest(tmp_fill);
-
+            this.FillPolygons.AddRange(sorted);
+            other_shell.Reverse();
             this.FillPolygons = other_shell.ToList();
             //tmp_fill.AddRange(inner_shell);   // Force draw infill clip polies
             //tmp_fill.AddRange(infill);        // Force draw infill
             //tmp_fill = tmp_fill[0].Union(tmp_fill).ToList();
             //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
 
-            this.FillPolygons.AddRange(sorted);
+            
         }
 
         public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)
@@ -308,6 +309,14 @@ namespace Slicer.slyce.Constructs
             }
 
             return this.Shapes;
+        }
+
+        public void SortPolygons()
+        {
+            //this.FillPolygons.Sort();
+            this.Polygons.Sort();
+            //this.FillPolygons.Reverse();
+            this.Polygons.Reverse();
         }
     }
 }

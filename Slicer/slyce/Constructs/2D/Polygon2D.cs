@@ -11,7 +11,7 @@ namespace Slicer.slyce.Constructs
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
-    public class Polygon2D : IShape2D
+    public class Polygon2D : IShape2D, IComparable
     {
         // The connected (!) line segments that creates this polygon.
         public LinkedList<Line> Lines { get; set; }
@@ -780,6 +780,44 @@ namespace Slicer.slyce.Constructs
 
             polies.ForEach(p => { p.IsInfill = true; });
             return polies;
+        }
+
+        public int CompareTo(object obj)
+        {
+            
+            var other = (Polygon2D)obj;
+            if(other.Contains(this))
+            {
+                return 1;
+            }
+            else if(this.Contains(other))
+            {
+                return -1;
+            }
+            int order1 = this.GetOrderNumber();
+            int order2 = other.GetOrderNumber();
+            return order1 - order2;
+        }
+
+        public int GetOrderNumber()
+        {
+            if(this.IsInfill)
+            {
+                return 5;
+            }
+            if(this.IsShell)
+            {
+                return 4;
+            }
+            if(this.IsHole)
+            {
+                return 3;
+            }
+            if(this.IsContour)
+            {
+                return 1;
+            }
+            return 0;
         }
     }
 }

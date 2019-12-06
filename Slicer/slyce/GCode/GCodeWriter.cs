@@ -130,34 +130,34 @@ namespace Slicer.slyce.GCode
             {
                 first_start = false;
 
-                this.Add(new LinearMove()
-                {
-                    Extrude = 0,
-                    Feedrate = 2700,
-                });
+                //this.Add(new LinearMove()
+                //{
+                //    Extrude = 0,
+                //    Feedrate = 2700,
+                //});
 
                 // Move to XYZ
                 this.Add(new RapidLinearMove()
                 {
                     MoveX = (decimal)start_point.X,
                     MoveY = (decimal)start_point.Y,
-                    MoveZ = (decimal)(start_z /*- 0.02*/),  // TODO ??
+                    MoveZ = (decimal)(start_z - 0.02),  // TODO ?? go a bit lower or not?
                     Feedrate = 6000
                 });
 
                 // Set feed
                 this.Add(new LinearMove()
                 {
-                    Feedrate = 1500,    // TODO At wich rate?  changed from 1200
+                    Feedrate = 1200,    // TODO At wich rate?  changed from 1200
                 });
             }
             else
             {
-                this.Add(new LinearMove()
-                {
-                    Extrude = 0,
-                    Feedrate = 2700,
-                });
+                //this.Add(new LinearMove()
+                //{
+                //    Extrude = 0,
+                //    Feedrate = 2700,
+                //});
 
                 // Move to XYZ
                 this.Add(new RapidLinearMove()

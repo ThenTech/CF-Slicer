@@ -180,6 +180,12 @@ namespace Slicer
 
         private void ExportGCode_Click(object sender, RoutedEventArgs e)
         {
+            if (_viewModel.Slicer == null)
+            {
+                MessageBox.Show("Slice the model first!", "Export error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var d = new SaveFileDialog
             {
                 Filter = "GCode|*.gcode",

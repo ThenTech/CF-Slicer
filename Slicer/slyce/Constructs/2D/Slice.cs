@@ -82,21 +82,24 @@ namespace Slicer.slyce.Constructs
 
         public void Erode(double delta, double miter_limit = 5)
         {
+            var eroded = new List<Polygon2D>(this.Polygons.Count);
+
             foreach (var poly in this.Polygons)
             {
                 if (poly.IsContour)
                 {
                     // Expand inwards
-                    poly.Offset(-delta, miter_limit);
+                    eroded.AddRange(poly.Offset(-delta, miter_limit));
                 }
                 else // if (poly.IsHole)
                 {
                     // Expand outwards == inwards into object
-                    poly.Offset(+delta, miter_limit);
+                    eroded.AddRange(poly.Offset(+delta, miter_limit));
                 }
-
-                poly.FilterShorts();
             }
+
+            eroded.ForEach(p => p.FilterShorts());
+            this.Polygons = eroded;
         }
 
         public void DetermineSurfaces(Slice above, Slice below)
@@ -116,7 +119,7 @@ namespace Slicer.slyce.Constructs
 
             foreach (var poly in this.Polygons)
             {
-                Polygon2D inner_most = null;
+                List<Polygon2D> inner_most = null;
 
                 // Note: inner most shells will be removed for infil, so add one more.
                 for (int shell = 1; shell < nShells /* -1 */; shell++)
@@ -127,7 +130,7 @@ namespace Slicer.slyce.Constructs
 
                     if (poly.IsContour)
                     {
-                        contour.Offset(-thickness * (double)shell, shell_miter);
+                        IEnumerable<Polygon2D> offsetted = contour.Offset(-thickness * (double)shell, shell_miter);
 
                         // TODO Always add but clip with existing things?
                         //foreach (var p in this.Polygons)
@@ -145,21 +148,27 @@ namespace Slicer.slyce.Constructs
 
                         //this.FillPolygons.Add(contour);
 
+                        bool added_one = false;
 
-                        if (   this.Polygons.Any(p => p.Intersects(contour).Item1)
-                            || this.FillPolygons.Any(p => (p.Hierarchy >= contour.Hierarchy && p.IsHole && p.Shell <= nShells && p.Contains(contour))))
+                        foreach (var shp in offsetted)
                         {
-                            break;
+                            if (this.Polygons.Any(p => p.Intersects(shp).Item1)
+                                                    || this.FillPolygons.Any(p => (p.Hierarchy >= shp.Hierarchy && p.IsHole && p.Shell <= nShells && p.Contains(shp))))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                added_one = true;
+                                this.FillPolygons.Add(shp);
+                            }
                         }
-                        else
-                        {
-                            inner_most = contour;
-                            this.FillPolygons.Add(contour);
-                        }
+
+                        if (added_one) inner_most = offsetted.ToList();
                     }
                     else
                     {
-                        contour.Offset(+thickness * (double)shell, shell_miter);
+                        IEnumerable<Polygon2D> offsetted = contour.Offset(+thickness * (double)shell, shell_miter);
 
                         // TODO Always add but clip with existing things?
                         //foreach (var p in this.Polygons)
@@ -177,18 +186,24 @@ namespace Slicer.slyce.Constructs
 
                         //this.FillPolygons.Add(contour);
 
+                        bool added_one = false;
 
-                        if (   this.Polygons.Any(p => p.Intersects(contour).Item1)
-                            || this.FillPolygons.Any(p => p.Intersects(contour).Item1 
-                                                       || (p.Hierarchy <= contour.Hierarchy && p.IsContour && p.Shell <= nShells && contour.Contains(p))))
+                        foreach (var shp in offsetted)
                         {
-                            break;
+                            if (   this.Polygons.Any(p => p.Intersects(shp).Item1)
+                                || this.FillPolygons.Any(p => p.Intersects(shp).Item1
+                                                           || (p.Hierarchy <= shp.Hierarchy && p.IsContour && p.Shell <= nShells && shp.Contains(p))))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                added_one = true;
+                                this.FillPolygons.Add(shp);
+                            }
                         }
-                        else
-                        {
-                            inner_most = contour;
-                            this.FillPolygons.Add(contour);
-                        }
+
+                        if (added_one) inner_most = offsetted.ToList();
                     }
                 }
 
@@ -196,31 +211,44 @@ namespace Slicer.slyce.Constructs
                 var infill_overlap_percentage = 0.3; // Same as Cura
                 var overlapp_offset = thickness * infill_overlap_percentage;
 
-                // Add a dummy to clip infill, move it closer to the previous shell
-                inner_most = inner_most == null ? poly.Clone() : inner_most.Clone();
-                inner_most.Shell = nShells;
-                inner_most.IsInfill = inner_most.IsShell = true;
-
-                if (inner_most.IsContour)
+                if (inner_most == null || inner_most.Count == 0)
                 {
-                    inner_most.Offset(-overlapp_offset, shell_miter);
-
-                    //if ( !(this.Polygons.Any(p => p.Intersects(inner_most).Item1
-                    //                          || (p.Hierarchy >= inner_most.Hierarchy && p.IsHole && p.Contains(inner_most)))
-                    //    || this.FillPolygons.Any(p => (p.Hierarchy >= inner_most.Hierarchy && p.IsHole && p.Shell < nShells && p.Contains(inner_most)))))
-                    {
-                        this.FillPolygons.Add(inner_most);
-                    }
+                    inner_most = new List<Polygon2D>() { poly.Clone() };
                 }
-                else
-                {
-                    inner_most.Offset(+overlapp_offset, shell_miter);
 
-                    //if ( !(this.Polygons.Any(p => p.Intersects(inner_most).Item1)
-                    //    || this.FillPolygons.Any(p => p.Intersects(inner_most).Item1
-                    //                               || (p.Hierarchy <= inner_most.Hierarchy && p.IsContour && p.Shell < nShells && inner_most.Contains(p)))))
+                // Add a dummy to clip infill, move it closer to the previous shell
+                foreach (var inner in inner_most)
+                {
+                    inner.Shell = nShells;
+                    inner.IsInfill = inner.IsShell = true;
+                    
+                    if (inner.IsContour)
                     {
-                        this.FillPolygons.Add(inner_most);
+                        var offsetted = inner.Offset(-overlapp_offset, shell_miter);
+
+                        foreach (var off in offsetted)
+                        {
+                            //if ( !(this.Polygons.Any(p => p.Intersects(off).Item1
+                            //                           || (p.Hierarchy >= off.Hierarchy && p.IsHole && p.Contains(off)))
+                            //    || this.FillPolygons.Any(p => (p.Hierarchy >= off.Hierarchy && p.IsHole && p.Shell < nShells && p.Contains(off)))))
+                            {
+                                this.FillPolygons.Add(off);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var offsetted = inner.Offset(+overlapp_offset, shell_miter);
+
+                        foreach (var off in offsetted)
+                        {
+                            //if ( !(this.Polygons.Any(p => p.Intersects(off).Item1)
+                            //    || this.FillPolygons.Any(p => p.Intersects(off).Item1
+                            //                               || (p.Hierarchy <= off.Hierarchy && p.IsContour && p.Shell < nShells && off.Contains(p)))))
+                            {
+                                this.FillPolygons.Add(off);
+                            }
+                        }
                     }
                 }
             }

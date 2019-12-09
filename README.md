@@ -58,6 +58,7 @@
 - [x] Add ambient light ~~
 - [x] Basic SliceModel class with slice plane and sliced model preview
 - [ ] Add brim/skirt (erode to outer on slice 0)
+- [ ] Make offsets for every contour/hole and then union them
 - [ ] Surface (floor/roof) herkenning
   - Refactor code to split generation
   - Subtract Layer+1 from Layer+0 for roofs
@@ -69,5 +70,4 @@
     - ✔ OF Line clipping in de plaats => Paths met lines clippen met inner shell
 - [ ] Overhang herkenning voor support (diff van subtraction > nozzle width => support needed)
 - [ ] Support toevoegen voor overgang
-
 - [ ] Report schrijven

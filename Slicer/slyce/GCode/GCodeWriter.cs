@@ -262,7 +262,7 @@ namespace Slicer.slyce.GCode
                 this.Add(new Comment() { Text = String.Format(layer_fmt, layer++) });
                 this.Add(new FanOn() { FanSpeed = 85 });  // Fan on low for first layer or off?
                 this.AddSlice(it.Current);
-                this.Add(new FanOn() { FanSpeed = 170 });
+                this.Add(new FanOn() { FanSpeed = 255 });
 
                 // Start next layers
                 while (it.MoveNext())

@@ -35,10 +35,34 @@ namespace Slicer.slyce.Constructs
             if (SmallerOrEquals(minV, z) && LargerOrEquals(maxV, z))
             {
                 // Find all points above and below
-                var above = this.Vertices.Where(v => v.Pos.Z > z).ToList();
-                var below = this.Vertices.Where(v => SmallerOrEquals(v.Pos.Z, z)).ToList();
+                var above = this.Vertices.Where(v => v.Pos.Z > z && !v.Pos.Z.EpsilonEquals(z, Point.EPSILON)).ToList();
+                var below = this.Vertices.Where(v => v.Pos.Z < z && !v.Pos.Z.EpsilonEquals(z, Point.EPSILON)).ToList();
+                var equals = this.Vertices.Where(v => v.Pos.Z.EpsilonEquals(z, Point.EPSILON)).ToList();
+                if(equals.Count() >= 1)
+                {
+                    if(above.Count() == 0)
+                    {
+                        above.AddRange(equals);
+                    }
+                    else if(below.Count() == 0)
+                    {
+                        below.AddRange(equals);
+                    }
+                    else
+                    {
+                        int x = 0;
 
-                if (above.Count == 1 || below.Count == 1)
+                    }
+                }
+
+                if(above.Count == 1 && below.Count == 1 && equals.Count == 1)
+                {
+                    var x = above[0].Pos.X + (z - above[0].Pos.Z) * (below[0].Pos.X - above[0].Pos.X) / (below[0].Pos.Z - above[0].Pos.Z);
+                    var y = above[0].Pos.Y + (z - above[0].Pos.Z) * (below[0].Pos.Y - above[0].Pos.Y) / (below[0].Pos.Z - above[0].Pos.Z);
+
+                    slice_cut = new Line(x, y, equals[0].Pos.X, equals[0].Pos.Y);
+                }
+                else if (above.Count == 1 || below.Count == 1)
                 {
                     List<Vertex> list_2_points = null;
                     Vertex other_point = null;
@@ -72,6 +96,10 @@ namespace Slicer.slyce.Constructs
                     // Exactly on z
                     poly_within_layer = true;
                 }
+                else if(below.Count > 0 || above.Count > 0 || equals.Count > 0)
+                {
+                    Console.WriteLine("EDGE CASE");
+                }
             }
             else if (SmallerOrEquals(minV, z2) && LargerOrEquals(maxV, z))
             {
@@ -94,12 +122,12 @@ namespace Slicer.slyce.Constructs
 
         private static bool SmallerOrEquals(double x, double y)
         {
-            return x < y || Math.Abs(x - y) < Point.EPSILON;
+            return x < y || x.EpsilonEquals(y, Point.EPSILON);
         }
 
         private static bool LargerOrEquals(double x, double y)
         {
-            return x > y || Math.Abs(x - y) < Point.EPSILON;
+            return x > y || x.EpsilonEquals(y, Point.EPSILON);
         }
     }
 }

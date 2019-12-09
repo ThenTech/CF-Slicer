@@ -38,7 +38,7 @@ namespace Slicer.slyce.Constructs
                 var above = this.Vertices.Where(v => v.Pos.Z > z && !v.Pos.Z.EpsilonEquals(z, Point.EPSILON)).ToList();
                 var below = this.Vertices.Where(v => v.Pos.Z < z && !v.Pos.Z.EpsilonEquals(z, Point.EPSILON)).ToList();
                 var equals = this.Vertices.Where(v => v.Pos.Z.EpsilonEquals(z, Point.EPSILON)).ToList();
-                if(equals.Count() >= 1)
+                if(equals.Count() == 1 && (above.Count() == 2 || below.Count() == 2))
                 {
                     if(above.Count() == 0)
                     {
@@ -48,14 +48,13 @@ namespace Slicer.slyce.Constructs
                     {
                         below.AddRange(equals);
                     }
-                    else
-                    {
-                        int x = 0;
-
-                    }
+                    slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, equals[0].Pos.X + Point.EPSILON * 2, equals[0].Pos.Y + Point.EPSILON * 2);
                 }
-
-                if(above.Count == 1 && below.Count == 1 && equals.Count == 1)
+                else if (equals.Count() == 2)
+                {
+                    slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, equals[1].Pos.X, equals[1].Pos.Y);
+                }
+                else if(above.Count == 1 && below.Count == 1 && equals.Count == 1)
                 {
                     var x = above[0].Pos.X + (z - above[0].Pos.Z) * (below[0].Pos.X - above[0].Pos.X) / (below[0].Pos.Z - above[0].Pos.Z);
                     var y = above[0].Pos.Y + (z - above[0].Pos.Z) * (below[0].Pos.Y - above[0].Pos.Y) / (below[0].Pos.Z - above[0].Pos.Z);

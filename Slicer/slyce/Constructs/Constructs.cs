@@ -136,6 +136,7 @@ namespace Slicer.slyce
         public Slice Slice(double slice_z_height, double perSlice)
         {
             var polies = new List<Polygon2D>();
+            var poliesInPlane = new List<Polygon2D>();
             bool HasSurface = false;
 
             foreach (var p in Polygons)
@@ -175,14 +176,15 @@ namespace Slicer.slyce
                 else if (cut != null && cut.GetType() == typeof(Polygon2D))
                 {
                     // Got polygon surface, so this _probably_ is a surface...
-                    //Polygon2D polygon = (Polygon2D)cut;
+                    Polygon2D polygon = (Polygon2D)cut;
+                    poliesInPlane.Add(polygon);
                     HasSurface = true;
                     //Fill in polygon
                 }
             }
 
             List<Polygon2D> completePolygons = new List<Polygon2D>();
-
+            List<Polygon2D> needsConnections = new List<Polygon2D>();
             for (int i = 0; i < polies.Count; i++)
             {
                 var p = polies[i];
@@ -219,6 +221,19 @@ namespace Slicer.slyce
                         p.WasTakenAway = true;
                         completePolygons.Add(p);
                     }
+                    else
+                    {
+                        //p.WasTakenAway = true;
+                        //Line connect = new Line(p.LastPoint(), p.FirstPoint());
+                        //p.AddLine(connect, ConnectionType.LAST);
+                        //foreach (var line in p.Lines)
+                        //{
+                        //    line.IsOpen = true;
+                        //}
+                        p.IsOpen = true;
+                        //completePolygons.Add(p);
+                        needsConnections.Add(p);
+                    }
                 }
                 else if (!p.WasTakenAway)
                 {
@@ -227,6 +242,45 @@ namespace Slicer.slyce
                     completePolygons.Add(p);
                 }
             }
+            //for(int i = 0; i < needsConnections.Count; i++)
+            //{
+            //    var openPoly = needsConnections[i];
+            //    while(!openPoly.IsComplete() && !openPoly.WasTakenAway)
+            //    {
+            //        bool addedSomething = false;
+            //        for(int j = 0; j < poliesInPlane.Count; j++)
+            //        {
+            //            var polyInPlane = poliesInPlane[j];
+            //            foreach (var line in polyInPlane.Lines)
+            //            {
+            //                if (openPoly.AddLine(line, openPoly.CanConnect(line)))
+            //                {
+            //                    polyInPlane.WasTakenAway = true;
+            //                    addedSomething = true;
+            //                    break;
+            //                }
+            //            }
+                        
+                        
+            //        }
+            //        if(addedSomething)
+            //        {
+            //            for(int j = 0; j < needsConnections.Count; j++)
+            //            {
+            //                var otherOpenPoly = needsConnections[j];
+            //                if(j != i)
+            //                {
+            //                    if(openPoly.AddPolygon(otherOpenPoly, openPoly.CanConnect(otherOpenPoly)))
+            //                    {
+            //                        otherOpenPoly.WasTakenAway = true;
+            //                    }
+            //                }
+            //            }
+            //        }
+                    
+            //    }
+
+            //}
 
             // TODO? Sort created polies with their distance to the middle, so we can print the middle one first?
             //  ==> Probably not needed..

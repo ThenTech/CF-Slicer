@@ -13,6 +13,7 @@ namespace Slicer.slyce.Constructs
         public static readonly Brush BrushContour = Brushes.Black;
         public static readonly Brush BrushHole    = Brushes.Blue;
         public static readonly Brush BrushInfill  = Brushes.Red;
+        public static readonly Brush BrushOpen = Brushes.Pink;
 
         public static readonly Brush BrushContourShell = Brushes.SlateGray;
         public static readonly Brush BrushHoleShell    = Brushes.DodgerBlue;
@@ -28,6 +29,7 @@ namespace Slicer.slyce.Constructs
         public bool IsHole    { get => !IsContour; set => IsContour = !value; }
         public bool IsInfill  { get; set; } = false;
         public bool IsShell   { get; set; } = false;
+        public bool IsOpen { get; set; } = false;
 
         public Line(double X1, double Y1, double X2, double Y2)
         {
@@ -175,6 +177,10 @@ namespace Slicer.slyce.Constructs
                            : Line.BrushInfill
                          : this.IsContour
                            ? Line.BrushContour : Line.BrushHole;
+            if(IsOpen)
+            {
+                colour = BrushOpen;
+            }
 
             if (this.GetLength() < Line.MIN_LENGTH)
             {

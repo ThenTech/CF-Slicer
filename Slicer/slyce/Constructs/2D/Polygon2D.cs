@@ -31,6 +31,7 @@ namespace Slicer.slyce.Constructs
 
         public bool IsInfill { get; set; } = false;
         public bool IsShell  { get; set; } = false;
+        public bool IsOpen { get; set; } = false;
 
         // List of seperate points in the Polygon for ClipperLib
         private Path _IntPoints = null;
@@ -94,10 +95,11 @@ namespace Slicer.slyce.Constructs
             return new Polygon2D(points) {
                 IsSurface = this.IsSurface,
                 IsContour = this.IsContour,
-                Shell     = this.Shell,
+                Shell = this.Shell,
                 Hierarchy = this.Hierarchy,
-                IsInfill  = this.IsInfill,
-                IsShell   = this.IsShell
+                IsInfill = this.IsInfill,
+                IsShell = this.IsShell,
+                IsOpen = this.IsOpen
             };
         }
 
@@ -244,12 +246,12 @@ namespace Slicer.slyce.Constructs
             return false;
         }
 
-        public void AddLine(Line line, ConnectionType connection)
+        public bool AddLine(Line line, ConnectionType connection)
         {
             switch (connection)
             {
                 case ConnectionType.NOT:
-                    break;
+                    return false;
                 case ConnectionType.FIRST:
                     Lines.AddFirst(line);
                     break;
@@ -265,6 +267,7 @@ namespace Slicer.slyce.Constructs
                     Lines.AddLast(line);
                     break;
             }
+            return true;
         }
 
         public Polygon2D Transform(Matrix tranformation)
@@ -295,7 +298,8 @@ namespace Slicer.slyce.Constructs
                 lines.AddLast(new Line(start, end) {
                     IsContour = this.IsContour,
                     IsInfill  = this.IsInfill,
-                    IsShell   = this.IsShell
+                    IsShell   = this.IsShell,
+                    IsOpen = this.IsOpen
                 });
             }
 
@@ -306,7 +310,8 @@ namespace Slicer.slyce.Constructs
                 lines.AddLast(new Line(last, first) {
                     IsContour = this.IsContour,
                     IsInfill  = this.IsInfill,
-                    IsShell   = this.IsShell
+                    IsShell   = this.IsShell,
+                    IsOpen = this.IsOpen
                 });
             }
 
@@ -389,7 +394,8 @@ namespace Slicer.slyce.Constructs
                         Shell     = this.Shell,
                         Hierarchy = this.Hierarchy,
                         IsInfill  = this.IsInfill,
-                        IsShell   = this.IsShell
+                        IsShell   = this.IsShell,
+                        IsOpen = this.IsOpen
                     };
                 }
             }

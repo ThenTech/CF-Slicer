@@ -370,7 +370,7 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        public void Offset(double delta, double miter_limit = 3)
+        public IEnumerable<Polygon2D> Offset(double delta, double miter_limit = 3)
         {
             var paths = new Paths();
 
@@ -380,13 +380,22 @@ namespace Slicer.slyce.Constructs
 
             if (paths.Count > 0)
             {
-                this._IntPoints = paths[0];
-                this.UpdateLinesFromPoints();
+                foreach (var path in paths)
+                {
+                    yield return new Polygon2D(path)
+                    {
+                        IsSurface = this.IsSurface,
+                        IsContour = this.IsContour,
+                        Shell     = this.Shell,
+                        Hierarchy = this.Hierarchy,
+                        IsInfill  = this.IsInfill,
+                        IsShell   = this.IsShell
+                    };
+                }
             }
             else
             {
-                // ?
-                Console.Error.WriteLine("Poly offset has no result?");
+                yield return this;
             }
         }
 

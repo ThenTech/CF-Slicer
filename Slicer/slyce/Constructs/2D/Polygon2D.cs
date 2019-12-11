@@ -462,7 +462,7 @@ namespace Slicer.slyce.Constructs
                                 PolyNodeToPolies(intersection).Select(p =>
                                 {
                                     p.IsSurface = this.IsSurface;
-                                    p.IsContour = this.IsContour;
+                                    //p.IsContour = this.IsContour;
                                     p.Shell     = this.Shell;
                                     p.Hierarchy = this.Hierarchy;
                                     p.IsInfill  = this.IsInfill;
@@ -477,7 +477,7 @@ namespace Slicer.slyce.Constructs
             return PolyNodeToPolies(result).Select(p =>
             {
                 p.IsSurface = this.IsSurface;
-                p.IsContour = this.IsContour;
+                //p.IsContour = this.IsContour;
                 p.Shell     = this.Shell;
                 p.Hierarchy = this.Hierarchy;
                 p.IsInfill  = this.IsInfill;
@@ -492,7 +492,7 @@ namespace Slicer.slyce.Constructs
             return PolyNodeToPolies(result).Select(p =>
             {
                 p.IsSurface = this.IsSurface;
-                p.IsContour = this.IsContour;
+                //p.IsContour = this.IsContour;
                 p.Shell     = this.Shell;
                 p.Hierarchy = this.Hierarchy;
                 p.IsInfill  = this.IsInfill;
@@ -507,7 +507,7 @@ namespace Slicer.slyce.Constructs
             return PolyNodeToPolies(result).Select(p =>
             {
                 p.IsSurface = this.IsSurface;
-                p.IsContour = this.IsContour;
+                //p.IsContour = this.IsContour;
                 p.Shell     = this.Shell;
                 p.Hierarchy = this.Hierarchy;
                 p.IsInfill  = this.IsInfill;
@@ -522,7 +522,7 @@ namespace Slicer.slyce.Constructs
             return PolyNodeToPolies(result).Select(p =>
             {
                 p.IsSurface = this.IsSurface;
-                p.IsContour = this.IsContour;
+                //p.IsContour = this.IsContour;
                 p.Shell     = this.Shell;
                 p.Hierarchy = this.Hierarchy;
                 p.IsInfill  = this.IsInfill;

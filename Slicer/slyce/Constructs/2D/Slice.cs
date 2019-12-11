@@ -125,6 +125,77 @@ namespace Slicer.slyce.Constructs
             var overlapp_offset = thickness * infill_overlap_percentage;
 
 #if true
+            for (int shell = 1; shell < nShells /* -1 */; shell++)
+            {
+                var shells_contour = new List<Polygon2D>();
+                var shells_holes = new List<Polygon2D>();
+                var offset = shell < nShells
+                            ? thickness * (double)shell
+                            : (thickness * (double)(shell - 1)) + overlapp_offset;
+
+                foreach (var poly in this.Polygons)
+                {
+                    var contour = poly.Clone();
+                    contour.Shell = shell;
+                    contour.IsInfill = contour.IsShell = true;
+
+                    if (contour.IsContour)
+                    {
+                        shells_contour.AddRange(contour.Offset(-offset, shell_miter));
+                    }
+                    else
+                    {
+                        shells_holes.AddRange(contour.Offset(+offset, shell_miter));
+                    }
+                }
+
+                var shells_contour_subtracted = new List<Polygon2D>();
+
+                foreach (var contour in shells_contour)
+                {
+
+                    var inside = shells_holes.Where(p => contour.ContainsOrOverlaps(p)).ToList();
+                    if (inside.Count > 0)
+                    {
+                        var diff = contour.Subtract(inside[0].Union(inside.GetRange(1, inside.Count - 1))).ToList();
+
+                        if (diff.Count > 0)
+                        {
+                            shells_contour_subtracted.AddRange(diff);
+                        }
+                        else
+                        {
+                            shells_contour_subtracted.Add(contour);
+                        }
+                    }
+                    else
+                    {
+                        shells_contour_subtracted.Add(contour);
+                    }
+                }
+
+                Polygon2D.DetermineHierachy(ref shells_contour_subtracted);
+                this.FillPolygons.AddRange(shells_contour_subtracted.Where(p => p.FilterShorts()));
+            }
+
+            var inner_shells = new List<Polygon2D>();
+
+            foreach (var sh in this.FillPolygons)
+            {
+                if (sh.Shell == nShells-1)
+                {
+                    var inner_shell = sh.Offset((sh.IsContour ? -1.0 : 1.0) * overlapp_offset, shell_miter);
+                    foreach (var inner in inner_shell)
+                    {
+                        inner.Shell = nShells;
+                        inner.IsInfill = inner.IsShell = true;
+                        inner_shells.Add(inner);
+                    }
+                }
+            }
+
+            this.FillPolygons.AddRange(inner_shells.Where(p => p.FilterShorts()));
+#elif true
             // Note: inner most shells will be removed for infil, so add one more later.
             for (int shell = 1; shell < nShells /* -1 */; shell++)
             {
@@ -169,21 +240,35 @@ namespace Slicer.slyce.Constructs
                         {
                             var p2 = shells_contour[j];
 
-                            if (i != j && !p2.WasTakenAway && p2.Shell == shell)
+                            if (i != j && !p2.WasTakenAway && p2.Hierarchy != p1.Hierarchy)
                             {
                                 if (p1.ContainsOrOverlaps(p2))
                                 {
                                     p1.WasTakenAway = p2.WasTakenAway = true;
+                                    p1.Shell++;
 
-                                    if (p1.IsContour)
+                                    var p2_arr = new Polygon2D[1] { p2 };
+
+                                    foreach (var pol in shells_contour)
                                     {
-                                        results.AddRange(p1.Subtract(new Polygon2D[1] { p2 }));
-                                    } else
-                                    {
-                                        results.AddRange(p1.Union(new Polygon2D[1] { p2 }));
+                                        if (pol.Hierarchy == p1.Hierarchy)
+                                        {
+                                            pol.WasTakenAway = true;
+                                            if (pol.IsContour)
+                                                results.AddRange(pol.Subtract(p2_arr).Select(p => { p.Shell = p1.Shell; return p; }));
+                                            else
+                                                results.AddRange(pol.Union(p2_arr).Select(p => { p.Shell = p1.Shell; return p; }));
+                                        }
                                     }
 
-                                    results.ForEach(p => p.Shell++);
+                                    //if (p1.IsContour)
+                                    //{
+                                    //    results.AddRange(p1.Subtract(new Polygon2D[1] { p2 }).Select(p => { p.Shell++; return p; }));
+                                    //}
+                                    //else
+                                    //{
+                                    //    results.AddRange(p1.Union(new Polygon2D[1] { p2 }));
+                                    //}
 
                                     results.AddRange(shells_contour.Where(p => !p.WasTakenAway));
                                     did_something = true;

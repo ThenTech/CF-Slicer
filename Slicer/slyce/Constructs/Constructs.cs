@@ -232,35 +232,7 @@ namespace Slicer.slyce
             //  ==> Probably not needed..
 
             // Simplify lines and reduce them to a minimum, and sort by area, largest first
-            completePolygons = Polygon2D.OrderByArea(completePolygons, true, true).ToList();
-
-            // Check for containment and flag holes
-            for (int i = 0; i < completePolygons.Count; i++)
-            {
-                var poly1 = completePolygons[i];
-                poly1.Hierarchy = i;
-
-                for (int j = 0; j < completePolygons.Count; j++)
-                {
-                    if (i != j)
-                    {
-                        var poly2 = completePolygons[j];
-
-                        //Check if i contains j
-                        if (poly1.Contains(poly2))
-                        {
-                            if (poly1.IsHole)
-                            {
-                                poly2.IsHole = false;
-                            }
-                            else
-                            {
-                                poly2.IsHole = true;
-                            }
-                        }
-                    }
-                }
-            }
+            Polygon2D.DetermineHierachy(ref completePolygons);
 
             return new Slice(completePolygons, slice_z_height, HasSurface);
         }

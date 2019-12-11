@@ -60,8 +60,8 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        // Indication of shell offset, higher is mor inwards inside object
-        public int Shell { get; set; } = 1;
+        // Indication of shell offset, higher is more inwards inside object
+        public int Shell { get; set; } = 0;
 
         private Point _Center = null;
         public Point Center
@@ -331,9 +331,9 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        public void FilterShorts()
+        public bool FilterShorts()
         {
-            if (this.Lines.Count > 3)
+            if (this.Lines.Count > 0)
             {
                 // Only include consecutive points if their distance is greater than a threshold
                 IntPoint p1 = this._IntPoints[0];
@@ -368,6 +368,8 @@ namespace Slicer.slyce.Constructs
                 this._IntPoints = filtered;
                 this.UpdateLinesFromPoints();
             }
+
+            return this.Lines.Count > 0;
         }
 
         public IEnumerable<Polygon2D> Offset(double delta, double miter_limit = 3)
@@ -375,7 +377,7 @@ namespace Slicer.slyce.Constructs
             var paths = new Paths();
 
             var c = new ClipperOffset(miter_limit);
-            c.AddPath(this.IntPoints, JoinType.jtMiter, EndType.etClosedPolygon);
+            c.AddPath(this.IntPoints, JoinType.jtMiter, this.IsComplete() ? EndType.etClosedPolygon : EndType.etOpenRound);
             c.Execute(ref paths, delta * Point.INT_POINT_FACTOR);
 
             if (paths.Count > 0)
@@ -457,31 +459,76 @@ namespace Slicer.slyce.Constructs
 
             var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
             return Tuple.Create(intersection.ChildCount > 0 && !this.Contains(other) && !other.Contains(this),
-                                PolyNodeToPolies(intersection));
+                                PolyNodeToPolies(intersection).Select(p =>
+                                {
+                                    p.IsSurface = this.IsSurface;
+                                    p.IsContour = this.IsContour;
+                                    p.Shell     = this.Shell;
+                                    p.Hierarchy = this.Hierarchy;
+                                    p.IsInfill  = this.IsInfill;
+                                    p.IsShell   = this.IsShell;
+                                    return p;
+                                }));
         }
 
         public IEnumerable<Polygon2D> Intersect(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctIntersection);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public IEnumerable<Polygon2D> Subtract(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctDifference);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public IEnumerable<Polygon2D> Union(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctUnion);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public IEnumerable<Polygon2D> Xor(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctXor);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public bool ContainsOrOverlaps(Polygon2D other)
@@ -603,6 +650,39 @@ namespace Slicer.slyce.Constructs
 
                 // Add last
                 yield return input[0];
+            }
+        }
+
+        public static void DetermineHierachy(ref List<Polygon2D> input)
+        {
+            input = Polygon2D.OrderByArea(input, true, true).ToList();
+
+            // Check for containment and flag holes
+            for (int i = 0; i < input.Count; i++)
+            {
+                var poly1 = input[i];
+                poly1.Hierarchy = i;
+
+                for (int j = 0; j < input.Count; j++)
+                {
+                    if (i != j)
+                    {
+                        var poly2 = input[j];
+
+                        //Check if i contains j
+                        if (poly1.Contains(poly2))
+                        {
+                            if (poly1.IsHole)
+                            {
+                                poly2.IsHole = false;
+                            }
+                            else
+                            {
+                                poly2.IsHole = true;
+                            }
+                        }
+                    }
+                }
             }
         }
 

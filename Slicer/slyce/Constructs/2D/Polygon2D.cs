@@ -174,6 +174,51 @@ namespace Slicer.slyce.Constructs
             return ConnectionType.NOT;
         }
 
+        public ConnectionType CanConnect(Line line, double precision)
+        {
+            if (this.Lines.Count > 1)
+            {
+                if (First().CanConnect(line, precision))
+                {
+                    if (First().StartPoint.Equals(line.StartPoint, precision))
+                    {
+                        return ConnectionType.FIRSTREVERSED;
+                    }
+                    return ConnectionType.FIRST;
+                }
+                else if (Last().CanConnect(line, precision))
+                {
+                    if (Last().EndPoint.Equals(line.EndPoint, precision))
+                    {
+                        return ConnectionType.LASTREVERSED;
+                    }
+                    return ConnectionType.LAST;
+                }
+            }
+            else
+            {
+                // Only one Line in poly, so First and Last are the same
+                if (First().StartPoint.Equals(line.StartPoint, precision))
+                {
+                    return ConnectionType.FIRSTREVERSED;
+                }
+                else if (First().StartPoint.Equals(line.EndPoint, precision))
+                {
+                    return ConnectionType.FIRST;
+                }
+                else if (First().EndPoint.Equals(line.EndPoint, precision))
+                {
+                    return ConnectionType.LASTREVERSED;
+                }
+                else if (First().EndPoint.Equals(line.StartPoint, precision))
+                {
+                    return ConnectionType.LAST;
+                }
+            }
+
+            return ConnectionType.NOT;
+        }
+
         public ConnectionType CanConnect(Polygon2D other)
         {
             ConnectionType can = ConnectionType.NOT;
@@ -197,6 +242,29 @@ namespace Slicer.slyce.Constructs
             return can;
         }
 
+        public ConnectionType CanConnect(Polygon2D other, double precision)
+        {
+            ConnectionType can = ConnectionType.NOT;
+
+            if (other.Lines.Count > 1)
+            {
+                if ((can = this.CanConnect(other.Last(), precision)) != ConnectionType.NOT)
+                {
+                    return can;
+                }
+                else if ((can = this.CanConnect(other.First(), precision)) != ConnectionType.NOT)
+                {
+                    return can;
+                }
+            }
+            else
+            {
+                return this.CanConnect(other.First(), precision);
+            }
+
+            return can;
+        }
+
         public void Swap()
         {
             LinkedList<Line> reversedList = new LinkedList<Line>();
@@ -213,6 +281,12 @@ namespace Slicer.slyce.Constructs
             return this.Lines.Count > 2
                 && (First().StartPoint.Equals(Last().EndPoint)
                  || First().StartPoint.Equals(Last().StartPoint));
+        }
+        public bool IsComplete(double precision)
+        {
+            return this.Lines.Count > 2
+                && (First().StartPoint.Equals(Last().EndPoint, precision)
+                 || First().StartPoint.Equals(Last().StartPoint, precision));
         }
 
         public bool AddPolygon(Polygon2D poly, ConnectionType connection)
@@ -323,10 +397,32 @@ namespace Slicer.slyce.Constructs
             if (this.Lines.Count > 2)
             {
                 // At least a triangle
+                foreach (var p in this.IntPoints)
+                {
+                    Console.Write("(" + p.X + ", " + p.Y + ") ");
+                }
+                Console.WriteLine(" ");
                 this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
 
                 // Optionally also call simplify?
                 Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
+                
+                Clipper c = new Clipper();
+
+
+                foreach (var s in simplified)
+                {
+                        c.AddPath(s, PolyType.ptClip, true);
+                }
+
+                PolyTree solution = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution);
+
+                if (simplified.Count > 1)
+                {
+                    var x = 0;
+                    var result = PolyNodeToPolies(solution).ToList();
+                }
                 if (simplified.Count > 0)
                 {
                     this._IntPoints = simplified[0];

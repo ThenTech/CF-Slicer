@@ -126,7 +126,7 @@ namespace Slicer.slyce
             await Task.Run(() =>
             {
                 //// For debug, set `opt` to 1, else -1 for unlimited
-                var opt = new ParallelOptions() { MaxDegreeOfParallelism = -1 };
+                var opt = new ParallelOptions() { MaxDegreeOfParallelism = 1 };
 
                 // Execute slicing
                 // Step 1: Find contours by slicing with Z plane

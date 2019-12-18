@@ -138,7 +138,12 @@ namespace Slicer.slyce
             var polies = new List<Polygon2D>();
             var poliesInPlane = new List<Polygon2D>();
             bool HasSurface = false;
-
+            int lookingFor = 7;
+            
+            if(slice_z_height == lookingFor*perSlice)
+            {
+                var x = 0;
+            }
             foreach (var p in Polygons)
             {
                 var cut = p.CutAtZ(slice_z_height, slice_z_height + perSlice);
@@ -242,51 +247,85 @@ namespace Slicer.slyce
                     completePolygons.Add(p);
                 }
             }
-            //for(int i = 0; i < needsConnections.Count; i++)
-            //{
-            //    var openPoly = needsConnections[i];
-            //    while(!openPoly.IsComplete() && !openPoly.WasTakenAway)
-            //    {
-            //        bool addedSomething = false;
-            //        for(int j = 0; j < poliesInPlane.Count; j++)
-            //        {
-            //            var polyInPlane = poliesInPlane[j];
-            //            foreach (var line in polyInPlane.Lines)
-            //            {
-            //                if (openPoly.AddLine(line, openPoly.CanConnect(line)))
-            //                {
-            //                    polyInPlane.WasTakenAway = true;
-            //                    addedSomething = true;
-            //                    break;
-            //                }
-            //            }
-                        
-                        
-            //        }
-            //        if(addedSomething)
-            //        {
-            //            for(int j = 0; j < needsConnections.Count; j++)
-            //            {
-            //                var otherOpenPoly = needsConnections[j];
-            //                if(j != i)
-            //                {
-            //                    if(openPoly.AddPolygon(otherOpenPoly, openPoly.CanConnect(otherOpenPoly)))
-            //                    {
-            //                        otherOpenPoly.WasTakenAway = true;
-            //                    }
-            //                }
-            //            }
-            //        }
-                    
-            //    }
+            List<Polygon2D> stillNoConnection = new List<Polygon2D>(needsConnections);
+            double factor = 10;
+            while (stillNoConnection.Count() > 0)
+            {
 
-            //}
+                if(stillNoConnection.Count() == 1)
+                {
+                    Line line = new Line(stillNoConnection[0].Last().EndPoint, stillNoConnection[0].First().StartPoint);
+                    stillNoConnection[0].AddLine(line, ConnectionType.LAST);
+                    stillNoConnection[0].WasTakenAway = true;
+                    completePolygons.Add(stillNoConnection[0]);
+                    break;
+                }
+
+                for (int i = 0; i < stillNoConnection.Count(); i++)
+                {
+                    var p = stillNoConnection[i];
+                    if(p.Lines.Count() == 1 && p.Lines.First().GetLength() < Point.EPSILON*factor)
+                    {
+                        p.WasTakenAway = true;
+                        break;
+                    }
+                    if(!p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
+                    {
+                        //Try connecting other polygons
+                        for(int j = 0; j < stillNoConnection.Count(); j++)
+                        {
+                            var p2 = stillNoConnection[j];
+                            if(i != j)
+                            {
+                                if (!p2.WasTakenAway && !p2.IsComplete() && p.CanConnect(p2, Point.EPSILON * factor) != ConnectionType.NOT)
+                                {
+                                    p.AddPolygon(p2, p.CanConnect(p2, Point.EPSILON * factor));
+                                    p2.WasTakenAway = true;
+                                }
+                                if (p.IsComplete())
+                                {
+                                    p.WasTakenAway = true;
+                                    completePolygons.Add(p);
+                                    break;
+                                }
+                            }
+                           
+                        }
+                    }
+                    if(p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
+                    {
+                        Line line = new Line(p.Last().EndPoint, p.First().StartPoint);
+                        p.AddLine(line, ConnectionType.LAST);
+                        p.WasTakenAway = true;
+                        completePolygons.Add(p);
+                    }
+                }
+                factor = factor * 10;
+                stillNoConnection = stillNoConnection.Where(p => !p.IsComplete() && !p.WasTakenAway).ToList();
+                
+            }
+
+
+
 
             // TODO? Sort created polies with their distance to the middle, so we can print the middle one first?
             //  ==> Probably not needed..
 
+
+            //foreach (var p in needsConnections)
+            //{
+            //    Line line = new Line(p.Last().EndPoint, p.First().StartPoint);
+            //    p.AddLine(line, ConnectionType.LAST);
+            //}
+            //completePolygons.AddRange(needsConnections);
             // Simplify lines and reduce them to a minimum, and sort by area, largest first
-            completePolygons = Polygon2D.OrderByArea(completePolygons, true, true).ToList();
+
+            foreach (var p in completePolygons)
+            {
+                p.CleanLines();
+            }
+
+            completePolygons = Polygon2D.OrderByArea(completePolygons, true,false).ToList();
 
             // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)
@@ -315,7 +354,12 @@ namespace Slicer.slyce
                     }
                 }
             }
-
+            foreach (var p in completePolygons)
+            {
+                p.FilterShorts();
+                p.CleanLines();
+            }
+            //completePolygons = completePolygons.Where(p => p.IsComplete()).ToList();
             return new Slice(completePolygons, slice_z_height, HasSurface);
         }
     }

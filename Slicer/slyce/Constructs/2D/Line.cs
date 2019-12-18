@@ -139,6 +139,14 @@ namespace Slicer.slyce.Constructs
                 || this.EndPoint.Equals(line.EndPoint);
         }
 
+        public bool CanConnect(Line line, double precision)
+        {
+            return this.StartPoint.Equals(line.StartPoint, precision)
+                || this.StartPoint.Equals(line.EndPoint, precision)
+                || this.EndPoint.Equals(line.StartPoint, precision)
+                || this.EndPoint.Equals(line.EndPoint, precision);
+        }
+
         public static double Distance(double x1, double y1, double x2, double y2)
         {
             double x = x1 - x2;

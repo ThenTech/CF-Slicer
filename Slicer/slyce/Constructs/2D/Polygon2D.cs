@@ -392,37 +392,63 @@ namespace Slicer.slyce.Constructs
             this.Lines = lines;
         }
 
-        public void CleanLines()
+        public List<Polygon2D> SimplifyToPolygons()
         {
-            if (this.Lines.Count > 2)
+            if(this.Lines.Count > 2)
             {
-                // At least a triangle
-                foreach (var p in this.IntPoints)
-                {
-                    Console.Write("(" + p.X + ", " + p.Y + ") ");
-                }
-                Console.WriteLine(" ");
-                this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
-
-                // Optionally also call simplify?
-                Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
-                
+                Paths simplified = Clipper.SimplifyPolygon(this.IntPoints, PolyFillType.pftEvenOdd);
                 Clipper c = new Clipper();
 
 
                 foreach (var s in simplified)
                 {
-                        c.AddPath(s, PolyType.ptClip, true);
+                    c.AddPath(s, PolyType.ptClip, true);
                 }
 
                 PolyTree solution = new PolyTree();
                 c.Execute(ClipType.ctUnion, solution);
 
-                if (simplified.Count > 1)
-                {
-                    var x = 0;
-                    var result = PolyNodeToPolies(solution).ToList();
-                }
+                return PolyNodeToPolies(solution).ToList();
+            }
+            return new List<Polygon2D>();
+            //if (simplified.Count > 1)
+            //{
+            //    var x = 0;
+            //    var result = PolyNodeToPolies(solution).ToList();
+            //}
+        }
+
+        public void CleanLines()
+        {
+            if (this.Lines.Count > 2)
+            {
+                // At least a triangle
+                //foreach (var p in this.IntPoints)
+                //{
+                //    Console.Write("(" + p.X + ", " + p.Y + ") ");
+                //}
+                //Console.WriteLine(" ");
+                this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
+
+                // Optionally also call simplify?
+                Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
+                
+                //Clipper c = new Clipper();
+
+
+                //foreach (var s in simplified)
+                //{
+                //        c.AddPath(s, PolyType.ptClip, true);
+                //}
+
+                //PolyTree solution = new PolyTree();
+                //c.Execute(ClipType.ctUnion, solution);
+
+                //if (simplified.Count > 1)
+                //{
+                //    var x = 0;
+                //    var result = PolyNodeToPolies(solution).ToList();
+                //}
                 if (simplified.Count > 0)
                 {
                     this._IntPoints = simplified[0];

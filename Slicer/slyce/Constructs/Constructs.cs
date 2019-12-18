@@ -320,12 +320,17 @@ namespace Slicer.slyce
             //completePolygons.AddRange(needsConnections);
             // Simplify lines and reduce them to a minimum, and sort by area, largest first
 
+            //foreach (var p in completePolygons)
+            //{
+            //    p.CleanLines();
+            //}
+            List<Polygon2D> realCompletePolies = new List<Polygon2D>();
             foreach (var p in completePolygons)
             {
-                p.CleanLines();
+                realCompletePolies.AddRange(p.SimplifyToPolygons());
             }
 
-            completePolygons = Polygon2D.OrderByArea(completePolygons, true,false).ToList();
+            completePolygons = Polygon2D.OrderByArea(realCompletePolies, true,false).ToList();
 
             // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)

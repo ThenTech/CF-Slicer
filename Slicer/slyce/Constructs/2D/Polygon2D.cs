@@ -31,6 +31,7 @@ namespace Slicer.slyce.Constructs
 
         public bool IsInfill { get; set; } = false;
         public bool IsShell  { get; set; } = false;
+        public bool IsOpen { get; set; } = false;
 
         // List of seperate points in the Polygon for ClipperLib
         private Path _IntPoints = null;
@@ -94,10 +95,11 @@ namespace Slicer.slyce.Constructs
             return new Polygon2D(points) {
                 IsSurface = this.IsSurface,
                 IsContour = this.IsContour,
-                Shell     = this.Shell,
+                Shell = this.Shell,
                 Hierarchy = this.Hierarchy,
-                IsInfill  = this.IsInfill,
-                IsShell   = this.IsShell
+                IsInfill = this.IsInfill,
+                IsShell = this.IsShell,
+                IsOpen = this.IsOpen
             };
         }
 
@@ -172,6 +174,51 @@ namespace Slicer.slyce.Constructs
             return ConnectionType.NOT;
         }
 
+        public ConnectionType CanConnect(Line line, double precision)
+        {
+            if (this.Lines.Count > 1)
+            {
+                if (First().CanConnect(line, precision))
+                {
+                    if (First().StartPoint.Equals(line.StartPoint, precision))
+                    {
+                        return ConnectionType.FIRSTREVERSED;
+                    }
+                    return ConnectionType.FIRST;
+                }
+                else if (Last().CanConnect(line, precision))
+                {
+                    if (Last().EndPoint.Equals(line.EndPoint, precision))
+                    {
+                        return ConnectionType.LASTREVERSED;
+                    }
+                    return ConnectionType.LAST;
+                }
+            }
+            else
+            {
+                // Only one Line in poly, so First and Last are the same
+                if (First().StartPoint.Equals(line.StartPoint, precision))
+                {
+                    return ConnectionType.FIRSTREVERSED;
+                }
+                else if (First().StartPoint.Equals(line.EndPoint, precision))
+                {
+                    return ConnectionType.FIRST;
+                }
+                else if (First().EndPoint.Equals(line.EndPoint, precision))
+                {
+                    return ConnectionType.LASTREVERSED;
+                }
+                else if (First().EndPoint.Equals(line.StartPoint, precision))
+                {
+                    return ConnectionType.LAST;
+                }
+            }
+
+            return ConnectionType.NOT;
+        }
+
         public ConnectionType CanConnect(Polygon2D other)
         {
             ConnectionType can = ConnectionType.NOT;
@@ -195,6 +242,29 @@ namespace Slicer.slyce.Constructs
             return can;
         }
 
+        public ConnectionType CanConnect(Polygon2D other, double precision)
+        {
+            ConnectionType can = ConnectionType.NOT;
+
+            if (other.Lines.Count > 1)
+            {
+                if ((can = this.CanConnect(other.Last(), precision)) != ConnectionType.NOT)
+                {
+                    return can;
+                }
+                else if ((can = this.CanConnect(other.First(), precision)) != ConnectionType.NOT)
+                {
+                    return can;
+                }
+            }
+            else
+            {
+                return this.CanConnect(other.First(), precision);
+            }
+
+            return can;
+        }
+
         public void Swap()
         {
             LinkedList<Line> reversedList = new LinkedList<Line>();
@@ -211,6 +281,12 @@ namespace Slicer.slyce.Constructs
             return this.Lines.Count > 2
                 && (First().StartPoint.Equals(Last().EndPoint)
                  || First().StartPoint.Equals(Last().StartPoint));
+        }
+        public bool IsComplete(double precision)
+        {
+            return this.Lines.Count > 2
+                && (First().StartPoint.Equals(Last().EndPoint, precision)
+                 || First().StartPoint.Equals(Last().StartPoint, precision));
         }
 
         public bool AddPolygon(Polygon2D poly, ConnectionType connection)
@@ -244,12 +320,12 @@ namespace Slicer.slyce.Constructs
             return false;
         }
 
-        public void AddLine(Line line, ConnectionType connection)
+        public bool AddLine(Line line, ConnectionType connection)
         {
             switch (connection)
             {
                 case ConnectionType.NOT:
-                    break;
+                    return false;
                 case ConnectionType.FIRST:
                     Lines.AddFirst(line);
                     break;
@@ -265,6 +341,7 @@ namespace Slicer.slyce.Constructs
                     Lines.AddLast(line);
                     break;
             }
+            return true;
         }
 
         public Polygon2D Transform(Matrix tranformation)
@@ -295,7 +372,8 @@ namespace Slicer.slyce.Constructs
                 lines.AddLast(new Line(start, end) {
                     IsContour = this.IsContour,
                     IsInfill  = this.IsInfill,
-                    IsShell   = this.IsShell
+                    IsShell   = this.IsShell,
+                    IsOpen = this.IsOpen
                 });
             }
 
@@ -306,11 +384,38 @@ namespace Slicer.slyce.Constructs
                 lines.AddLast(new Line(last, first) {
                     IsContour = this.IsContour,
                     IsInfill  = this.IsInfill,
-                    IsShell   = this.IsShell
+                    IsShell   = this.IsShell,
+                    IsOpen = this.IsOpen
                 });
             }
 
             this.Lines = lines;
+        }
+
+        public List<Polygon2D> SimplifyToPolygons()
+        {
+            if(this.Lines.Count > 2)
+            {
+                Paths simplified = Clipper.SimplifyPolygon(this.IntPoints, PolyFillType.pftEvenOdd);
+                Clipper c = new Clipper();
+
+
+                foreach (var s in simplified)
+                {
+                    c.AddPath(s, PolyType.ptClip, true);
+                }
+
+                PolyTree solution = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution);
+
+                return PolyNodeToPolies(solution).ToList();
+            }
+            return new List<Polygon2D>();
+            //if (simplified.Count > 1)
+            //{
+            //    var x = 0;
+            //    var result = PolyNodeToPolies(solution).ToList();
+            //}
         }
 
         public void CleanLines()
@@ -318,10 +423,32 @@ namespace Slicer.slyce.Constructs
             if (this.Lines.Count > 2)
             {
                 // At least a triangle
+                //foreach (var p in this.IntPoints)
+                //{
+                //    Console.Write("(" + p.X + ", " + p.Y + ") ");
+                //}
+                //Console.WriteLine(" ");
                 this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
 
                 // Optionally also call simplify?
                 Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
+                
+                //Clipper c = new Clipper();
+
+
+                //foreach (var s in simplified)
+                //{
+                //        c.AddPath(s, PolyType.ptClip, true);
+                //}
+
+                //PolyTree solution = new PolyTree();
+                //c.Execute(ClipType.ctUnion, solution);
+
+                //if (simplified.Count > 1)
+                //{
+                //    var x = 0;
+                //    var result = PolyNodeToPolies(solution).ToList();
+                //}
                 if (simplified.Count > 0)
                 {
                     this._IntPoints = simplified[0];
@@ -389,7 +516,8 @@ namespace Slicer.slyce.Constructs
                         Shell     = this.Shell,
                         Hierarchy = this.Hierarchy,
                         IsInfill  = this.IsInfill,
-                        IsShell   = this.IsShell
+                        IsShell   = this.IsShell,
+                        IsOpen = this.IsOpen
                     };
                 }
             }

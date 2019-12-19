@@ -60,5 +60,10 @@ namespace Slicer.slyce.Constructs
             return this.X.EpsilonEquals(p2.X, Point.EPSILON)
                 && this.Y.EpsilonEquals(p2.Y, Point.EPSILON);
         }
+        public bool Equals(Point p2, double epsilon)
+        {
+            return this.X.EpsilonEquals(p2.X, epsilon)
+                && this.Y.EpsilonEquals(p2.Y, epsilon);
+        }
     }
 }

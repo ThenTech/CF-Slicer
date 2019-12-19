@@ -119,7 +119,7 @@ namespace Slicer.slyce.Constructs
                     }
                     
                 }
-                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface))
                 {
                     if(p.IsComplete())
                     {
@@ -154,7 +154,7 @@ namespace Slicer.slyce.Constructs
                     }
                     
                 }
-                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface))
                 {
                     if(p.IsComplete())
                     {
@@ -191,6 +191,10 @@ namespace Slicer.slyce.Constructs
                         {
                             belowMinusThisMinusHoles.AddRange(p.Subtract(hole));
                         }
+                        else
+                        {
+                            belowMinusThisMinusHoles.Add(p);
+                        }
                     }
                 }
                 else
@@ -209,6 +213,10 @@ namespace Slicer.slyce.Constructs
                         if (!hole.Contains(p))
                         {
                             aboveMinusThisMinusHoles.AddRange(p.Subtract(hole));
+                        }
+                        else
+                        {
+                            aboveMinusThisMinusHoles.Add(p);
                         }
                     }
                 }
@@ -429,7 +437,7 @@ namespace Slicer.slyce.Constructs
             }
             else
             {
-                inner_shell = this.Polygons;
+                inner_shell = this.Polygons.Where(p => !p.IsSurface);
                 other_shell = new List<Polygon2D>();
             }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ClipperLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -105,6 +106,139 @@ namespace Slicer.slyce.Constructs
         public void DetermineSurfaces(Slice above, Slice below)
         {
             // Subtract above/below/this.Polygons
+            List<Polygon2D> aboveMinusThis = new List<Polygon2D>(); // Roofs
+            List<Polygon2D> belowMinusThis = new List<Polygon2D>(); // Floors
+            if (above != null)
+            {
+                Clipper c1 = new Clipper();
+                foreach (var p in above.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                {
+                    if(p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                    
+                }
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                {
+                    if(p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+                    }
+                    
+                }
+                PolyTree solution = new PolyTree();
+                c1.Execute(ClipType.ctDifference, solution);
+                
+                aboveMinusThis.AddRange(Polygon2D.PolyNodeToPolies(solution));
+                
+            }
+            else
+            {
+                aboveMinusThis.AddRange(this.Polygons.Select(p => p.Clone()));
+                //foreach (var p in this.Polygons)
+                //{
+                //    p.IsSurface = true;
+                //    p.IsRoof = true;
+                //}
+            }
+
+            if(below != null)
+            {
+                Clipper c1 = new Clipper();
+                foreach (var p in below.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                {
+                    if(p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                    
+                }
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                {
+                    if(p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+                    }
+                    
+                }
+                PolyTree solution = new PolyTree();
+                c1.Execute(ClipType.ctDifference, solution);
+                belowMinusThis.AddRange(Polygon2D.PolyNodeToPolies(solution));
+               
+            }
+            else
+            {
+                belowMinusThis.AddRange(this.Polygons.Select(p => p.Clone()));
+                //foreach (var p in this.Polygons)
+                //{
+                //    p.IsSurface = true;
+                //    p.IsFloor = true;
+                //}
+            }
+            
+            var holes = this.Polygons.Where(q => q.IsHole).ToList();
+            var belowMinusThisMinusHoles = new List<Polygon2D>();
+            var aboveMinusThisMinusHoles = new List<Polygon2D>();
+            //Subtract holes if polygon is not in the hole
+            foreach (var p in belowMinusThis)
+            {
+                if(holes.Count() > 0)
+                {
+                    foreach (var hole in holes)
+                    {
+                        if (!hole.Contains(p))
+                        {
+                            belowMinusThisMinusHoles.AddRange(p.Subtract(hole));
+                        }
+                    }
+                }
+                else
+                {
+                    belowMinusThisMinusHoles.Add(p);
+                }
+                
+
+            }
+            foreach (var p in aboveMinusThis)
+            {
+                if(holes.Count() > 0)
+                {
+                    foreach (var hole in holes)
+                    {
+                        if (!hole.Contains(p))
+                        {
+                            aboveMinusThisMinusHoles.AddRange(p.Subtract(hole));
+                        }
+                    }
+                }
+                else
+                {
+                    belowMinusThisMinusHoles.Add(p);
+                }
+                
+
+            }
+            foreach (var p in aboveMinusThisMinusHoles)
+            {
+                p.IsSurface = true;
+                p.IsRoof = true;
+
+                p.IsHole = false;
+                p.IsContour = false;
+                p.IsShell = false;
+            }
+            foreach (var p in belowMinusThisMinusHoles)
+            {
+                p.IsSurface = true;
+                p.IsFloor = true;
+
+                p.IsHole = false;
+                p.IsContour = false;
+                p.IsShell = false;
+            }
+            this.Polygons.AddRange(belowMinusThisMinusHoles);
+            this.Polygons.AddRange(aboveMinusThisMinusHoles);
 
 
             // Add newly found polies to FillPolygons, and set IsSurface to them.

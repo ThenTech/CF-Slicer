@@ -172,18 +172,18 @@ namespace Slicer.slyce
                     slice.AddDenseInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
 
                     // Add infill for internals
-                    if (   i < this.data.NumberOfShells
-                        || i >= this.data.MaxSliceIdx - this.data.NumberOfShells
-                        /* || slice.HasSurface */)
-                    {
-                        // Fill entire slice with surface (For .HasSurface even if only part had to be surface...)
-                        slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
-                    }
-                    else
-                    {
-                        slice.AddInfill(infill_struct);
-                    }
-
+                    //if (   i < this.data.NumberOfShells
+                    //    || i >= this.data.MaxSliceIdx - this.data.NumberOfShells
+                    //    /* || slice.HasSurface */)
+                    //{
+                    //    // Fill entire slice with surface (For .HasSurface even if only part had to be surface...)
+                    //    slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
+                    //}
+                    //else
+                    //{
+                    //    slice.AddInfill(infill_struct);
+                    //}
+                    slice.AddInfill(infill_struct);
                     // Reverse order polies
                     slice.SortPolygons();
 

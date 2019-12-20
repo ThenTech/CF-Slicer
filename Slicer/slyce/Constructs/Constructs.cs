@@ -364,7 +364,7 @@ namespace Slicer.slyce
                 p.FilterShorts();
                 p.CleanLines();
             }
-            //completePolygons = completePolygons.Where(p => p.IsComplete()).ToList();
+            completePolygons = completePolygons.Where(p => p.IsComplete()).ToList();
             return new Slice(completePolygons, slice_z_height, HasSurface);
         }
     }

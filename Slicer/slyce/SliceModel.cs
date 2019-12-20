@@ -159,31 +159,56 @@ namespace Slicer.slyce
                     this.data.SlicingProgressValue = 0;
                 });
 
+                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
+                    var slice = this.SliceStore[i];
+
+                    // Determine surfaces
+                    slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),
+                                            this.SliceStore.ElementAtOrDefault(i + 1));
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        this.data.SlicingProgressValue++;
+                    });
+                });
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.data.SlicingProgressValue = 0;
+                });
+
+                //  TODO propagate roof/floor
+                // slice.Polygons.AddRange(this.SliceStore.ElementAtOrDefault(i - 1).Polygons.Where(p => p.IsSurface && p.IsRoof));
+
+                for (int i = 0; i < this.data.MaxSliceIdx + 1; i++)
+                {
+                    var below = this.SliceStore.ElementAtOrDefault(i - 1);
+                    var above = this.SliceStore.ElementAtOrDefault(i + 1);
+
+                    if (below != null)
+                    {
+                        // TODO
+                    }
+
+                    if (above != null)
+                    {
+                        // TODO
+                    }
+                }
+
                 // Step 2: Compare with layer above and below to find and add floor/roofs,
                 //         Erode, add shells and infill
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Check for floor/roofs
                     var slice = this.SliceStore[i];
-                    slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),
-                                            this.SliceStore.ElementAtOrDefault(i + 1));
+
+                    // Add shells
                     slice.AddShells(data.NumberOfShells, data.NozzleDiameter * dense_spacing);
 
                     // Add infill for surfaces
                     slice.AddDenseInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
-
-                    // Add infill for internals
-                    //if (   i < this.data.NumberOfShells
-                    //    || i >= this.data.MaxSliceIdx - this.data.NumberOfShells
-                    //    /* || slice.HasSurface */)
-                    //{
-                    //    // Fill entire slice with surface (For .HasSurface even if only part had to be surface...)
-                    //    slice.AddInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
-                    //}
-                    //else
-                    //{
-                    //    slice.AddInfill(infill_struct);
-                    //}
                     slice.AddInfill(infill_struct);
+              
                     // Reverse order polies
                     slice.SortPolygons();
 

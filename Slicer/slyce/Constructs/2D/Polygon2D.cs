@@ -391,9 +391,9 @@ namespace Slicer.slyce.Constructs
             return Enumerable.Empty<Polygon2D>();
         }
 
-        public void FilterShorts()
+        public bool FilterShorts()
         {
-            if (this.Lines.Count > 3)
+            if (this.Lines.Count > 2)
             {
                 // Only include consecutive points if their distance is greater than a threshold
                 IntPoint p1 = this._IntPoints[0];
@@ -427,6 +427,33 @@ namespace Slicer.slyce.Constructs
 
                 this._IntPoints = filtered;
                 this.UpdateLinesFromPoints();
+                return this.Lines.Count > 0;
+            }
+            else
+            {
+                // 3 Lines or lower
+                if (this.Lines.Count == 0 || (this.Lines.Count == 1 && this.Lines.First.Value.GetLength() < Line.MIN_LENGTH))
+                {
+                    return false;
+                }
+                else if (this.Lines.Count == 2)
+                {
+                    if (this.Lines.First.Value.GetLength() < Line.MIN_LENGTH) this.Lines.RemoveFirst();
+                    if (this.Lines.Last.Value.GetLength() < Line.MIN_LENGTH) this.Lines.RemoveLast();
+                }
+                else
+                {
+                    var filtered = this.Lines.Where(p => p.GetLength() >= Line.MIN_LENGTH).ToList();
+                    
+                    if (filtered.Count > 1)
+                    {
+                        filtered[0].EndPoint = filtered[1].StartPoint;
+                    }
+                
+                    this.Lines = new LinkedList<Line>(filtered);
+                }
+
+                return this.Lines.Count > 0;
             }
         }
 

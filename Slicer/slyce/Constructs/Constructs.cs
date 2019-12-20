@@ -140,10 +140,6 @@ namespace Slicer.slyce
             bool HasSurface = false;
             int lookingFor = 7;
             
-            if(slice_z_height == lookingFor*perSlice)
-            {
-                var x = 0;
-            }
             foreach (var p in Polygons)
             {
                 var cut = p.CutAtZ(slice_z_height, slice_z_height + perSlice);
@@ -247,12 +243,13 @@ namespace Slicer.slyce
                     completePolygons.Add(p);
                 }
             }
+
             List<Polygon2D> stillNoConnection = new List<Polygon2D>(needsConnections);
             double factor = 10;
-            while (stillNoConnection.Count() > 0)
-            {
 
-                if(stillNoConnection.Count() == 1)
+            while (stillNoConnection.Count > 0)
+            {
+                if (stillNoConnection.Count == 1)
                 {
                     Line line = new Line(stillNoConnection[0].Last().EndPoint, stillNoConnection[0].First().StartPoint);
                     stillNoConnection[0].AddLine(line, ConnectionType.LAST);
@@ -261,18 +258,20 @@ namespace Slicer.slyce
                     break;
                 }
 
-                for (int i = 0; i < stillNoConnection.Count(); i++)
+                for (int i = 0; i < stillNoConnection.Count; i++)
                 {
                     var p = stillNoConnection[i];
-                    if(p.Lines.Count() == 1 && p.Lines.First().GetLength() < Point.EPSILON*factor)
+
+                    if (p.Lines.Count() == 1 && p.Lines.First().GetLength() < Point.EPSILON*factor)
                     {
                         p.WasTakenAway = true;
                         break;
                     }
-                    if(!p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
+
+                    if (!p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
                     {
                         //Try connecting other polygons
-                        for(int j = 0; j < stillNoConnection.Count(); j++)
+                        for (int j = 0; j < stillNoConnection.Count(); j++)
                         {
                             var p2 = stillNoConnection[j];
                             if(i != j)
@@ -300,17 +299,10 @@ namespace Slicer.slyce
                         completePolygons.Add(p);
                     }
                 }
-                factor = factor * 10;
+
+                factor *= 10;
                 stillNoConnection = stillNoConnection.Where(p => !p.IsComplete() && !p.WasTakenAway).ToList();
-                
             }
-
-
-
-
-            // TODO? Sort created polies with their distance to the middle, so we can print the middle one first?
-            //  ==> Probably not needed..
-
 
             //foreach (var p in needsConnections)
             //{
@@ -324,13 +316,14 @@ namespace Slicer.slyce
             //{
             //    p.CleanLines();
             //}
+
             List<Polygon2D> realCompletePolies = new List<Polygon2D>();
             foreach (var p in completePolygons)
             {
                 realCompletePolies.AddRange(p.SimplifyToPolygons());
             }
 
-            completePolygons = Polygon2D.OrderByArea(realCompletePolies, true,false).ToList();
+            completePolygons = Polygon2D.OrderByArea(realCompletePolies, true, false).ToList();
 
             // Check for containment and flag holes
             for (int i = 0; i < completePolygons.Count; i++)
@@ -359,13 +352,14 @@ namespace Slicer.slyce
                     }
                 }
             }
+
             foreach (var p in completePolygons)
             {
-                p.FilterShorts();
                 p.CleanLines();
             }
+
             //completePolygons = completePolygons.Where(p => p.IsComplete()).ToList();
-            return new Slice(completePolygons, slice_z_height, HasSurface);
+            return new Slice(completePolygons.Where(p => p.FilterShorts()).ToList(), slice_z_height, HasSurface);
         }
     }
 }

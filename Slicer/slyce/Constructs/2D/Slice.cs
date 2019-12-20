@@ -98,9 +98,8 @@ namespace Slicer.slyce.Constructs
                     eroded.AddRange(poly.Offset(+delta, miter_limit));
                 }
             }
-
-            eroded.ForEach(p => p.FilterShorts());
-            this.Polygons = eroded;
+            
+            this.Polygons = eroded.Where(p => p.FilterShorts()).ToList();
         }
 
         public void DetermineSurfaces(Slice above, Slice below)
@@ -423,8 +422,8 @@ namespace Slicer.slyce.Constructs
                     }
                 }
             }
-
-            this.FillPolygons.ForEach(p => p.FilterShorts());
+            
+            this.FillPolygons = this.FillPolygons.Where(p => p.FilterShorts()).ToList();
         }
 
         public void AddDenseInfill(List<Polygon2D> infill_struct)
@@ -485,9 +484,8 @@ namespace Slicer.slyce.Constructs
                     p.IsSurface = true;
                     p.IsInfill  = true;
                     p.CleanLines();
-                    p.FilterShorts();
                 }
-                tmp_dense_fill.AddRange(intersected);
+                tmp_dense_fill.AddRange(intersected.Where(p => p.FilterShorts()));
             }
 
             // Intersect each poly from infill with each one of inner shells
@@ -503,9 +501,8 @@ namespace Slicer.slyce.Constructs
                     {
                         q.IsInfill = true;
                         q.CleanLines();
-                        q.FilterShorts();
                     }
-                    tmp_fill.AddRange(result);
+                    tmp_fill.AddRange(result.Where(q => q.FilterShorts()));
                 }
             }
 

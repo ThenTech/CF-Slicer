@@ -56,7 +56,7 @@ namespace Slicer.slyce.Constructs
         public double MinY { get; set; }
         public double MaxX { get; set; }
         public double MaxY { get; set; }
-        public bool HasSurface { get; set; }
+        public bool   HasSurface { get; set; }
 
         public double Z { get; set; }
         public double ZHeight { get; set; }
@@ -286,8 +286,9 @@ namespace Slicer.slyce.Constructs
             // EDIT Now ignores shells that would overlap
 
             var shell_miter = 10.0;
+            var polies = this.Polygons.Where(p => !p.IsSurface).ToList();
 
-            foreach (var poly in this.Polygons)
+            foreach (var poly in polies)
             {
                 List<Polygon2D> inner_most = null;
 
@@ -322,8 +323,8 @@ namespace Slicer.slyce.Constructs
 
                         foreach (var shp in offsetted)
                         {
-                            if (this.Polygons.Any(p => p.Intersects(shp).Item1)
-                                                    || this.FillPolygons.Any(p => (p.Hierarchy >= shp.Hierarchy && p.IsHole && p.Shell <= nShells && p.Contains(shp))))
+                            if (polies.Any(p => p.Intersects(shp).Item1)
+                                             || this.FillPolygons.Any(p => (p.Hierarchy >= shp.Hierarchy && p.IsHole && p.Shell <= nShells && p.Contains(shp))))
                             {
                                 continue;
                             }
@@ -360,7 +361,7 @@ namespace Slicer.slyce.Constructs
 
                         foreach (var shp in offsetted)
                         {
-                            if (   this.Polygons.Any(p => p.Intersects(shp).Item1)
+                            if (   polies.Any(p => p.Intersects(shp).Item1)
                                 || this.FillPolygons.Any(p => p.Intersects(shp).Item1
                                                            || (p.Hierarchy <= shp.Hierarchy && p.IsContour && p.Shell <= nShells && shp.Contains(p))))
                             {
@@ -433,12 +434,12 @@ namespace Slicer.slyce.Constructs
             if (this.Polygons.Any(p => p.IsSurface))
             {
                 var tmp_fill = new List<Polygon2D>();
-                var surfaces = this.Polygons.Where(p => p.IsSurface);
+                var surfaces = this.Polygons.Where(p => p.IsSurface).ToList();
 
                 foreach (var inf in infill_struct)
                 {
                     var intersected = inf.Intersect(surfaces);
-                    foreach (var p in intersected) p.CleanLines();
+                    foreach (var p in intersected) { p.CleanLines(); p.IsSurface = true; }
                     tmp_fill.AddRange(intersected);
                 }
 
@@ -451,42 +452,69 @@ namespace Slicer.slyce.Constructs
             // Add this infill to the insides
 
             // Intersect infill_struct with contours and subtract holes from it.
+            var tmp_dense_fill = new List<Polygon2D>();
             var tmp_fill = new List<Polygon2D>();
 
             IEnumerable<Polygon2D> inner_shell = null;
             IEnumerable<Polygon2D> other_shell = null;
+            IEnumerable<Polygon2D> dense_fill  = null;
+
+            var surfaces = this.Polygons.Where(p => p.IsSurface).ToList();
 
             if (this.FillPolygons.Count > 0)
             {
                 // Has shell
                 var most_inner_shell = this.FillPolygons.Max(p => p.Shell);
-                inner_shell = this.FillPolygons.Where(p => p.Shell == most_inner_shell);
-                other_shell = this.FillPolygons.Where(p => p.Shell < most_inner_shell);
+                inner_shell = this.FillPolygons.Where(p => !p.IsSurface && p.Shell == most_inner_shell).ToList();
+                other_shell = this.FillPolygons.Where(p => !p.IsSurface && p.Shell < most_inner_shell).ToList();
+                dense_fill  = this.FillPolygons.Where(p => p.IsSurface).ToList();
             }
             else
             {
                 inner_shell = this.Polygons.Where(p => !p.IsSurface);
                 other_shell = new List<Polygon2D>();
+                dense_fill  = new List<Polygon2D>();
             }
 
-            // Intersect each poly from infill with each one of inner shells
-            foreach (var inf in infill_struct)
+            // Intersect each surface fill with inner shell
+            foreach (var inf in this.FillPolygons.Where(p => p.IsSurface))
             {
                 var intersected = inf.Intersect(inner_shell);
                 foreach (var p in intersected)
                 {
-                    p.IsInfill = true;
+                    p.IsSurface = true;
+                    p.IsInfill  = true;
                     p.CleanLines();
                     p.FilterShorts();
                 }
-                tmp_fill.AddRange(intersected);
+                tmp_dense_fill.AddRange(intersected);
+            }
+
+            // Intersect each poly from infill with each one of inner shells
+            // And subtract the Surface polies, since these already have dense infil
+            foreach (var inf in infill_struct)
+            {
+                var intersected = inf.Intersect(inner_shell);
+
+                foreach (var p in intersected)
+                {
+                    var result = p.Subtract(surfaces);
+                    foreach (var q in result)
+                    {
+                        q.IsInfill = true;
+                        q.CleanLines();
+                        q.FilterShorts();
+                    }
+                    tmp_fill.AddRange(result);
+                }
             }
 
             // Add shells from inside to outside
             this.FillPolygons = other_shell.ToList();  // .Reverse()
 
             // Sort infill on closest by
-            var sorted = Polygon2D.OrderByClosest(tmp_fill);
+            tmp_dense_fill.AddRange(tmp_fill);
+            var sorted = Polygon2D.OrderByClosest(tmp_dense_fill);
 
             //tmp_fill.AddRange(inner_shell);   // Force draw infill clip polies
             //tmp_fill.AddRange(infill);        // Force draw infill
@@ -494,6 +522,9 @@ namespace Slicer.slyce.Constructs
             //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
             
             this.FillPolygons.AddRange(sorted);
+
+            // Remove surfaces as they are now handled
+            this.Polygons = this.Polygons.Where(p => !p.IsSurface).ToList();
         }
 
         public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)

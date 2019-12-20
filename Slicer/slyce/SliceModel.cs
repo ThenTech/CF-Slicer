@@ -166,7 +166,6 @@ namespace Slicer.slyce
                     var slice = this.SliceStore[i];
                     slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),
                                             this.SliceStore.ElementAtOrDefault(i + 1));
-                    
                     slice.AddShells(data.NumberOfShells, data.NozzleDiameter * dense_spacing);
 
                     // Add infill for surfaces

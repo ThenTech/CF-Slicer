@@ -1,0 +1,25 @@
+# Vendored files and directories are excluded from language
+# statistics.
+#
+# Lines in this file are Regexps that are matched against the file
+# pathname.
+#
+# Please add additional test coverage to
+# `test/test_blob.rb#test_vendored` if you make any changes.
+
+# Ref: https://github.com/github/linguist/blob/master/lib/linguist/vendor.yml
+
+# git config files
+- gitattributes$
+- gitignore$
+- gitmodules$
+
+# Visual Studio IntelliSense
+- -vsdoc\.js$
+- \.intellisense\.js$
+
+# NuGet
+- ^[Pp]ackages\/.+\.\d+\/
+
+# Custom
+- TestModels/

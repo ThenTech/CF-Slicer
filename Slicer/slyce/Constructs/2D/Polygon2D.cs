@@ -338,27 +338,6 @@ namespace Slicer.slyce.Constructs
             this.Lines = lines;
         }
 
-        public IEnumerable<Polygon2D> SimplifyToPolygons()
-        {
-            if (this.Lines.Count > 2)
-            {
-                Paths simplified = Clipper.SimplifyPolygon(this.IntPoints, PolyFillType.pftEvenOdd);
-                Clipper c = new Clipper();
-
-                foreach (var s in simplified)
-                {
-                    c.AddPath(s, PolyType.ptClip, true);
-                }
-
-                PolyTree solution = new PolyTree();
-                c.Execute(ClipType.ctUnion, solution);
-
-                return PolyNodeToPolies(solution);
-            }
-
-            return Enumerable.Empty<Polygon2D>();
-        }
-
         public void CleanLines()
         {
             if (this.Lines.Count > 2)
@@ -385,7 +364,17 @@ namespace Slicer.slyce.Constructs
 
                 // Optionally also call simplify?
                 Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
-                return simplified.Select(p => new Polygon2D(p));
+                Clipper c = new Clipper();
+
+                foreach (var s in simplified)
+                {
+                    c.AddPath(s, PolyType.ptClip, true);
+                }
+
+                PolyTree solution = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution);
+
+                return PolyNodeToPolies(solution);
             }
 
             return Enumerable.Empty<Polygon2D>();
@@ -452,8 +441,6 @@ namespace Slicer.slyce.Constructs
 
                     this.Lines = new LinkedList<Line>(filtered);
                 }
-
-                return this.Lines.Count > 0;
             }
 
             return this.Lines.Count > 0;

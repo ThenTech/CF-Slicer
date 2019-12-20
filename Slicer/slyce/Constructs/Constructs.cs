@@ -320,17 +320,12 @@ namespace Slicer.slyce
             List<Polygon2D> realCompletePolies = new List<Polygon2D>();
             foreach (var p in completePolygons)
             {
-                realCompletePolies.AddRange(p.SimplifyToPolygons());
+                realCompletePolies.AddRange(p.CleanToPolygons());
             }
 
             Polygon2D.DetermineHierachy(ref realCompletePolies, false);
 
-            foreach (var p in completePolygons)
-            {
-                p.CleanLines();
-            }
-
-            return new Slice(completePolygons.Where(p => p.FilterShorts() && p.IsComplete()).ToList(), slice_z_height, HasSurface);
+            return new Slice(realCompletePolies.Where(p => p.FilterShorts() && p.IsComplete()).ToList(), slice_z_height, HasSurface);
         }
     }
 }

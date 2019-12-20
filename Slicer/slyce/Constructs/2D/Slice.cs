@@ -540,7 +540,7 @@ namespace Slicer.slyce.Constructs
             }
 
 #else
-            foreach (var poly in this.Polygons)
+            foreach (var poly in polies)
             {
                 List<Polygon2D> inner_most = null;
 
@@ -808,9 +808,6 @@ namespace Slicer.slyce.Constructs
             //tmp_fill.AddRange(infill);        // Force draw infill
             //tmp_fill = tmp_fill[0].Union(tmp_fill).ToList();
             //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
-
-            // Sort infill on closest by
-            var sorted = Polygon2D.OrderByClosest(tmp_fill);
 
             this.FillPolygons.AddRange(sorted);
 

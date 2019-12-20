@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ClipperLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -105,6 +106,175 @@ namespace Slicer.slyce.Constructs
         public void DetermineSurfaces(Slice above, Slice below)
         {
             // Subtract above/below/this.Polygons
+            List<Polygon2D> thisMinusAbove = new List<Polygon2D>(); // Roofs
+            List<Polygon2D> thisMinusBelow = new List<Polygon2D>(); // Floors
+
+            ////Make this
+            //PolyTree thisTree = new PolyTree();
+            //PolyTree aboveTree = new PolyTree();
+            //PolyTree belowTree = new PolyTree();
+            //if(this.Polygons != null && this.Polygons.Count() > 0)
+            //{
+            //    Clipper c1 = new Clipper();
+            //    foreach (var p in this.Polygons.Where(p => !p.IsSurface && !p.IsHole && p.IsComplete()))
+            //    {
+            //        if(p.IsComplete())
+            //        {
+            //            c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+            //        }
+            //    }
+            //    foreach (var p in this.Polygons.Where(p => !p.IsSurface && p.IsHole && p.IsComplete()))
+            //    {
+            //        if (p.IsComplete())
+            //        {
+            //            c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+            //        }
+            //    }
+            //    c1.Execute(ClipType.ctDifference, thisTree);
+            //}
+            ////Make above
+            //if (above != null && above.Polygons != null && above.Polygons.Count() > 0)
+            //{
+            //    Clipper c1 = new Clipper();
+            //    foreach (var p in above.Polygons.Where(p => !p.IsSurface && !p.IsHole && p.IsComplete()))
+            //    {
+            //        if (p.IsComplete())
+            //        {
+            //            c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+            //        }
+            //    }
+            //    //foreach (var p in above.Polygons.Where(p => !p.IsSurface && p.IsHole && p.IsComplete()))
+            //    //{
+            //    //    if (p.IsComplete())
+            //    //    {
+            //    //        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+            //    //    }
+            //    //}
+            //    c1.Execute(ClipType.ctDifference, aboveTree);
+            //}
+            ////Make below
+            //if (below != null && below.Polygons != null && below.Polygons.Count() > 0)
+            //{
+            //    Clipper c1 = new Clipper();
+            //    foreach (var p in below.Polygons.Where(p => !p.IsSurface && !p.IsHole && p.IsComplete()))
+            //    {
+            //        if (p.IsComplete())
+            //        {
+            //            c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+            //        }
+            //    }
+
+            //    //foreach (var p in below.Polygons.Where(p => !p.IsSurface && p.IsHole && p.IsComplete()))
+            //    //{
+            //    //    if (p.IsComplete())
+            //    //    {
+            //    //        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+            //    //    }
+            //    //}
+            //    c1.Execute(ClipType.ctDifference, belowTree);
+            //}
+            //Clipper cTotalAbove = new Clipper();
+            //cTotalAbove.AddPaths(Clipper.ClosedPathsFromPolyTree(thisTree), PolyType.ptSubject, true);
+            //cTotalAbove.AddPaths(Clipper.ClosedPathsFromPolyTree(aboveTree), PolyType.ptClip, true);
+            //PolyTree solution = new PolyTree();
+            //cTotalAbove.Execute(ClipType.ctDifference, solution);
+            //thisMinusAbove = Polygon2D.PolyNodeToPolies(solution).ToList();
+
+            //Clipper cTotalBelow = new Clipper();
+            //cTotalBelow.AddPaths(Clipper.ClosedPathsFromPolyTree(thisTree), PolyType.ptSubject, true);
+            //cTotalAbove.AddPaths(Clipper.ClosedPathsFromPolyTree(belowTree), PolyType.ptClip, true);
+            //PolyTree solution2 = new PolyTree();
+            //cTotalAbove.Execute(ClipType.ctDifference, solution2);
+            //thisMinusBelow = Polygon2D.PolyNodeToPolies(solution2).ToList();
+            if (above != null && above.Polygons != null && above.Polygons.Count() != 0)
+            {
+                Clipper c1 = new Clipper();
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface))
+                {
+                    if (p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+
+                }
+
+                foreach (var p in above.Polygons.Where(q => !q.IsSurface))
+                {
+                    if (p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+                    }
+
+                }
+                PolyTree solution = new PolyTree();
+                c1.Execute(ClipType.ctDifference, solution);
+
+                thisMinusAbove.AddRange(Polygon2D.PolyNodeToPolies(solution));
+
+            }
+            else
+            {
+                thisMinusAbove.AddRange(this.Polygons.Where(p => !p.IsHole).Select(p => p.Clone()));
+                //foreach (var p in this.Polygons)
+                //{
+                //    p.IsSurface = true;
+                //    p.IsRoof = true;
+                //}
+            }
+
+            if (below != null && below.Polygons != null && below.Polygons.Count() != 0)
+            {
+                Clipper c1 = new Clipper();
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                {
+                    if (p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+
+                }
+                foreach (var p in below.Polygons.Where(q => !q.IsSurface))
+                {
+                    if (p.IsComplete())
+                    {
+                        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
+                    }
+
+                }
+                PolyTree solution = new PolyTree();
+                c1.Execute(ClipType.ctDifference, solution);
+                thisMinusBelow.AddRange(Polygon2D.PolyNodeToPolies(solution));
+
+            }
+            else
+            {
+                thisMinusBelow.AddRange(this.Polygons.Where(p => !p.IsHole).Select(p => p.Clone()));
+                //foreach (var p in this.Polygons)
+                //{
+                //    p.IsSurface = true;
+                //    p.IsFloor = true;
+                //}
+            }
+            foreach (var p in thisMinusAbove)
+            {
+                p.IsSurface = true;
+                p.IsRoof = true;
+
+                p.IsHole = false;
+                p.IsContour = false;
+                p.IsShell = false;
+            }
+            foreach (var p in thisMinusBelow)
+            {
+                p.IsSurface = true;
+                p.IsFloor = true;
+
+                p.IsHole = false;
+                p.IsContour = false;
+                p.IsShell = false;
+            }
+            this.Polygons.AddRange(thisMinusBelow);
+            this.Polygons.AddRange(thisMinusAbove);
 
 
             // Add newly found polies to FillPolygons, and set IsSurface to them.
@@ -301,7 +471,7 @@ namespace Slicer.slyce.Constructs
             }
             else
             {
-                inner_shell = this.Polygons;
+                inner_shell = this.Polygons.Where(p => !p.IsSurface);
                 other_shell = new List<Polygon2D>();
                 dense_fill  = new List<Polygon2D>();
             }

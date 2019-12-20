@@ -31,7 +31,10 @@ namespace Slicer.slyce.Constructs
 
         public bool IsInfill { get; set; } = false;
         public bool IsShell  { get; set; } = false;
-        public bool IsOpen   { get; set; } = false;
+        public bool IsOpen { get; set; } = false;
+        public bool IsFloor { get; set; } = false;
+        public bool IsRoof { get; set; } = false;
+
 
         // List of seperate points in the Polygon for ClipperLib
         private Path _IntPoints = null;
@@ -97,9 +100,11 @@ namespace Slicer.slyce.Constructs
                 IsContour = this.IsContour,
                 Shell     = this.Shell,
                 Hierarchy = this.Hierarchy,
-                IsInfill  = this.IsInfill,
-                IsShell   = this.IsShell,
-                IsOpen    = this.IsOpen
+                IsInfill = this.IsInfill,
+                IsShell = this.IsShell,
+                IsOpen = this.IsOpen,
+                IsFloor = this.IsFloor,
+                IsRoof = this.IsRoof
             };
         }
 
@@ -445,7 +450,9 @@ namespace Slicer.slyce.Constructs
                         Hierarchy = this.Hierarchy,
                         IsInfill  = this.IsInfill,
                         IsShell   = this.IsShell,
-                        IsOpen = this.IsOpen
+                        IsOpen = this.IsOpen,
+                        IsRoof = this.IsRoof,
+                        IsFloor = this.IsFloor
                     };
                 }
             }
@@ -455,7 +462,7 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        private PolyTree GetClipperSolutionWith(IEnumerable<Polygon2D> others, ClipType type)
+        public PolyTree GetClipperSolutionWith(IEnumerable<Polygon2D> others, ClipType type)
         {
             // https://github.com/junmer/clipper-lib/blob/master/Documentation.md#clipperlibcliptype
             Clipper c = new Clipper();
@@ -526,6 +533,13 @@ namespace Slicer.slyce.Constructs
         {
             var result = GetClipperSolutionWith(others, ClipType.ctDifference);
             return PolyNodeToPolies(result);
+        }
+
+        public IEnumerable<Polygon2D> Subtract(Polygon2D other)
+        {
+            var others = new List<Polygon2D>();
+            others.Add(other);
+            return Subtract(others);
         }
 
         public IEnumerable<Polygon2D> Union(IEnumerable<Polygon2D> others)

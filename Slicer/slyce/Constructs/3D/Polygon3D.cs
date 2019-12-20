@@ -59,8 +59,7 @@ namespace Slicer.slyce.Constructs
                 {
                     //A
                     //Add no lines since the nearby polygon connected to this point should be found too
-                    //slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, 
-                    //                     equals[0].Pos.X + Point.EPSILON * 2, equals[0].Pos.Y + Point.EPSILON * 2);
+                    //slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, equals[0].Pos.X + Point.EPSILON * 2, equals[0].Pos.Y + Point.EPSILON * 2);
                 }
                 else if (equals.Count() == 2)
                 {

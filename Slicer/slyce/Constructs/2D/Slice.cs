@@ -8,6 +8,9 @@ using Shape = System.Windows.Shapes.Shape;
 
 namespace Slicer.slyce.Constructs
 {
+    using Path = List<IntPoint>;
+    using Paths = List<List<IntPoint>>;
+
     public class Slice
     {
         // Contains Outer Edges => the raw found slice lines connected
@@ -99,7 +102,7 @@ namespace Slicer.slyce.Constructs
                     eroded.AddRange(poly.Offset(+delta, miter_limit));
                 }
             }
-            
+
             this.Polygons = eroded.Where(p => p.FilterShorts()).ToList();
         }
 
@@ -268,7 +271,7 @@ namespace Slicer.slyce.Constructs
             {
                 p.IsSurface = true;
                 p.IsFloor   = true;
-                
+
                 p.IsContour = false;
                 p.IsShell   = false;
             }
@@ -285,7 +288,259 @@ namespace Slicer.slyce.Constructs
             var shell_miter = 10.0;
             var polies = this.Polygons.Where(p => !p.IsSurface).ToList();
 
-            foreach (var poly in polies)
+            // Amount of overlap between infill and walls, expressed in terms of infill line width
+            var infill_overlap_percentage = 0.3; // Same as Cura
+            var overlapp_offset = thickness * infill_overlap_percentage;
+
+#if false
+            for (int shell = 1; shell < nShells /* -1 */; shell++)
+            {
+                var shells_contour = new List<Polygon2D>();
+                var shells_holes = new List<Polygon2D>();
+                var offset = shell < nShells
+                            ? thickness * (double)shell
+                            : (thickness * (double)(shell - 1)) + overlapp_offset;
+
+                foreach (var poly in this.Polygons)
+                {
+                    var contour = poly.Clone();
+                    contour.Shell = shell;
+                    contour.IsInfill = contour.IsShell = true;
+
+                    if (contour.IsContour)
+                    {
+                        shells_contour.AddRange(contour.Offset(-offset, shell_miter));
+                    }
+                    else
+                    {
+                        shells_holes.AddRange(contour.Offset(+offset, shell_miter));
+                    }
+                }
+
+                var shells_contour_subtracted = new List<Polygon2D>();
+
+                foreach (var contour in shells_contour)
+                {
+
+                    var inside = shells_holes.Where(p => contour.ContainsOrOverlaps(p)).ToList();
+                    if (inside.Count > 0)
+                    {
+                        var diff = contour.Subtract(inside[0].Union(inside.GetRange(1, inside.Count - 1))).ToList();
+
+                        if (diff.Count > 0)
+                        {
+                            shells_contour_subtracted.AddRange(diff);
+                        }
+                        else
+                        {
+                            shells_contour_subtracted.Add(contour);
+                        }
+                    }
+                    else
+                    {
+                        shells_contour_subtracted.Add(contour);
+                    }
+                }
+
+                Polygon2D.DetermineHierachy(ref shells_contour_subtracted);
+                this.FillPolygons.AddRange(shells_contour_subtracted.Where(p => p.FilterShorts()));
+            }
+
+            var inner_shells = new List<Polygon2D>();
+
+            foreach (var sh in this.FillPolygons)
+            {
+                if (sh.Shell == nShells-1)
+                {
+                    var inner_shell = sh.Offset((sh.IsContour ? -1.0 : 1.0) * overlapp_offset, shell_miter);
+                    foreach (var inner in inner_shell)
+                    {
+                        inner.Shell = nShells;
+                        inner.IsInfill = inner.IsShell = true;
+                        inner_shells.Add(inner);
+                    }
+                }
+            }
+
+            this.FillPolygons.AddRange(inner_shells.Where(p => p.FilterShorts()));
+#elif false
+            // Note: inner most shells will be removed for infil, so add one more later.
+            for (int shell = 1; shell < nShells /* -1 */; shell++)
+            {
+                var shells_contour = new List<Polygon2D>();
+                var shells_holes = new List<Polygon2D>();
+                var offset = shell < nShells
+                           ? thickness * (double)shell
+                           : (thickness * (double)(shell - 1)) + overlapp_offset;
+
+
+                foreach (var poly in this.Polygons)
+                {
+                    var contour = poly.Clone();
+                    contour.Shell = shell;
+                    contour.IsInfill = contour.IsShell = true;
+
+                    if (contour.IsContour)
+                    {
+                        shells_contour.AddRange(contour.Offset(-offset, shell_miter));
+                    }
+                    else
+                    {
+                        shells_contour.AddRange(contour.Offset(+offset, shell_miter));
+                    }
+                }
+
+                var shells_contour_subtracted = new List<Polygon2D>();
+                shells_contour = Polygon2D.OrderByArea(shells_contour).ToList();
+
+                bool did_something = false;
+
+                do
+                {
+                    var results = new List<Polygon2D>();
+                    did_something = false;
+
+                    for (var i = 0; i < shells_contour.Count; i++)
+                    {
+                        var p1 = shells_contour[i];
+
+                        for (var j = 0; j < shells_contour.Count; j++)
+                        {
+                            var p2 = shells_contour[j];
+
+                            if (i != j && !p2.WasTakenAway && p2.Hierarchy != p1.Hierarchy)
+                            {
+                                if (p1.ContainsOrOverlaps(p2))
+                                {
+                                    p1.WasTakenAway = p2.WasTakenAway = true;
+                                    p1.Shell++;
+
+                                    var p2_arr = new Polygon2D[1] { p2 };
+
+                                    foreach (var pol in shells_contour)
+                                    {
+                                        if (pol.Hierarchy == p1.Hierarchy)
+                                        {
+                                            pol.WasTakenAway = true;
+                                            if (pol.IsContour)
+                                                results.AddRange(pol.Subtract(p2_arr).Select(p => { p.Shell = p1.Shell; return p; }));
+                                            else
+                                                results.AddRange(pol.Union(p2_arr).Select(p => { p.Shell = p1.Shell; return p; }));
+                                        }
+                                    }
+
+                                    //if (p1.IsContour)
+                                    //{
+                                    //    results.AddRange(p1.Subtract(new Polygon2D[1] { p2 }).Select(p => { p.Shell++; return p; }));
+                                    //}
+                                    //else
+                                    //{
+                                    //    results.AddRange(p1.Union(new Polygon2D[1] { p2 }));
+                                    //}
+
+                                    results.AddRange(shells_contour.Where(p => !p.WasTakenAway));
+                                    did_something = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!did_something)
+                        {
+                            p1.WasTakenAway = true;
+                            results.Add(p1);
+                        } else
+                        {
+                            break;
+                        }
+                    }
+
+                    if (results.All(p => p.Shell > shell))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        shells_contour = results;
+                    }
+                } while (did_something);
+
+                shells_contour.ForEach(p => p.Shell = shell);
+                shells_contour_subtracted = shells_contour;
+
+                //foreach (var contour in shells_contour)
+                //{
+                //    var diff = contour.Subtract(shells_holes.Where(p => /*p.Hierarchy >= contour.Hierarchy &&*/ contour.ContainsOrOverlaps(p))).ToList();
+
+                //    if (diff.Count > 0)
+                //    {
+                //        shells_contour_subtracted.AddRange(diff);
+                //    }
+                //    else
+                //    {
+                //        shells_contour_subtracted.Add(contour);
+                //    }
+                //    break;
+                //}
+
+                if (shells_contour_subtracted.Count > 0)
+                {
+                    /*
+                    var result = new List<Polygon2D>();
+
+                    for (var i = 0; i < shells_contour_subtracted.Count; i++)
+                    {
+                        var p1 = shells_contour_subtracted[i];
+
+                        if (p1.WasTakenAway) continue;
+
+                        var select = new List<Polygon2D>();
+                        p1.WasTakenAway = true;
+
+                        for (var j = 0; j < shells_contour_subtracted.Count; j++)
+                        {
+                            var p2 = shells_contour_subtracted[j];
+
+                            if (i != j && !p2.WasTakenAway)
+                            {
+                                var intersect = p1.Intersects(p2);
+                                if (intersect.Item1)
+                                {
+                                    //select.AddRange(intersect.Item2);
+                                    select.Add(p2);
+                                    p2.WasTakenAway = true;
+                                }
+                            }
+                        }
+
+                        result.AddRange(p1.Union(select));
+                        //result.AddRange(select);
+                    }
+
+                    Polygon2D.DetermineHierachy(ref result);
+                    this.FillPolygons.AddRange(result.Where(p => p.FilterShorts()));
+                    */
+
+                    Polygon2D.DetermineHierachy(ref shells_contour_subtracted);
+                    this.FillPolygons.AddRange(shells_contour_subtracted.Where(p => p.FilterShorts()));
+
+
+                }
+            }
+
+            foreach (var poly in this.Polygons)
+            {
+                var inner_shell = poly.Offset((poly.IsContour ? -1.0 : 1.0) * ((thickness * (double)(nShells - 1)) + overlapp_offset), shell_miter);
+                foreach (var inner in inner_shell)
+                {
+                    inner.Shell = nShells;
+                    inner.IsInfill = inner.IsShell = true;
+                    this.FillPolygons.Add(inner);
+                }
+            }
+
+#else
+            foreach (var poly in this.Polygons)
             {
                 List<Polygon2D> inner_most = null;
 
@@ -375,10 +630,6 @@ namespace Slicer.slyce.Constructs
                     }
                 }
 
-                // Amount of overlap between infill and walls, expressed in terms of infill line width
-                var infill_overlap_percentage = 0.3; // Same as Cura
-                var overlapp_offset = thickness * infill_overlap_percentage;
-
                 if (inner_most == null || inner_most.Count == 0)
                 {
                     inner_most = new List<Polygon2D>() { poly.Clone() };
@@ -389,7 +640,7 @@ namespace Slicer.slyce.Constructs
                 {
                     inner.Shell = nShells;
                     inner.IsInfill = inner.IsShell = true;
-                    
+
                     if (inner.IsContour)
                     {
                         var offsetted = inner.Offset(-overlapp_offset, shell_miter);
@@ -420,8 +671,9 @@ namespace Slicer.slyce.Constructs
                     }
                 }
             }
-            
+
             this.FillPolygons = this.FillPolygons.Where(p => p.FilterShorts()).ToList();
+#endif
         }
 
         public void AddDenseInfill(List<Polygon2D> infill_struct)
@@ -452,7 +704,7 @@ namespace Slicer.slyce.Constructs
                     p.IsSurface = true;
                     tmp_fill.Add(p);
                 }
-                
+
                 this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
             }
         }
@@ -460,6 +712,34 @@ namespace Slicer.slyce.Constructs
         public void AddInfill(List<Polygon2D> infill_struct)
         {
             // Add this infill to the insides
+
+            //var nShells = 3;
+            //var thickness = 0.4 * 0.95;
+
+            //var shell_miter = 10.0;
+            //var infill_overlap_percentage = 0.3; // Same as Cura
+            //var overlapp_offset = thickness * infill_overlap_percentage;
+
+
+            //var tmp_fill = new List<Polygon2D>();
+
+            //foreach (var inf in infill_struct)
+            //{
+            //    var intersected = inf.Intersect(this.Polygons);
+            //    foreach (var p in intersected)
+            //    {
+            //        p.IsInfill = true;
+            //        p.CleanLines();
+            //        tmp_fill.AddRange(p.Offset(-(double)(nShells - 1) * thickness + overlapp_offset, shell_miter)
+            //                           .Where(of => of.FilterShorts()));
+            //    }
+            //}
+
+            //this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
+
+
+
+
 
             // Intersect infill_struct with contours and subtract holes from it.
             var tmp_dense_fill = new List<Polygon2D>();
@@ -528,7 +808,10 @@ namespace Slicer.slyce.Constructs
             //tmp_fill.AddRange(infill);        // Force draw infill
             //tmp_fill = tmp_fill[0].Union(tmp_fill).ToList();
             //this.FillPolygons.AddRange(tmp_fill[0].Union(tmp_fill));
-            
+
+            // Sort infill on closest by
+            var sorted = Polygon2D.OrderByClosest(tmp_fill);
+
             this.FillPolygons.AddRange(sorted);
 
             // Remove surfaces as they are now handled

@@ -323,35 +323,7 @@ namespace Slicer.slyce
                 realCompletePolies.AddRange(p.SimplifyToPolygons());
             }
 
-            completePolygons = Polygon2D.OrderByArea(realCompletePolies, true, false).ToList();
-
-            // Check for containment and flag holes
-            for (int i = 0; i < completePolygons.Count; i++)
-            {
-                var poly1 = completePolygons[i];
-                poly1.Hierarchy = i;
-
-                for (int j = 0; j < completePolygons.Count; j++)
-                {
-                    if (i != j)
-                    {
-                        var poly2 = completePolygons[j];
-
-                        //Check if i contains j
-                        if (poly1.Contains(poly2))
-                        {
-                            if (poly1.IsHole)
-                            {
-                                poly2.IsHole = false;
-                            }
-                            else
-                            {
-                                poly2.IsHole = true;
-                            }
-                        }
-                    }
-                }
-            }
+            Polygon2D.DetermineHierachy(ref realCompletePolies, false);
 
             foreach (var p in completePolygons)
             {

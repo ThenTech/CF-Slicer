@@ -64,8 +64,8 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        // Indication of shell offset, higher is mor inwards inside object
-        public int Shell { get; set; } = 1;
+        // Indication of shell offset, higher is more inwards inside object
+        public int Shell { get; set; } = 0;
 
         private Point _Center = null;
         public Point Center
@@ -387,7 +387,7 @@ namespace Slicer.slyce.Constructs
                 Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
                 return simplified.Select(p => new Polygon2D(p));
             }
-     
+
             return Enumerable.Empty<Polygon2D>();
         }
 
@@ -444,17 +444,19 @@ namespace Slicer.slyce.Constructs
                 else
                 {
                     var filtered = this.Lines.Where(p => p.GetLength() >= Line.MIN_LENGTH).ToList();
-                    
+
                     if (filtered.Count > 1)
                     {
                         filtered[0].EndPoint = filtered[1].StartPoint;
                     }
-                
+
                     this.Lines = new LinkedList<Line>(filtered);
                 }
 
                 return this.Lines.Count > 0;
             }
+
+            return this.Lines.Count > 0;
         }
 
         public IEnumerable<Polygon2D> Offset(double delta, double miter_limit = 3)
@@ -462,7 +464,7 @@ namespace Slicer.slyce.Constructs
             var paths = new Paths();
 
             var c = new ClipperOffset(miter_limit);
-            c.AddPath(this.IntPoints, JoinType.jtMiter, EndType.etClosedPolygon);
+            c.AddPath(this.IntPoints, JoinType.jtMiter, this.IsComplete() ? EndType.etClosedPolygon : EndType.etOpenRound);
             c.Execute(ref paths, delta * Point.INT_POINT_FACTOR);
 
             if (paths.Count > 0)
@@ -526,13 +528,13 @@ namespace Slicer.slyce.Constructs
                     IsHole  = polynode.IsHole
                 });
             }
-                
+
             foreach (PolyNode pn in polynode.Childs)
             {
                 AddPolyNodeToPolies(pn, polies);
             }
         }
- 
+
         public static IEnumerable<Polygon2D> PolyNodeToPolies(PolyTree polytree)
         {
             var polies = new List<Polygon2D>(polytree.Total);
@@ -547,19 +549,46 @@ namespace Slicer.slyce.Constructs
 
             var intersection = GetClipperSolutionWith(other, ClipType.ctIntersection);
             return Tuple.Create(intersection.ChildCount > 0 && !this.Contains(other) && !other.Contains(this),
-                                PolyNodeToPolies(intersection));
+                                PolyNodeToPolies(intersection).Select(p =>
+                                {
+                                    p.IsSurface = this.IsSurface;
+                                    //p.IsContour = this.IsContour;
+                                    p.Shell     = this.Shell;
+                                    p.Hierarchy = this.Hierarchy;
+                                    p.IsInfill  = this.IsInfill;
+                                    p.IsShell   = this.IsShell;
+                                    return p;
+                                }));
         }
 
         public IEnumerable<Polygon2D> Intersect(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctIntersection);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                //p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public IEnumerable<Polygon2D> Subtract(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctDifference);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                //p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public IEnumerable<Polygon2D> Subtract(Polygon2D other)
@@ -572,13 +601,31 @@ namespace Slicer.slyce.Constructs
         public IEnumerable<Polygon2D> Union(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctUnion);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                //p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public IEnumerable<Polygon2D> Xor(IEnumerable<Polygon2D> others)
         {
             var result = GetClipperSolutionWith(others, ClipType.ctXor);
-            return PolyNodeToPolies(result);
+            return PolyNodeToPolies(result).Select(p =>
+            {
+                p.IsSurface = this.IsSurface;
+                //p.IsContour = this.IsContour;
+                p.Shell     = this.Shell;
+                p.Hierarchy = this.Hierarchy;
+                p.IsInfill  = this.IsInfill;
+                p.IsShell   = this.IsShell;
+                return p;
+            });
         }
 
         public bool ContainsOrOverlaps(Polygon2D other)
@@ -647,7 +694,7 @@ namespace Slicer.slyce.Constructs
 
             Point centroid = this.Center;
             double poly_area = this.Area() * 1.07;  // Adjust for circle
-            
+
             var p1 = new Point(this.IntPoints[0]);
             var p2 = new Point(this.IntPoints[(int)(numPoints * 1.0 / 3.0)]);
             var p3 = new Point(this.IntPoints[(int)(numPoints * 2.0 / 3.0)]);
@@ -678,7 +725,7 @@ namespace Slicer.slyce.Constructs
         }
 
         public static IEnumerable<Polygon2D> OrderByClosest(List<Polygon2D> input, Polygon2D start = null)
-        {           
+        {
             if (input.Count > 1)
             {
                 // Add first
@@ -700,6 +747,39 @@ namespace Slicer.slyce.Constructs
 
                 // Add last
                 yield return input[0];
+            }
+        }
+
+        public static void DetermineHierachy(ref List<Polygon2D> input, bool clean_first = true)
+        {
+            input = Polygon2D.OrderByArea(input, true, clean_first).ToList();
+
+            // Check for containment and flag holes
+            for (int i = 0; i < input.Count; i++)
+            {
+                var poly1 = input[i];
+                poly1.Hierarchy = i;
+
+                for (int j = 0; j < input.Count; j++)
+                {
+                    if (i != j)
+                    {
+                        var poly2 = input[j];
+
+                        //Check if i contains j
+                        if (poly1.Contains(poly2))
+                        {
+                            if (poly1.IsHole)
+                            {
+                                poly2.IsHole = false;
+                            }
+                            else
+                            {
+                                poly2.IsHole = true;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -742,13 +822,13 @@ namespace Slicer.slyce.Constructs
                         for (double offset = Ystart + ((size_y - y_total_length) / 2.0); offset <= YEnd - y_length;)
                         {
                             var next_y = offset + y_length;
-                            
+
                             pattern.Add(new Polygon2D(new Line(XStart - x_length, offset, XEnd   + x_length, offset)));
                             pattern.Add(new Polygon2D(new Line(XEnd   + x_length, next_y, XStart - x_length, next_y)));
 
                             offset = next_y + y_length;
                         }
-                        
+
                         // Transform pattern
                         Matrix matr = Matrix.Identity;
                         matr.RotateAt(-45, X + size_x / 2.0, Y + size_y / 2.0);
@@ -792,7 +872,7 @@ namespace Slicer.slyce.Constructs
                         {
                             var next_y = offset + y_length;
                             var poly = new Polygon2D();
-                            
+
                             poly.AddLine(new Line(XStart - x_length, offset, XEnd   + x_length, offset), ConnectionType.LAST);
                             poly.AddLine(new Line(XEnd   + x_length, offset, XEnd   + x_length, next_y), ConnectionType.LAST);
                             poly.AddLine(new Line(XEnd   + x_length, next_y, XStart - x_length, next_y), ConnectionType.LAST);

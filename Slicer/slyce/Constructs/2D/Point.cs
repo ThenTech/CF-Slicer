@@ -57,9 +57,9 @@ namespace Slicer.slyce.Constructs
 
         public bool Equals(Point p2)
         {
-            return this.X.EpsilonEquals(p2.X, Point.EPSILON)
-                && this.Y.EpsilonEquals(p2.Y, Point.EPSILON);
+            return this.Equals(p2, Point.EPSILON);
         }
+
         public bool Equals(Point p2, double epsilon)
         {
             return this.X.EpsilonEquals(p2.X, epsilon)

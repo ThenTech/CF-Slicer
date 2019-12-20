@@ -135,6 +135,7 @@ namespace Slicer.slyce
                     var slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
                                           data.NozzleThickness);
                     slice.SetNozzleHeight((i + 1) * data.NozzleThickness);
+                    slice.Erode(data.NozzleDiameter / 2.0);
                     this.SliceStore[i] = slice;
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -165,7 +166,6 @@ namespace Slicer.slyce
                     var slice = this.SliceStore[i];
                     slice.DetermineSurfaces(this.SliceStore.ElementAtOrDefault(i - 1),
                                             this.SliceStore.ElementAtOrDefault(i + 1));
-                    slice.Erode(data.NozzleDiameter / 2.0);
                     slice.AddShells(data.NumberOfShells, data.NozzleDiameter * dense_spacing);
 
                     // Add infill for surfaces

@@ -20,6 +20,14 @@ namespace Slicer.slyce.Constructs
             var vertices = Vertices.Select(v => v.Clone()).ToArray();
             return new Polygon3D(vertices);
         }
+
+        private Point GetIntersection(Vector p1, Vector p2, double cut_at_z)
+        {
+            var x = p1.X + (cut_at_z - p1.Z) * (p2.X - p1.X) / (p2.Z - p1.Z);
+            var y = p1.Y + (cut_at_z - p1.Z) * (p2.Y - p1.Y) / (p2.Z - p1.Z);
+            return new Point(x, y);
+        }
+
         public IShape2D CutAtZ(double z, double z2)
         {
             IShape2D slice_cut = null;
@@ -28,6 +36,7 @@ namespace Slicer.slyce.Constructs
             //Find minimum and maximum (height) vertex of polygon
             var minV = this.Vertices.Min(v => v.Pos.Z);
             var maxV = this.Vertices.Max(v => v.Pos.Z);
+
             //Minimum is smaller or equal to the slice line and maximum is greater or equal
             //CASES:
             //A) One vertex is on cutting plane, other on same side (above or below)
@@ -37,36 +46,36 @@ namespace Slicer.slyce.Constructs
             //E) One vertex is below the cutting plane, the others are above
             //F) One vertex is above the cutting plane, the others are below
             //G) all vertex are on the cutting plane
+
             if (SmallerOrEquals(minV, middleZ) && LargerOrEquals(maxV, middleZ))
             {
                 //ABCEF
                 //Find vertices above, below and on the sliceline
-                var above = this.Vertices.Where(v => v.Pos.Z > middleZ && !v.Pos.Z.EpsilonEquals(middleZ, Point.EPSILON)).ToList();
-                var below = this.Vertices.Where(v => v.Pos.Z < middleZ && !v.Pos.Z.EpsilonEquals(middleZ, Point.EPSILON)).ToList();
+                var above  = this.Vertices.Where(v => v.Pos.Z > middleZ && !v.Pos.Z.EpsilonEquals(middleZ, Point.EPSILON)).ToList();
+                var below  = this.Vertices.Where(v => v.Pos.Z < middleZ && !v.Pos.Z.EpsilonEquals(middleZ, Point.EPSILON)).ToList();
                 var equals = this.Vertices.Where(v => v.Pos.Z.EpsilonEquals(middleZ, Point.EPSILON)).ToList();
-                if(equals.Count() == 1 && (above.Count() == 2 || below.Count() == 2))
+
+                if (equals.Count() == 1 && (above.Count() == 2 || below.Count() == 2))
                 {
                     //A
                     //Add no lines since the nearby polygon connected to this point should be found too
-                    slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, equals[0].Pos.X + Point.EPSILON * 2, equals[0].Pos.Y + Point.EPSILON * 2);
+                    //slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, 
+                    //                     equals[0].Pos.X + Point.EPSILON * 2, equals[0].Pos.Y + Point.EPSILON * 2);
                 }
-                else if(equals.Count() == 2)
+                else if (equals.Count() == 2)
                 {
                     //B
                     //Add line between the two vertices
                     slice_cut = new Line(equals[0].Pos.X, equals[0].Pos.Y, equals[1].Pos.X, equals[1].Pos.Y);
                 }
-                else if(equals.Count() == 1 && above.Count() == 1 && below.Count() == 1)
+                else if (equals.Count() == 1 && above.Count() == 1 && below.Count() == 1)
                 {
                     //C
                     //Add line through equals and between above and below
-                    var p1 = above[0].Pos;
-                    var p2 = below[0].Pos;
-                    var x = p1.X + (middleZ - p1.Z) * (p2.X - p1.X) / (p2.Z - p1.Z);
-                    var y = p1.Y + (middleZ - p1.Z) * (p2.Y - p1.Y) / (p2.Z - p1.Z);
-                    Point point1 = new Point(x, y);
+                    Point point1 = this.GetIntersection(above[0].Pos, below[0].Pos, middleZ);
                     Point point2 = new Point(equals[0].Pos.X, equals[0].Pos.Y);
-                    if(!point1.Equals(point2))
+
+                    if (!point1.Equals(point2))
                     {
                         slice_cut = new Line(point1, point2);
                     }
@@ -76,15 +85,9 @@ namespace Slicer.slyce.Constructs
                 {
                     //E
                     //Add line through below and above1 and below and above2
-                    var p1 = below[0].Pos;
-                    var p2 = above[0].Pos;
-                    var x = p1.X + (middleZ - p1.Z) * (p2.X - p1.X) / (p2.Z - p1.Z);
-                    var y = p1.Y + (middleZ - p1.Z) * (p2.Y - p1.Y) / (p2.Z - p1.Z);
-                    var p3 = above[1].Pos;
-                    var x2 = p1.X + (middleZ - p1.Z) * (p3.X - p1.X) / (p3.Z - p1.Z);
-                    var y2 = p1.Y + (middleZ - p1.Z) * (p3.Y - p1.Y) / (p3.Z - p1.Z);
-                    Point point1 = new Point(x, y);
-                    Point point2 = new Point(x2, y2);
+                    Point point1 = this.GetIntersection(below[0].Pos, above[0].Pos, middleZ);
+                    Point point2 = this.GetIntersection(below[0].Pos, above[1].Pos, middleZ);
+
                     if (!point1.Equals(point2))
                     {
                         slice_cut = new Line(point1, point2);
@@ -95,15 +98,9 @@ namespace Slicer.slyce.Constructs
                 {
                     //F
                     //Add line through above and below1 and above and below2
-                    var p1 = above[0].Pos;
-                    var p2 = below[0].Pos;
-                    var x = p1.X + (middleZ - p1.Z) * (p2.X - p1.X) / (p2.Z - p1.Z);
-                    var y = p1.Y + (middleZ - p1.Z) * (p2.Y - p1.Y) / (p2.Z - p1.Z);
-                    var p3 = below[1].Pos;
-                    var x2 = p1.X + (middleZ - p1.Z) * (p3.X - p1.X) / (p3.Z - p1.Z);
-                    var y2 = p1.Y + (middleZ - p1.Z) * (p3.Y - p1.Y) / (p3.Z - p1.Z);
-                    Point point1 = new Point(x, y);
-                    Point point2 = new Point(x2, y2);
+                    Point point1 = this.GetIntersection(above[0].Pos, below[0].Pos, middleZ);
+                    Point point2 = this.GetIntersection(above[0].Pos, below[1].Pos, middleZ);
+
                     if (!point1.Equals(point2))
                     {
                         slice_cut = new Line(point1, point2);
@@ -117,7 +114,6 @@ namespace Slicer.slyce.Constructs
                     poly.Lines.AddLast(new Line(Vertices[2].Pos.X, Vertices[2].Pos.Y, Vertices[0].Pos.X, Vertices[0].Pos.Y));
                     poly.IsSurface = true;
                     slice_cut = poly;
-
                 }
             }
             //D
@@ -125,6 +121,7 @@ namespace Slicer.slyce.Constructs
 
             return slice_cut;
         }
+
         public IShape2D CutAtZ2(double z, double z2)
         {
             IShape2D slice_cut = null;

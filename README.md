@@ -9,9 +9,9 @@
 - [x] (+ render all paths in colors)
 - [x] Basic GUI for configuring essential parameters e.g. layer height, nozzle diameter, number of shells,…
 - [x] Support for Shells + infill (basic e.g. rectangular) 
-- [ ] (+ roofs/floors)
+- [x] (+ roofs/floors)
 - [x] Models can have holes!
-- [ ] Support generation (basic zig-zag structure)
+- [ ] Support generation (basic rectangle structure)
 - [ ] Optimize for print quality (not speed)
 
 ## Possible extras
@@ -22,7 +22,7 @@
 - [ ] Support structures to avoid toppling of objects (e.g. cube standing on 1 corner)
 - [ ] Automatic orientation of model (XY rotation; optimization)
 - [x] Automatic centring of model (XY position)
-- [ ] Optimized support structures
+- [ ] Optimized support structures (zigzag)
 - [ ] Print time estimation (take speed per accumulated extrusion and sum them)
 
 ## Progress
@@ -38,7 +38,7 @@
   polygon slices)
 - [x] **[Deadline 7/12]** Extend g-code generation and 3D print simple object that does not require support 
   structure
-- [ ] Calculate regions + generate paths (+ g-code) for floors and roofs
+- [x] Calculate regions + generate paths (+ g-code) for floors and roofs
 - [ ] Try 3D printing a closed object (roofs + floors) that does not require support
 - [ ] Features + algorithms for support structure generation
 - [ ] **[Deadline 6/01]** Implement all other minimal requirements (e.g. basic UI controls for settings)
@@ -59,11 +59,11 @@
 - [x] Basic SliceModel class with slice plane and sliced model preview
 - [ ] Add brim/skirt (erode to outer on slice 0)
 - [ ] Make offsets for every contour/hole and then union them
-- [ ] Surface (floor/roof) herkenning
-  - Refactor code to split generation
-  - Subtract Layer+1 from Layer+0 for roofs
-  - Subtract Layer+0 from Layer+1 for floors
-  - Add to separate list
+- [x] Surface (floor/roof) herkenning
+  - ✔ Refactor code to split generation
+  - ✔ Subtract Layer+1 from Layer+0 for roofs
+  - ✔ Subtract Layer+0 from Layer+1 for floors
+  - ✔ Add to separate list
 - [x] Surface invullen met patroon => denser infill, ~~mss met offsets ipv rects or zigzag?~~
   - ✔ Shells en dense infill beter 1.5*nozzle thinkness => Cura
   - ✔ Dense infill korte segmentjes verwijderen na clipping

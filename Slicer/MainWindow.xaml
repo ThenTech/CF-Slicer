@@ -197,7 +197,9 @@
                                  Visibility="{Binding SlicingProgressVisible}"
                                  Value="{Binding SlicingProgressValue}"
                                  Minimum="0"
-                                 Maximum="{Binding MaxSliceIdx}"/>
+                                 Maximum="{Binding MaxSliceIdx}"
+                                 Foreground="{Binding ProgressBarColor}"
+                                 />
                     <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="25" Height="30" Click="Slice_Click"/>
                 </Grid>
             </DockPanel>

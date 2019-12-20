@@ -157,6 +157,7 @@ namespace Slicer.slyce
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
+                    data.Brush = Brushes.Yellow;
                 });
 
                 // Step 2: Compare with layer above and below to find and add floor/roofs,
@@ -194,7 +195,7 @@ namespace Slicer.slyce
                         this.data.SlicingProgressValue++;
                     });
                 });
-
+                
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.Slice = this.SliceStore[0];
@@ -207,6 +208,8 @@ namespace Slicer.slyce
                     this.data.SlicingInProgress = false;
                     this.data.CurrentSliceIdx = 0;
                 });
+
+                
             });
         }
 

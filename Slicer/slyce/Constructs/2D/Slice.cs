@@ -46,6 +46,7 @@ namespace Slicer.slyce.Constructs
                     foreach (var l in p.Lines)
                     {
                         l.IsInfill = true;
+                        l.IsSurface = p.IsSurface;
                         yield return l;
                     }
                 }
@@ -102,7 +103,7 @@ namespace Slicer.slyce.Constructs
             this.Polygons = eroded.Where(p => p.FilterShorts()).ToList();
         }
 
-        public void DetermineSurfaces(Slice above, Slice below)
+        public void DetermineSurfaces(Slice below, Slice above)
         {
             // Subtract above/below/this.Polygons
             List<Polygon2D> thisMinusAbove = new List<Polygon2D>(); // Roofs
@@ -185,7 +186,8 @@ namespace Slicer.slyce.Constructs
             //PolyTree solution2 = new PolyTree();
             //cTotalAbove.Execute(ClipType.ctDifference, solution2);
             //thisMinusBelow = Polygon2D.PolyNodeToPolies(solution2).ToList();
-            if (above != null && above.Polygons != null && above.Polygons.Count() != 0)
+
+            if (above != null && above.Polygons != null && above.Polygons.Count != 0)
             {
                 Clipper c1 = new Clipper();
                 foreach (var p in this.Polygons.Where(q => !q.IsSurface))
@@ -194,7 +196,6 @@ namespace Slicer.slyce.Constructs
                     {
                         c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
                     }
-
                 }
 
                 foreach (var p in above.Polygons.Where(q => !q.IsSurface))
@@ -203,13 +204,12 @@ namespace Slicer.slyce.Constructs
                     {
                         c1.AddPath(p.IntPoints, PolyType.ptClip, true);
                     }
-
                 }
+
                 PolyTree solution = new PolyTree();
                 c1.Execute(ClipType.ctDifference, solution);
 
                 thisMinusAbove.AddRange(Polygon2D.PolyNodeToPolies(solution));
-
             }
             else
             {
@@ -254,29 +254,27 @@ namespace Slicer.slyce.Constructs
                 //    p.IsFloor = true;
                 //}
             }
+
             foreach (var p in thisMinusAbove)
             {
                 p.IsSurface = true;
-                p.IsRoof = true;
+                p.IsRoof    = true;
 
-                p.IsHole = false;
-                p.IsContour = false;
+                p.IsHole  = false;
                 p.IsShell = false;
             }
+
             foreach (var p in thisMinusBelow)
             {
                 p.IsSurface = true;
-                p.IsFloor = true;
-
-                p.IsHole = false;
+                p.IsFloor   = true;
+                
                 p.IsContour = false;
-                p.IsShell = false;
+                p.IsShell   = false;
             }
+
             this.Polygons.AddRange(thisMinusBelow);
             this.Polygons.AddRange(thisMinusAbove);
-
-
-            // Add newly found polies to FillPolygons, and set IsSurface to them.
         }
 
         public void AddShells(int nShells, double thickness)
@@ -435,13 +433,26 @@ namespace Slicer.slyce.Constructs
                 var tmp_fill = new List<Polygon2D>();
                 var surfaces = this.Polygons.Where(p => p.IsSurface).ToList();
 
+                Clipper c = new Clipper();
+
                 foreach (var inf in infill_struct)
                 {
                     var intersected = inf.Intersect(surfaces);
-                    foreach (var p in intersected) { p.CleanLines(); p.IsSurface = true; }
-                    tmp_fill.AddRange(intersected);
+                    foreach (var p in intersected) {
+                        p.CleanLines();
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, false);
+                    }
                 }
 
+                PolyTree solution = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution);
+
+                foreach (var p in Polygon2D.PolyNodeToPolies(solution))
+                {
+                    p.IsSurface = true;
+                    tmp_fill.Add(p);
+                }
+                
                 this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
             }
         }

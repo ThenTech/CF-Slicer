@@ -18,6 +18,8 @@ namespace Slicer.slyce.Constructs
         public static readonly Brush BrushContourShell = Brushes.SlateGray;
         public static readonly Brush BrushHoleShell    = Brushes.DodgerBlue;
         public static readonly Brush BrushLengthWarn   = Brushes.Orange;
+        public static readonly Brush BrushRoofFill     = Brushes.Coral;
+        public static readonly Brush BrushFloorFill    = Brushes.DarkRed;
 
         // Minimal line length, shorter gets ignored
         public static readonly double MIN_LENGTH = 0.10;
@@ -30,6 +32,7 @@ namespace Slicer.slyce.Constructs
         public bool IsInfill  { get; set; } = false;
         public bool IsShell   { get; set; } = false;
         public bool IsOpen    { get; set; } = false;
+        public bool IsSurface { get; set; } = false;
 
         public Line(double X1, double Y1, double X2, double Y2)
         {
@@ -179,7 +182,9 @@ namespace Slicer.slyce.Constructs
                            ? this.IsContour
                              ? Line.BrushContourShell
                              : Line.BrushHoleShell
-                           : Line.BrushInfill
+                           : this.IsSurface
+                             ? Line.BrushFloorFill
+                             : Line.BrushInfill
                          : this.IsContour
                            ? Line.BrushContour : Line.BrushHole;
             if (this.IsOpen)

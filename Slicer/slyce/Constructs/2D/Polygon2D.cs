@@ -31,9 +31,9 @@ namespace Slicer.slyce.Constructs
 
         public bool IsInfill { get; set; } = false;
         public bool IsShell  { get; set; } = false;
-        public bool IsOpen { get; set; } = false;
-        public bool IsFloor { get; set; } = false;
-        public bool IsRoof { get; set; } = false;
+        public bool IsOpen   { get; set; } = false;
+        public bool IsFloor  { get; set; } = false;
+        public bool IsRoof   { get; set; } = false;
 
 
         // List of seperate points in the Polygon for ClipperLib
@@ -100,11 +100,11 @@ namespace Slicer.slyce.Constructs
                 IsContour = this.IsContour,
                 Shell     = this.Shell,
                 Hierarchy = this.Hierarchy,
-                IsInfill = this.IsInfill,
-                IsShell = this.IsShell,
-                IsOpen = this.IsOpen,
-                IsFloor = this.IsFloor,
-                IsRoof = this.IsRoof
+                IsInfill  = this.IsInfill,
+                IsShell   = this.IsShell,
+                IsOpen    = this.IsOpen,
+                IsFloor   = this.IsFloor,
+                IsRoof    = this.IsRoof
             };
         }
 
@@ -319,7 +319,7 @@ namespace Slicer.slyce.Constructs
                     IsContour = this.IsContour,
                     IsInfill  = this.IsInfill,
                     IsShell   = this.IsShell,
-                    IsOpen    = this.IsOpen
+                    IsOpen    = this.IsOpen,
                 });
             }
 
@@ -331,7 +331,7 @@ namespace Slicer.slyce.Constructs
                     IsContour = this.IsContour,
                     IsInfill  = this.IsInfill,
                     IsShell   = this.IsShell,
-                    IsOpen    = this.IsOpen
+                    IsOpen    = this.IsOpen,
                 });
             }
 
@@ -477,9 +477,9 @@ namespace Slicer.slyce.Constructs
                         Hierarchy = this.Hierarchy,
                         IsInfill  = this.IsInfill,
                         IsShell   = this.IsShell,
-                        IsOpen = this.IsOpen,
-                        IsRoof = this.IsRoof,
-                        IsFloor = this.IsFloor
+                        IsOpen    = this.IsOpen,
+                        IsRoof    = this.IsRoof,
+                        IsFloor   = this.IsFloor
                     };
                 }
             }
@@ -523,7 +523,7 @@ namespace Slicer.slyce.Constructs
             {
                 polies.Add(new Polygon2D(polynode.Contour)
                 {
-                    IsHole = polynode.IsHole
+                    IsHole  = polynode.IsHole
                 });
             }
                 

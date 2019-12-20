@@ -337,17 +337,15 @@ namespace Slicer.GUI
         }
 
         private Brush _ProgressBarColor = Brushes.Red;
-
-        public Brush ProgressBarColor
-        {
+        public Brush ProgressBarColor {
             get { return _ProgressBarColor; }
-            set {
+            set
+            {
                 _ProgressBarColor = value;
                 OnPropertyChanged("ProgressBarColor");
             }
         }
-
-
+        
         protected virtual void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;

@@ -19,6 +19,12 @@ namespace Slicer.slyce
     {
         private ViewModel data;
 
+        private static readonly Brush[] StateBrushes =
+        {
+            new SolidColorBrush(Color.FromRgb(0x01, 0xD3, 0x28)), 
+            Brushes.Yellow, Brushes.Orange, Brushes.Crimson
+        };
+
         public MeshGeometry3D  Original   { get; private set; }
         public GeometryModel3D SlicePlane { get; private set; }
         public Slice Slice { get; set; }
@@ -87,6 +93,7 @@ namespace Slicer.slyce
             {
                 this.data.SlicingProgressValue = 0;
                 this.data.SlicingInProgress = true;
+                this.data.ProgressBarColor = SliceModel.StateBrushes[0];
             });
 
             this.Original = SliceModel.GeometrizeModel(this.data.CurrentModel);
@@ -129,7 +136,7 @@ namespace Slicer.slyce
                 var opt = new ParallelOptions() { MaxDegreeOfParallelism = -1 };
 
                 // Execute slicing
-                // Step 1: Find contours by slicing with Z plane
+                // Step 1: Find contours by slicing with Z plane and Erode
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Construct slice
                     var slice = obj.Slice(bounds.Z + i * data.NozzleThickness,
@@ -157,9 +164,12 @@ namespace Slicer.slyce
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
-                    data.Brush = Brushes.Yellow;
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[1];
                 });
 
+
+                // Step 2: Determine surfaces
+                //         Compare with layer above and below to find and add floor/roofs.
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     var slice = this.SliceStore[i];
 
@@ -176,29 +186,67 @@ namespace Slicer.slyce
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[2];
                 });
 
-                //  TODO propagate roof/floor
-                // slice.Polygons.AddRange(this.SliceStore.ElementAtOrDefault(i - 1).Polygons.Where(p => p.IsSurface && p.IsRoof));
+
+                // Step 3: Propagate roof/floors
+                var floors = new List<Polygon2D>();
+                var roofs  = new List<Polygon2D>();
 
                 for (int i = 0; i < this.data.MaxSliceIdx + 1; i++)
                 {
-                    var below = this.SliceStore.ElementAtOrDefault(i - 1);
-                    var above = this.SliceStore.ElementAtOrDefault(i + 1);
+                    var from_below = this.SliceStore.ElementAtOrDefault(i);
+                    var from_above = this.SliceStore.ElementAtOrDefault(this.data.MaxSliceIdx - i);
 
-                    if (below != null)
+                    if (from_below != null && from_below.Polygons.Count > 0)
                     {
-                        // TODO
+                        // Get floors that need to be propagated
+                        var propagate = from_below.Polygons
+                                            .Where(p => p.IsSurface && p.IsFloor)
+                                            .Select(p => { p.Shell = this.data.NumberOfShells - 1; return p; })
+                                            .ToList();  // To list, else enumerator will select floors added in next statement
+
+                        // Add floor polies from current that need to go up
+                        from_below.Polygons.AddRange(
+                            floors.Where(p => p.Shell > 0)
+                                  .Select(p => { p.Shell--; return p; }));
+
+                        floors.AddRange(propagate);
                     }
 
-                    if (above != null)
+                    if (from_above != null && from_above.Polygons.Count > 0)
                     {
-                        // TODO
+                        // Get roofs that need to be propagated
+                        var propagate = from_above.Polygons
+                                            .Where(p => p.IsSurface && p.IsRoof)
+                                            .Select(p => { p.Shell = this.data.NumberOfShells - 1; return p; })
+                                            .ToList();  // To list, else enumerator will select roofs added in next statement
+
+                        // Add roof polies from current that need to go down
+                        from_above.Polygons.AddRange(
+                            roofs.Where(p => p.Shell > 0)
+                                 .Select(p => { p.Shell--; return p; }));
+
+                        roofs.AddRange(propagate);
                     }
+
+                    floors = floors.Where(p => p.Shell > 0).ToList();
+                    roofs  = roofs.Where(p => p.Shell > 0).ToList();
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        this.data.SlicingProgressValue++;
+                    });
                 }
 
-                // Step 2: Compare with layer above and below to find and add floor/roofs,
-                //         Erode, add shells and infill
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.data.SlicingProgressValue = 0;
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[3];
+                });
+
+                // Step 4: Add shells and infill
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Check for floor/roofs
                     var slice = this.SliceStore[i];
@@ -230,11 +278,10 @@ namespace Slicer.slyce
                     this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));
 
                     this.data.SlicingProgressValue = 0;
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[0];
                     this.data.SlicingInProgress = false;
                     this.data.CurrentSliceIdx = 0;
                 });
-
-                
             });
         }
 

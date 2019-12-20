@@ -139,7 +139,7 @@ namespace Slicer.slyce
             var poliesInPlane = new List<Polygon2D>();
             bool HasSurface = false;
             int lookingFor = 7;
-            
+
             foreach (var p in Polygons)
             {
                 var cut = p.CutAtZ(slice_z_height, slice_z_height + perSlice);
@@ -288,7 +288,7 @@ namespace Slicer.slyce
                                     break;
                                 }
                             }
-                           
+
                         }
                     }
                     if(p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
@@ -358,8 +358,7 @@ namespace Slicer.slyce
                 p.CleanLines();
             }
 
-            //completePolygons = completePolygons.Where(p => p.IsComplete()).ToList();
-            return new Slice(completePolygons.Where(p => p.FilterShorts()).ToList(), slice_z_height, HasSurface);
+            return new Slice(completePolygons.Where(p => p.FilterShorts() && p.IsComplete()).ToList(), slice_z_height, HasSurface);
         }
     }
 }

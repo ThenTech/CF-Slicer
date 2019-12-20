@@ -334,7 +334,19 @@ namespace Slicer.GUI
                 _InfillSpacing = value;
                 OnPropertyChanged("InfillSpacing");
             }
-        } 
+        }
+
+        private Brush _ProgressBarColor = Brushes.Red;
+
+        public Brush ProgressBarColor
+        {
+            get { return _ProgressBarColor; }
+            set {
+                _ProgressBarColor = value;
+                OnPropertyChanged("ProgressBarColor");
+            }
+        }
+
 
         protected virtual void OnPropertyChanged(string propertyName)
         {

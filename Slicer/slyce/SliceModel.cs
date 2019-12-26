@@ -183,6 +183,12 @@ namespace Slicer.slyce
                     });
                 });
 
+
+                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) =>
+                {
+                    this.SliceStore[i].AddFoundSurfaces();
+                });
+
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
@@ -232,7 +238,7 @@ namespace Slicer.slyce
                     }
 
                     floors = floors.Where(p => p.Shell > 0).ToList();
-                    roofs  = roofs.Where(p => p.Shell > 0).ToList();
+                    roofs = roofs.Where(p => p.Shell > 0).ToList();
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {

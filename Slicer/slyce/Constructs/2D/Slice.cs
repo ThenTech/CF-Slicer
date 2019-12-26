@@ -16,6 +16,9 @@ namespace Slicer.slyce.Constructs
         // Contains Outer Edges => the raw found slice lines connected
         public List<Polygon2D> Polygons { get; set; }
 
+        // Temp
+        private List<Polygon2D> TempSurfaces { get; set; }
+
         // Should contain inner polygons, i.e. an outer poly subtracted by inner one
         // these should then be intersected with an infill structure (Clipper)
         // and the result would be a FillPolygons (only the segenmts required to print infill).
@@ -190,9 +193,11 @@ namespace Slicer.slyce.Constructs
             //cTotalAbove.Execute(ClipType.ctDifference, solution2);
             //thisMinusBelow = Polygon2D.PolyNodeToPolies(solution2).ToList();
 
+            // Determine roofs
             if (above != null && above.Polygons != null && above.Polygons.Count != 0)
             {
                 Clipper c1 = new Clipper();
+
                 foreach (var p in this.Polygons.Where(q => !q.IsSurface))
                 {
                     if (p.IsComplete())
@@ -211,22 +216,18 @@ namespace Slicer.slyce.Constructs
 
                 PolyTree solution = new PolyTree();
                 c1.Execute(ClipType.ctDifference, solution);
-
                 thisMinusAbove.AddRange(Polygon2D.PolyNodeToPolies(solution));
             }
             else
             {
                 thisMinusAbove.AddRange(this.Polygons.Where(p => !p.IsHole).Select(p => p.Clone()));
-                //foreach (var p in this.Polygons)
-                //{
-                //    p.IsSurface = true;
-                //    p.IsRoof = true;
-                //}
             }
 
-            if (below != null && below.Polygons != null && below.Polygons.Count() != 0)
+            // Determine floors
+            if (below != null && below.Polygons != null && below.Polygons.Count != 0)
             {
                 Clipper c1 = new Clipper();
+
                 foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
                 {
                     if (p.IsComplete())
@@ -235,6 +236,7 @@ namespace Slicer.slyce.Constructs
                     }
 
                 }
+
                 foreach (var p in below.Polygons.Where(q => !q.IsSurface))
                 {
                     if (p.IsComplete())
@@ -243,19 +245,14 @@ namespace Slicer.slyce.Constructs
                     }
 
                 }
+
                 PolyTree solution = new PolyTree();
                 c1.Execute(ClipType.ctDifference, solution);
                 thisMinusBelow.AddRange(Polygon2D.PolyNodeToPolies(solution));
-
             }
             else
             {
                 thisMinusBelow.AddRange(this.Polygons.Where(p => !p.IsHole).Select(p => p.Clone()));
-                //foreach (var p in this.Polygons)
-                //{
-                //    p.IsSurface = true;
-                //    p.IsFloor = true;
-                //}
             }
 
             foreach (var p in thisMinusAbove)
@@ -272,12 +269,21 @@ namespace Slicer.slyce.Constructs
                 p.IsSurface = true;
                 p.IsFloor   = true;
 
-                p.IsContour = false;
+                p.IsHole    = false;
                 p.IsShell   = false;
             }
 
-            this.Polygons.AddRange(thisMinusBelow);
-            this.Polygons.AddRange(thisMinusAbove);
+            // Add to temp list, else this.Polygons gets modified for other threads
+            this.TempSurfaces = thisMinusBelow;
+            this.TempSurfaces.AddRange(thisMinusAbove);
+        }
+
+        public void AddFoundSurfaces()
+        {
+            this.Polygons.AddRange(this.TempSurfaces
+                    .SelectMany(p => p.CleanToPolygons())
+                    .Where(p => p.FilterShorts() && p.Lines.Count > 2));
+            this.TempSurfaces.Clear();
         }
 
         public void AddShells(int nShells, double thickness)
@@ -683,14 +689,24 @@ namespace Slicer.slyce.Constructs
             if (this.Polygons.Any(p => p.IsSurface))
             {
                 var tmp_fill = new List<Polygon2D>();
-                var surfaces = this.Polygons.Where(p => p.IsSurface).ToList();
+
+                // First join surfaces as Positives (i.e. all surfaces are solid contours, no holes)
+                Clipper joiner = new Clipper();
+                joiner.AddPaths(this.Polygons.Where(p => p.IsSurface)
+                                             .Select(p => p.IntPoints).ToList(),
+                                PolyType.ptSubject, true);
+                PolyTree sol2 = new PolyTree();
+                joiner.Execute(ClipType.ctUnion, sol2, PolyFillType.pftPositive);
+                var surfaces = Polygon2D.PolyNodeToPolies(sol2).ToList();
+            
 
                 Clipper c = new Clipper();
-
+                
                 foreach (var inf in infill_struct)
                 {
                     var intersected = inf.Intersect(surfaces);
-                    foreach (var p in intersected) {
+                    foreach (var p in intersected)
+                    {
                         p.CleanLines();
                         c.AddPath(p.IntPoints, PolyType.ptSubject, false);
                     }
@@ -713,34 +729,6 @@ namespace Slicer.slyce.Constructs
         {
             // Add this infill to the insides
 
-            //var nShells = 3;
-            //var thickness = 0.4 * 0.95;
-
-            //var shell_miter = 10.0;
-            //var infill_overlap_percentage = 0.3; // Same as Cura
-            //var overlapp_offset = thickness * infill_overlap_percentage;
-
-
-            //var tmp_fill = new List<Polygon2D>();
-
-            //foreach (var inf in infill_struct)
-            //{
-            //    var intersected = inf.Intersect(this.Polygons);
-            //    foreach (var p in intersected)
-            //    {
-            //        p.IsInfill = true;
-            //        p.CleanLines();
-            //        tmp_fill.AddRange(p.Offset(-(double)(nShells - 1) * thickness + overlapp_offset, shell_miter)
-            //                           .Where(of => of.FilterShorts()));
-            //    }
-            //}
-
-            //this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
-
-
-
-
-
             // Intersect infill_struct with contours and subtract holes from it.
             var tmp_dense_fill = new List<Polygon2D>();
             var tmp_fill = new List<Polygon2D>();
@@ -749,7 +737,14 @@ namespace Slicer.slyce.Constructs
             IEnumerable<Polygon2D> other_shell = null;
             IEnumerable<Polygon2D> dense_fill  = null;
 
-            var surfaces = this.Polygons.Where(p => p.IsSurface).ToList();
+            // First join surfaces as Positives (i.e. all surfaces are solid contours, no holes)
+            Clipper joiner = new Clipper();
+            joiner.AddPaths(this.Polygons.Where(p => p.IsSurface)
+                                         .Select(p => p.IntPoints).ToList(),
+                            PolyType.ptSubject, true);
+            PolyTree sol2 = new PolyTree();
+            joiner.Execute(ClipType.ctUnion, sol2, PolyFillType.pftPositive);
+            var surfaces = Polygon2D.PolyNodeToPolies(sol2).ToList();
 
             if (this.FillPolygons.Count > 0)
             {
@@ -767,7 +762,7 @@ namespace Slicer.slyce.Constructs
             }
 
             // Intersect each surface fill with inner shell
-            foreach (var inf in this.FillPolygons.Where(p => p.IsSurface))
+            foreach (var inf in dense_fill)
             {
                 var intersected = inf.Intersect(inner_shell);
                 foreach (var p in intersected)

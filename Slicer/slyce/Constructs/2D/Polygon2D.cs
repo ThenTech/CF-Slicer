@@ -374,7 +374,19 @@ namespace Slicer.slyce.Constructs
                 PolyTree solution = new PolyTree();
                 c.Execute(ClipType.ctUnion, solution);
 
-                return PolyNodeToPolies(solution);
+                return PolyNodeToPolies(solution)
+                    .Select(p => {
+                        p.IsSurface = this.IsSurface;
+                        //p.IsContour = this.IsContour;
+                        p.Shell     = this.Shell;
+                        p.Hierarchy = this.Hierarchy;
+                        p.IsInfill  = this.IsInfill;
+                        p.IsShell   = this.IsShell;
+                        p.IsOpen    = this.IsOpen;
+                        p.IsRoof    = this.IsRoof;
+                        p.IsFloor   = this.IsFloor;
+                        return p;
+                    });
             }
 
             return Enumerable.Empty<Polygon2D>();
@@ -385,7 +397,7 @@ namespace Slicer.slyce.Constructs
             if (this.Lines.Count > 2)
             {
                 // Only include consecutive points if their distance is greater than a threshold
-                IntPoint p1 = this._IntPoints[0];
+                IntPoint p1 = this.IntPoints[0];
                 var filtered = new Path(this._IntPoints.Count) { p1 };
 
                 for (var i = 1; i < this._IntPoints.Count; i++)
@@ -580,9 +592,7 @@ namespace Slicer.slyce.Constructs
 
         public IEnumerable<Polygon2D> Subtract(Polygon2D other)
         {
-            var others = new List<Polygon2D>();
-            others.Add(other);
-            return Subtract(others);
+            return Subtract(new Polygon2D[1] { other });
         }
 
         public IEnumerable<Polygon2D> Union(IEnumerable<Polygon2D> others)
@@ -673,6 +683,11 @@ namespace Slicer.slyce.Constructs
             return Line.Distance(this.Center, other.Center);
         }
 
+        public double DistanceFromEndToStart(Polygon2D other)
+        {
+            return Line.Distance(this.Lines.Last.Value.EndPoint, other.Lines.First.Value.StartPoint);
+        }
+
         public Tuple<bool, double> ResemblesCircle(double tolerance = 1e-5)
         {
             var numPoints = this.IntPoints.Count;
@@ -700,7 +715,8 @@ namespace Slicer.slyce.Constructs
 
             for (var i = start; i < input.Count; i++)
             {
-                var dist_to = current.DistanceTo(input[i]);
+                //var dist_to = current.DistanceTo(input[i]);
+                var dist_to = current.DistanceFromEndToStart(input[i]);
                 if (dist_to < shortest_dist)
                 {
                     shortest_dist = dist_to;

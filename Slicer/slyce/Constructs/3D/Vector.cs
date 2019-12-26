@@ -51,9 +51,9 @@ namespace Slicer.slyce.Constructs
 
         public static bool operator ==(Vector v1, Vector v2)
         {
-            return Math.Abs(v1.X - v2.X) < EPSILON
-                && Math.Abs(v1.Y - v2.Y) < EPSILON
-                && Math.Abs(v1.Y - v2.Y) < EPSILON;
+            return v1.X.EpsilonEquals(v2.X, EPSILON)
+                && v1.Y.EpsilonEquals(v2.Y, EPSILON)
+                && v1.Z.EpsilonEquals(v2.Z, EPSILON);
         }
 
         public static bool operator !=(Vector v1, Vector v2)

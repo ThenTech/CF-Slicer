@@ -336,7 +336,7 @@ namespace Slicer.GUI
             }
         }
 
-        public InfillType UseSupport { get; set; } = InfillType.SQUARE;
+        public InfillType UseSupport { get; set; } = InfillType.ZIGZAG;
 
         private double _SupportSpacing = 7;
         public double SupportSpacing

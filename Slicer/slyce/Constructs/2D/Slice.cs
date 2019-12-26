@@ -753,11 +753,49 @@ namespace Slicer.slyce.Constructs
                 foreach (var p in Polygon2D.PolyNodeToPolies(solution))
                 {
                     p.IsSupport = true;
-                    p.IsInfill  = true;
+                    p.IsInfill = true;
                     tmp_fill.Add(p);
                 }
 
-                this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
+                Polygon2D current = null;
+
+                foreach (var p in Polygon2D.OrderByClosest(tmp_fill))
+                {
+                    if (current == null)
+                    {
+                        current = p;
+                        continue;
+                    }
+                    else
+                    {
+                        var line_fom_to = new Line(current.LastPoint(), p.FirstPoint());
+                        var extra_conn  = new Polygon2D(line_fom_to);
+
+                        if (this.Polygons.Where(q => !q.IsSupport).Any(q => extra_conn.ContainsOrOverlaps(q)))
+                        {
+                            // Intersects, so don't add. current is all we could get.
+                            this.FillPolygons.Add(current);
+                            current = p;
+                        }
+                        else
+                        {
+                            // Doesn't intersect, so add to current.
+                            current.AddLine(line_fom_to, ConnectionType.LAST);
+                            current.AddPolygon(p, ConnectionType.LAST);
+                        }
+                    }
+                }
+
+                if (current != null)
+                    this.FillPolygons.Add(current);
+
+                //this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
+                //this.FillPolygons.AddRange(infill_struct.Select(p =>
+                //{
+                //    p.IsSupport = true;
+                //    p.IsInfill = true;
+                //    return p;
+                //}));
             }
         }
 

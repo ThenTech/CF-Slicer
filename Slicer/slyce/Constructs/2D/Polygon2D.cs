@@ -753,6 +753,26 @@ namespace Slicer.slyce.Constructs
         {
             if (input.Count > 1)
             {
+                if (start == null)
+                {
+                    // Get most left instead of [0]
+                    double minx = Double.MaxValue;
+                    int idx = -1;
+
+                    for (int i = 0; i < input.Count; i++)
+                    {
+                        var p = input[i];
+                        if (p.Center.X < minx)
+                        {
+                            minx = p.Center.X;
+                            idx = i;
+                        }
+                    }
+
+                    if (idx >= 0)
+                        start = input.GetAndRemoveAt(idx);
+                }
+
                 // Add first
                 var current = start ?? input.GetAndRemoveAt(0);
                 yield return current;
@@ -1018,6 +1038,23 @@ namespace Slicer.slyce.Constructs
                         matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
                         //matr.Translate(0, (linethickness * pattern_spacing) / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
+
+                        break;
+                    }
+                case InfillType.ZIGZAG:
+                    {
+                        var pattern = Polygon2D.GenerateInfill(X, Y, X2, Y2, linethickness, pattern_spacing, InfillType.SINGLE);
+
+                        var p = pattern[0];
+
+                        for (int i = 1; i < pattern.Count; i++)
+                        {
+                            var next = pattern[i].First();
+                            p.AddLine(new Line(p.LastPoint(), next.StartPoint), ConnectionType.LAST);
+                            p.AddLine(next, ConnectionType.LAST);
+                        }
+
+                        polies.Add(p);
 
                         break;
                     }

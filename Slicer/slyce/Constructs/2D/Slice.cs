@@ -151,6 +151,20 @@ namespace Slicer.slyce.Constructs
                 c.Execute(ClipType.ctUnion, solution2);
                 abovePolies = Polygon2D.PolyNodeToPolies(solution2).ToList();
 
+                List<Polygon2D> sliceShape = new List<Polygon2D>();
+                //Union pieces in this layer
+                c = new Clipper();
+                foreach (var p in this.Polygons)
+                {
+                    if(p.IsComplete())
+                    {
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                }
+                PolyTree solution3 = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution3);
+                sliceShape.AddRange(Polygon2D.PolyNodeToPolies(solution3));
+
                 //Difference of that and this slice = support area
                 c = new Clipper();
                 foreach (var p in abovePolies)
@@ -160,16 +174,16 @@ namespace Slicer.slyce.Constructs
                         c.AddPath(p.IntPoints, PolyType.ptSubject, true);
                     }
                 }
-                foreach (var p in this.Polygons)
+                foreach (var p in sliceShape)
                 {
                     if(p.IsComplete())
                     {
                         c.AddPath(p.IntPoints, PolyType.ptClip, true);
                     }
                 }
-                PolyTree solution3 = new PolyTree();
-                c.Execute(ClipType.ctDifference, solution3);
-                supportPolies.AddRange(Polygon2D.PolyNodeToPolies(solution3));
+                PolyTree solution4 = new PolyTree();
+                c.Execute(ClipType.ctDifference, solution4);
+                supportPolies.AddRange(Polygon2D.PolyNodeToPolies(solution4));
 
                 foreach (var p in supportPolies)
                 {

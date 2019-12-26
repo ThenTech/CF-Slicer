@@ -20,6 +20,7 @@ namespace Slicer.slyce.Constructs
         public static readonly Brush BrushLengthWarn   = Brushes.Orange;
         public static readonly Brush BrushRoofFill     = Brushes.Coral;
         public static readonly Brush BrushFloorFill    = Brushes.DarkRed;
+        public static readonly Brush BrushSupport      = Brushes.YellowGreen;
 
         // Minimal line length, shorter gets ignored
         public static readonly double MIN_LENGTH = 0.10;
@@ -186,15 +187,14 @@ namespace Slicer.slyce.Constructs
                            : this.IsSurface
                              ? Line.BrushFloorFill
                              : Line.BrushInfill
-                         : this.IsContour
-                           ? Line.BrushContour : Line.BrushHole;
+                         : this.IsSupport
+                           ? Line.BrushSupport
+                           : this.IsContour
+                             ? Line.BrushContour : Line.BrushHole;
+
             if (this.IsOpen)
             {
                 colour = Line.BrushOpen;
-            }
-            if(this.IsSupport)
-            {
-                colour = Brushes.YellowGreen;
             }
             if (this.GetLength() < Line.MIN_LENGTH)
             {

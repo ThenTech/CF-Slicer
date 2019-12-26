@@ -22,7 +22,7 @@ namespace Slicer.slyce
         private static readonly Brush[] StateBrushes =
         {
             new SolidColorBrush(Color.FromRgb(0x01, 0xD3, 0x28)), 
-            Brushes.Yellow, Brushes.Orange, Brushes.Crimson
+            Brushes.Yellow, Brushes.Orange, Brushes.OrangeRed, Brushes.Crimson
         };
 
         public MeshGeometry3D  Original   { get; private set; }
@@ -253,16 +253,32 @@ namespace Slicer.slyce
                 });
 
                 // Step 4: Generate Support
-                for (int i = 0; i < this.data.MaxSliceIdx; i++)
+                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) =>
                 {
-                    var j = this.data.MaxSliceIdx - 1 - i;
-                    var slice = this.SliceStore[j];
-                    slice.GenerateSupport(this.SliceStore[j + 1], data.NozzleThickness);
-                    if(slice.Polygons.Any(p => p.IsSupport))
+                    var j = this.data.MaxSliceIdx - i;
+
+                    var current = this.SliceStore.ElementAtOrDefault(j);
+                    var above   = this.SliceStore.ElementAtOrDefault(j + 1);
+
+                    current.GenerateSupport(above, this.data.NozzleThickness);
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        var x = 0;
-                    }
-                }
+                        this.data.SlicingProgressValue++;
+                    });
+                });
+
+                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) =>
+                {
+                    this.SliceStore[i].AddFoundSurfaces();
+                });
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.data.SlicingProgressValue = 0;
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[4];
+                });
+
                 // Step 5: Add shells and infill
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Check for floor/roofs

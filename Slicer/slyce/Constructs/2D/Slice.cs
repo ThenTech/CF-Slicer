@@ -714,7 +714,7 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        public void AddSupportInfill(List<Polygon2D> infill_struct, double offset, double miter_limit = 3)
+        public void AddSupportInfill(List<Polygon2D> infill_struct, double offset, bool connect_lines = true, double miter_limit = 3)
         {
             // Add this infill only to supports
 
@@ -735,61 +735,96 @@ namespace Slicer.slyce.Constructs
                     .SelectMany(p => p.Offset(-offset, miter_limit))
                     .ToList();
 
-                Clipper c = new Clipper();
-
-                foreach (var inf in infill_struct)
+                if (connect_lines)
                 {
-                    var intersected = inf.Intersect(supports);
-                    foreach (var p in intersected)
+                    foreach (var support in supports)
                     {
-                        p.CleanLines();
-                        c.AddPath(p.IntPoints, PolyType.ptSubject, false);
-                    }
-                }
+                        Clipper c = new Clipper();
 
-                PolyTree solution = new PolyTree();
-                c.Execute(ClipType.ctUnion, solution);
-
-                foreach (var p in Polygon2D.PolyNodeToPolies(solution))
-                {
-                    p.IsSupport = true;
-                    p.IsInfill = true;
-                    tmp_fill.Add(p);
-                }
-
-                Polygon2D current = null;
-
-                foreach (var p in Polygon2D.OrderByClosest(tmp_fill))
-                {
-                    if (current == null)
-                    {
-                        current = p;
-                        continue;
-                    }
-                    else
-                    {
-                        var line_fom_to = new Line(current.LastPoint(), p.FirstPoint());
-                        var extra_conn  = new Polygon2D(line_fom_to);
-
-                        if (this.Polygons.Where(q => !q.IsSupport).Any(q => extra_conn.ContainsOrOverlaps(q)))
+                        foreach (var inf in infill_struct)
                         {
-                            // Intersects, so don't add. current is all we could get.
+                            var intersected = inf.Intersect(new Polygon2D[] { support });
+                            foreach (var p in intersected)
+                            {
+                                p.CleanLines();
+                                c.AddPath(p.IntPoints, PolyType.ptSubject, false);
+                            }
+                        }
+
+                        PolyTree solution = new PolyTree();
+                        c.Execute(ClipType.ctUnion, solution);
+
+                        Polygon2D current = null;
+
+                        foreach (var p in Polygon2D.OrderByClosest(Polygon2D.PolyNodeToPolies(solution).ToList()))
+                        {
+                            p.IsSupport = true;
+                            p.IsInfill = true;
+
+                            if (current == null)
+                            {
+                                current = p;
+
+                                if (current.IsComplete())
+                                {
+                                    this.FillPolygons.Add(current);
+                                    current = null;
+                                }
+
+                                continue;
+                            }
+                            else
+                            {
+                                var line_fom_to = new Line(current.LastPoint(), p.FirstPoint());
+                                var extra_conn = new Polygon2D(line_fom_to);
+
+                                if (this.Polygons.Where(q => !q.IsSupport).Any(q => extra_conn.ContainsOrOverlaps(q)))
+                                {
+                                    // Intersects, so don't add. current is all we could get.
+                                    this.FillPolygons.Add(current);
+                                    current = p;
+                                }
+                                else
+                                {
+                                    // Doesn't intersect, so add to current.
+                                    current.AddLine(line_fom_to, ConnectionType.LAST);
+                                    current.AddPolygon(p, ConnectionType.LAST);
+                                }
+                            }
+                        }
+
+                        if (current != null)
                             this.FillPolygons.Add(current);
-                            current = p;
-                        }
-                        else
-                        {
-                            // Doesn't intersect, so add to current.
-                            current.AddLine(line_fom_to, ConnectionType.LAST);
-                            current.AddPolygon(p, ConnectionType.LAST);
-                        }
                     }
                 }
+                else
+                {
+                    Clipper c = new Clipper();
 
-                if (current != null)
-                    this.FillPolygons.Add(current);
+                    foreach (var inf in infill_struct)
+                    {
+                        var intersected = inf.Intersect(supports);
+                        foreach (var p in intersected)
+                        {
+                            p.CleanLines();
+                            c.AddPath(p.IntPoints, PolyType.ptSubject, false);
+                        }
+                    }
 
-                //this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
+                    PolyTree solution = new PolyTree();
+                    c.Execute(ClipType.ctUnion, solution);
+
+                    foreach (var p in Polygon2D.PolyNodeToPolies(solution))
+                    {
+                        p.IsSupport = true;
+                        p.IsInfill = true;
+                        tmp_fill.Add(p);
+                    }
+
+                    this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
+                }
+                
+                // Show support structure
                 //this.FillPolygons.AddRange(infill_struct.Select(p =>
                 //{
                 //    p.IsSupport = true;

@@ -138,7 +138,6 @@ namespace Slicer.slyce
             var polies = new List<Polygon2D>();
             var poliesInPlane = new List<Polygon2D>();
             bool HasSurface = false;
-            int lookingFor = 7;
 
             foreach (var p in Polygons)
             {

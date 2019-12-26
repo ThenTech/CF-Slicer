@@ -246,7 +246,18 @@ namespace Slicer.slyce
                     this.data.ProgressBarColor = SliceModel.StateBrushes[3];
                 });
 
-                // Step 4: Add shells and infill
+                // Step 4: Generate Support
+                for (int i = 0; i < this.data.MaxSliceIdx; i++)
+                {
+                    var j = this.data.MaxSliceIdx - 1 - i;
+                    var slice = this.SliceStore[j];
+                    slice.GenerateSupport(this.SliceStore[j + 1], data.NozzleThickness);
+                    if(slice.Polygons.Any(p => p.IsSupport))
+                    {
+                        var x = 0;
+                    }
+                }
+                // Step 5: Add shells and infill
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     // Check for floor/roofs
                     var slice = this.SliceStore[i];
@@ -268,7 +279,9 @@ namespace Slicer.slyce
                         this.data.SlicingProgressValue++;
                     });
                 });
-                
+
+
+
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.Slice = this.SliceStore[0];

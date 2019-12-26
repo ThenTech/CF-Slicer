@@ -73,6 +73,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -118,7 +120,7 @@
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Nozzle diameter (mm)" Grid.Row="13" Grid.ColumnSpan="2"/>
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Filament diameter (mm)" Grid.Row="14" Grid.ColumnSpan="2"/>
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Number of Shells" Grid.Row="15" Grid.ColumnSpan="2"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Current slice layer" Grid.Row="18" Grid.ColumnSpan="2" Margin="0 5 0 0"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Current slice layer" Grid.Row="20" Grid.ColumnSpan="2" Margin="0 5 0 0"/>
 
                     <TextBox Foreground="Black" Text="{Binding NozzleThickness, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="12" />
                     <TextBox Foreground="Black" Text="{Binding NozzleDiameter, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="13" />
@@ -132,8 +134,15 @@
                     <TextBlock Foreground="{Binding TextForegroundColour}" Text="Infill size" Grid.Row="17" Height="22" Padding="0 2"/>
                     <TextBox Foreground="Black" Text="{Binding InfillSpacing, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="17"/>
                     <Slider Name="slider9" Grid.Column="1" Grid.Row="17" Minimum="1" Maximum="20" Value="{Binding InfillSpacing}" Margin="10 2 10 2"/>
-                    
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Grid.Column="1" Grid.Row="18" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0 5 0 0">
+
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Support type" Grid.Row="18" Height="22" Margin="0 5 0 0"/>
+                    <ComboBox x:Name="cboxSupportType" Grid.Row="18" Grid.Column="1" Grid.ColumnSpan="2" SelectedItem="{Binding UseSupport}" VerticalAlignment="Center"/>
+
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Support size" Grid.Row="19" Height="22" Padding="0 2"/>
+                    <TextBox Foreground="Black" Text="{Binding SupportSpacing, StringFormat={}{0:N2}}" Grid.Column="2" Grid.Row="19"/>
+                    <Slider Name="sliderSupp" Grid.Column="1" Grid.Row="19" Minimum="0.95" Maximum="12.5" Value="{Binding SupportSpacing}" Margin="10 2 10 2"/>
+
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Grid.Column="1" Grid.Row="20" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0 5 0 0">
                         <TextBlock.Text>
                             <MultiBinding StringFormat="{}{0} of {1}">
                                 <Binding Path="CurrentSliceIdx" />
@@ -142,7 +151,7 @@
                         </TextBlock.Text>
                     </TextBlock>
 
-                    <Grid Grid.Row="19" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid Grid.Row="21" Grid.Column="0" Grid.ColumnSpan="3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -181,18 +190,18 @@
                         </Button>
                     </Grid>
 
-                    <Separator Grid.Row="20" Grid.ColumnSpan="4" Height="5"/>
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Preview settings" Grid.Row="21" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
+                    <Separator Grid.Row="22" Grid.ColumnSpan="4" Height="5"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Preview settings" Grid.Row="23" Grid.ColumnSpan="2" FontWeight="Bold" FontSize="14" Margin="0 2 0 5"/>
 
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Stroke thickness" Grid.Row="22" Height="22"/>
-                    <Slider Name="slider11" Grid.Column="1" Grid.Row="22" Grid.ColumnSpan="2" Minimum="0.1" Maximum="5" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Stroke thickness" Grid.Row="24" Height="22"/>
+                    <Slider Name="slider11" Grid.Column="1" Grid.Row="24" Grid.ColumnSpan="2" Minimum="0.1" Maximum="5" Value="{Binding PreviewStrokeThickness}" Margin="10 2 10 2"/>
 
-                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Arrow size" Grid.Row="23" Height="22"/>
-                    <Slider Name="slider12" Grid.Column="1" Grid.Row="23" Grid.ColumnSpan="2" Minimum="0" Maximum="6" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
+                    <TextBlock Foreground="{Binding TextForegroundColour}" Text="Arrow size" Grid.Row="25" Height="22"/>
+                    <Slider Name="slider12" Grid.Column="1" Grid.Row="25" Grid.ColumnSpan="2" Minimum="0" Maximum="6" Value="{Binding PreviewArrowThickness}" Margin="10 2 10 2"/>
 
 
 
-                    <ProgressBar Grid.Row="25"  Grid.ColumnSpan="3" 
+                    <ProgressBar Grid.Row="27"  Grid.ColumnSpan="3" 
                                  Height="30" Panel.ZIndex="10"
                                  Visibility="{Binding SlicingProgressVisible}"
                                  Value="{Binding SlicingProgressValue}"
@@ -200,7 +209,7 @@
                                  Maximum="{Binding MaxSliceIdx}"
                                  Foreground="{Binding ProgressBarColor}"
                                  />
-                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="25" Height="30" Click="Slice_Click"/>
+                    <Button IsEnabled="{Binding HasModel}" Content="Slice!" Grid.ColumnSpan="3" Grid.Row="27" Height="30" Click="Slice_Click"/>
                 </Grid>
             </DockPanel>
 

@@ -273,7 +273,7 @@ namespace Slicer.slyce
                         for (int j = 0; j < stillNoConnection.Count(); j++)
                         {
                             var p2 = stillNoConnection[j];
-                            if(i != j)
+                            if (i != j)
                             {
                                 if (!p2.WasTakenAway && !p2.IsComplete() && p.CanConnect(p2, Point.EPSILON * factor) != ConnectionType.NOT)
                                 {
@@ -290,11 +290,13 @@ namespace Slicer.slyce
 
                         }
                     }
-                    if(p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
+
+                    if (p.IsComplete(Point.EPSILON * factor) && !p.WasTakenAway)
                     {
                         Line line = new Line(p.Last().EndPoint, p.First().StartPoint);
                         p.AddLine(line, ConnectionType.LAST);
                         p.WasTakenAway = true;
+                        p.IsOpen = false;
                         completePolygons.Add(p);
                     }
                 }

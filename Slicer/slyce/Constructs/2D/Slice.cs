@@ -53,6 +53,7 @@ namespace Slicer.slyce.Constructs
                     {
                         l.IsInfill = true;
                         l.IsSurface = p.IsSurface;
+                        l.IsSupport = p.IsSupport;
                         yield return l;
                     }
                 }
@@ -113,9 +114,6 @@ namespace Slicer.slyce.Constructs
         {
             if (above != null && above.Polygons != null && above.Polygons.Count > 0)
             {
-                List<Polygon2D> supportPolies = new List<Polygon2D>();
-                List<Polygon2D> abovePolies = new List<Polygon2D>();
-
                 //Take union of every polygon in above (except support)
                 Clipper c = new Clipper();
                 c.AddPaths(above.Polygons.Where(p => !p.IsSupport && p.IsComplete())
@@ -124,86 +122,52 @@ namespace Slicer.slyce.Constructs
 
                 PolyTree solution = new PolyTree();
                 c.Execute(ClipType.ctUnion, solution);
-                abovePolies.AddRange(Polygon2D.PolyNodeToPolies(solution));
 
-                //Offset with -half diameter
-                foreach (var p in abovePolies)
-                {
-                    p.Offset(-diameter / 2.0);
-                }
+                List<Polygon2D> abovePolies = Polygon2D.PolyNodeToPolies(solution)
+                    //.SelectMany(p => p.Offset(-diameter / 2.0))  // Offset with -half diameter. EDIT: Give errors
+                    .ToList();
 
                 //Add supports from before
                 c = new Clipper();
-
-                foreach (var p in abovePolies)
-                {
-                    if (p.IsComplete())
-                    {
-                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
-                    }
-                }
-                foreach (var p in above.Polygons.Where(p => p.IsSupport))
-                {
-                    if(p.IsComplete())
-                    {
-                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
-                    }
-                }
+                c.AddPaths(abovePolies.Where(p => p.IsComplete())
+                                      .Select(p => p.IntPoints)
+                                      .ToList(), 
+                           PolyType.ptSubject, true);
+                c.AddPaths(above.Polygons.Where(p => p.IsSupport && p.IsComplete())
+                                         .Select(p => p.IntPoints)
+                                         .ToList(),
+                           PolyType.ptSubject, true);
 
                 PolyTree solution2 = new PolyTree();
                 c.Execute(ClipType.ctUnion, solution2);
-                abovePolies = Polygon2D.PolyNodeToPolies(solution2).ToList();
-
-                List<Polygon2D> sliceShape = new List<Polygon2D>();
+                //abovePolies = Polygon2D.PolyNodeToPolies(solution2).ToList();
 
                 //Union pieces in this layer
                 c = new Clipper();
-
-                foreach (var p in this.Polygons)
-                {
-                    if(p.IsComplete())
-                    {
-                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
-                    }
-                }
+                c.AddPaths(this.Polygons.Where(p => p.IsComplete()).Select(p => p.IntPoints).ToList(), PolyType.ptSubject, true);
 
                 PolyTree solution3 = new PolyTree();
                 c.Execute(ClipType.ctUnion, solution3);
-                sliceShape.AddRange(Polygon2D.PolyNodeToPolies(solution3));
+                //List<Polygon2D> sliceShape = Polygon2D.PolyNodeToPolies(solution3).ToList();
 
                 //Difference of that and this slice = support area
                 c = new Clipper();
 
-                foreach (var p in abovePolies)
-                {
-                    if (p.IsComplete())
-                    {
-                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
-                    }
-                }
+                // abovePolies
+                c.AddPaths(Polygon2D.PolyNodeToPolies(solution2).Select(p => p.IntPoints).ToList(), PolyType.ptSubject, true);
 
-                foreach (var p in sliceShape)
-                {
-                    if(p.IsComplete())
-                    {
-                        c.AddPath(p.IntPoints, PolyType.ptClip, true);
-                    }
-                }
+                // sliceShape
+                c.AddPaths(Polygon2D.PolyNodeToPolies(solution3).Select(p => p.IntPoints).ToList(), PolyType.ptClip, true);
 
                 PolyTree solution4 = new PolyTree();
                 c.Execute(ClipType.ctDifference, solution4);
-                supportPolies.AddRange(Polygon2D.PolyNodeToPolies(solution4));
 
-                foreach (var p in supportPolies)
-                {
-                    p.IsSupport = true;
-                    foreach (var l in p.Lines)
-                    {
-                        l.IsSupport = true;
-                    }
-                }
+                this.TempSurfaces = Polygon2D.PolyNodeToPolies(solution4)
+                    .SelectMany(p => p.CleanSimple())
+                    .Select(p => { p.IsSupport = true; p.IsInfill = true; return p; })
+                    .ToList();
                 
-                this.TempSurfaces = supportPolies;
+                this.AddFoundSurfaces();
             }
             else
             {
@@ -217,11 +181,12 @@ namespace Slicer.slyce.Constructs
             List<Polygon2D> thisMinusAbove = new List<Polygon2D>(); // Roofs
             List<Polygon2D> thisMinusBelow = new List<Polygon2D>(); // Floors
 
+            // Determine roofs
             if (above != null && above.Polygons != null && above.Polygons.Count != 0)
             {
                 Clipper c1 = new Clipper();
 
-                foreach (var p in this.Polygons.Where(q => !q.IsSurface))
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsSupport))
                 {
                     if (p.IsComplete())
                     {
@@ -229,7 +194,7 @@ namespace Slicer.slyce.Constructs
                     }
                 }
 
-                foreach (var p in above.Polygons.Where(q => !q.IsSurface))
+                foreach (var p in above.Polygons.Where(q => !q.IsSurface && !q.IsSupport))
                 {
                     if (p.IsComplete())
                     {
@@ -243,7 +208,7 @@ namespace Slicer.slyce.Constructs
             }
             else
             {
-                thisMinusAbove.AddRange(this.Polygons.Where(p => !p.IsHole).Select(p => p.Clone()));
+                thisMinusAbove.AddRange(this.Polygons.Where(p => !p.IsHole && !p.IsSupport).Select(p => p.Clone()));
             }
 
             // Determine floors
@@ -251,7 +216,7 @@ namespace Slicer.slyce.Constructs
             {
                 Clipper c1 = new Clipper();
 
-                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole))
+                foreach (var p in this.Polygons.Where(q => !q.IsSurface && !q.IsHole && !q.IsSupport))
                 {
                     if (p.IsComplete())
                     {
@@ -260,7 +225,7 @@ namespace Slicer.slyce.Constructs
 
                 }
 
-                foreach (var p in below.Polygons.Where(q => !q.IsSurface))
+                foreach (var p in below.Polygons.Where(q => !q.IsSurface && !q.IsSupport))
                 {
                     if (p.IsComplete())
                     {
@@ -275,7 +240,7 @@ namespace Slicer.slyce.Constructs
             }
             else
             {
-                thisMinusBelow.AddRange(this.Polygons.Where(p => !p.IsHole).Select(p => p.Clone()));
+                thisMinusBelow.AddRange(this.Polygons.Where(p => !p.IsHole && !p.IsSupport).Select(p => p.Clone()));
             }
 
             foreach (var p in thisMinusAbove)
@@ -304,7 +269,7 @@ namespace Slicer.slyce.Constructs
         public void AddFoundSurfaces()
         {
             this.Polygons.AddRange(this.TempSurfaces
-                    .SelectMany(p => p.CleanToPolygons())
+                    //.SelectMany(p => p.CleanToPolygons())   // Causes polies to appear?
                     .Where(p => p.FilterShorts() && p.Lines.Count > 2));
             this.TempSurfaces.Clear();
         }
@@ -741,6 +706,54 @@ namespace Slicer.slyce.Constructs
                 foreach (var p in Polygon2D.PolyNodeToPolies(solution))
                 {
                     p.IsSurface = true;
+                    p.IsInfill  = true;
+                    tmp_fill.Add(p);
+                }
+
+                this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
+            }
+        }
+
+        public void AddSupportInfill(List<Polygon2D> infill_struct, double offset, double miter_limit = 3)
+        {
+            // Add this infill only to supports
+
+            if (this.Polygons.Any(p => p.IsSupport))
+            {
+                var tmp_fill = new List<Polygon2D>();
+
+                // First join supports as Positives (i.e. all supports are solid contours, no holes)
+                Clipper joiner = new Clipper();
+                joiner.AddPaths(this.Polygons.Where(p => p.IsSupport)
+                                             .Select(p => p.IntPoints).ToList(),
+                                PolyType.ptSubject, true);
+                PolyTree sol2 = new PolyTree();
+                joiner.Execute(ClipType.ctUnion, sol2, PolyFillType.pftPositive);
+
+                // Get solution and offset to make them a bit smaller
+                var supports = Polygon2D.PolyNodeToPolies(sol2)
+                    .SelectMany(p => p.Offset(-offset, miter_limit))
+                    .ToList();
+
+                Clipper c = new Clipper();
+
+                foreach (var inf in infill_struct)
+                {
+                    var intersected = inf.Intersect(supports);
+                    foreach (var p in intersected)
+                    {
+                        p.CleanLines();
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, false);
+                    }
+                }
+
+                PolyTree solution = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution);
+
+                foreach (var p in Polygon2D.PolyNodeToPolies(solution))
+                {
+                    p.IsSupport = true;
+                    p.IsInfill  = true;
                     tmp_fill.Add(p);
                 }
 
@@ -756,9 +769,10 @@ namespace Slicer.slyce.Constructs
             var tmp_dense_fill = new List<Polygon2D>();
             var tmp_fill = new List<Polygon2D>();
 
-            IEnumerable<Polygon2D> inner_shell = null;
-            IEnumerable<Polygon2D> other_shell = null;
-            IEnumerable<Polygon2D> dense_fill  = null;
+            IEnumerable<Polygon2D> inner_shell  = null;
+            IEnumerable<Polygon2D> other_shell  = null;
+            IEnumerable<Polygon2D> dense_fill   = null;
+            IEnumerable<Polygon2D> support_fill = null;
 
             // First join surfaces as Positives (i.e. all surfaces are solid contours, no holes)
             Clipper joiner = new Clipper();
@@ -773,16 +787,21 @@ namespace Slicer.slyce.Constructs
             {
                 // Has shell
                 var most_inner_shell = this.FillPolygons.Max(p => p.Shell);
-                inner_shell = this.FillPolygons.Where(p => !p.IsSurface && p.Shell == most_inner_shell).ToList();
-                other_shell = this.FillPolygons.Where(p => !p.IsSurface && p.Shell < most_inner_shell).ToList();
-                dense_fill  = this.FillPolygons.Where(p => p.IsSurface).ToList();
+                inner_shell  = this.FillPolygons.Where(p => !p.IsSurface && !p.IsSupport && p.Shell == most_inner_shell).ToList();
+                other_shell  = this.FillPolygons.Where(p => !p.IsSurface && !p.IsSupport && p.Shell < most_inner_shell).ToList();
+                dense_fill   = this.FillPolygons.Where(p => p.IsSurface && !p.IsSupport).ToList();
+                support_fill = this.FillPolygons.Where(p => p.IsSupport).ToList();
             }
             else
             {
-                inner_shell = this.Polygons.Where(p => !p.IsSurface);
-                other_shell = new List<Polygon2D>();
-                dense_fill  = new List<Polygon2D>();
+                inner_shell  = this.Polygons.Where(p => !p.IsSurface && !p.IsSupport);
+                other_shell  = new List<Polygon2D>();
+                dense_fill   = new List<Polygon2D>();
+                support_fill = new List<Polygon2D>();
             }
+
+            // Add support fill
+            tmp_dense_fill.AddRange(support_fill);
 
             // Intersect each surface fill with inner shell
             foreach (var inf in dense_fill)
@@ -830,7 +849,7 @@ namespace Slicer.slyce.Constructs
             this.FillPolygons.AddRange(sorted);
 
             // Remove surfaces as they are now handled
-            this.Polygons = this.Polygons.Where(p => !p.IsSurface).ToList();
+            this.Polygons = this.Polygons.Where(p => !p.IsSurface && !p.IsSupport).ToList();
         }
 
         public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)

@@ -336,6 +336,19 @@ namespace Slicer.GUI
             }
         }
 
+        public InfillType UseSupport { get; set; } = InfillType.SQUARE;
+
+        private double _SupportSpacing = 7;
+        public double SupportSpacing
+        {
+            get { return _SupportSpacing; }
+            set
+            {
+                _SupportSpacing = value;
+                OnPropertyChanged("SupportSpacing");
+            }
+        }
+
         private Brush _ProgressBarColor = Brushes.Red;
         public Brush ProgressBarColor {
             get { return _ProgressBarColor; }

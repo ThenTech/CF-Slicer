@@ -180,17 +180,17 @@ namespace Slicer.slyce.Constructs
         public System.Windows.Shapes.Shape ToShape(double minX, double minY, double scale, double arrow_scale, double stroke)
         {
             Brush colour = this.IsInfill 
-                         ? this.IsShell
-                           ? this.IsContour
-                             ? Line.BrushContourShell
-                             : Line.BrushHoleShell
-                           : this.IsSurface
-                             ? Line.BrushFloorFill
-                             : Line.BrushInfill
-                         : this.IsSupport
+                         ? this.IsSupport
                            ? Line.BrushSupport
-                           : this.IsContour
-                             ? Line.BrushContour : Line.BrushHole;
+                           : this.IsShell
+                             ? this.IsContour
+                               ? Line.BrushContourShell
+                               : Line.BrushHoleShell
+                             : this.IsSurface
+                               ? Line.BrushFloorFill
+                               : Line.BrushInfill
+                         : this.IsContour
+                           ? Line.BrushContour : Line.BrushHole;
 
             if (this.IsOpen)
             {

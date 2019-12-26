@@ -87,6 +87,9 @@ namespace Slicer
             cboxInfillType.ItemsSource = Enum.GetValues(typeof(InfillType)).Cast<InfillType>();
             cboxInfillType.SelectedItem = this._viewModel.UseInfill;
 
+            cboxSupportType.ItemsSource = Enum.GetValues(typeof(InfillType)).Cast<InfillType>();
+            cboxSupportType.SelectedItem = this._viewModel.UseSupport;
+
             this.ResetCamera_Click(null, null);
             this.Reset_Click(null, null);
         }

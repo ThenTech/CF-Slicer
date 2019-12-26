@@ -363,20 +363,27 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        public IEnumerable<Polygon2D> CleanToPolygons()
+        public IEnumerable<Polygon2D> CleanSimple()
+        {
+            if (this.Lines.Count > 2)
+            {
+                var intpoints = Clipper.CleanPolygon(this.IntPoints);
+                return new Polygon2D[] { new Polygon2D(intpoints) };
+            }
+
+            return Enumerable.Empty<Polygon2D>();
+        }
+
+        public IEnumerable<Polygon2D> CleanToPolygons(PolyFillType fill_type = PolyFillType.pftEvenOdd)
         {
             if (this.Lines.Count > 2)
             {
                 this._IntPoints = Clipper.CleanPolygon(this.IntPoints);
 
                 // Optionally also call simplify?
-                Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, PolyFillType.pftEvenOdd);
+                Paths simplified = Clipper.SimplifyPolygon(this._IntPoints, fill_type);
                 Clipper c = new Clipper();
-
-                foreach (var s in simplified)
-                {
-                    c.AddPath(s, PolyType.ptClip, true);
-                }
+                c.AddPaths(simplified, PolyType.ptClip, true);
 
                 PolyTree solution = new PolyTree();
                 c.Execute(ClipType.ctUnion, solution);
@@ -384,7 +391,7 @@ namespace Slicer.slyce.Constructs
                 return PolyNodeToPolies(solution)
                     .Select(p => {
                         p.IsSurface = this.IsSurface;
-                        //p.IsContour = this.IsContour;
+                        p.IsContour = this.IsContour;
                         p.Shell     = this.Shell;
                         p.Hierarchy = this.Hierarchy;
                         p.IsInfill  = this.IsInfill;

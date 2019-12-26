@@ -130,6 +130,12 @@ namespace Slicer.slyce
                 this.data.NozzleDiameter, dense_spacing, InfillType.SINGLE_ROTATED
             );
 
+            var support_struct = Polygon2D.GenerateInfill(
+                bounds.X, bounds.Y,
+                bounds.X + bounds.SizeX, bounds.Y + bounds.SizeY,
+                this.data.NozzleDiameter, this.data.SupportSpacing, this.data.UseSupport
+            );
+
             await Task.Run(() =>
             {
                 //// For debug, set `opt` to 1, else -1 for unlimited
@@ -168,7 +174,30 @@ namespace Slicer.slyce
                 });
 
 
-                // Step 2: Determine surfaces
+                // Step 2: Generate Support
+                for (int i = 0; i < this.data.MaxSliceIdx + 1; i++)
+                {
+                    var j = this.data.MaxSliceIdx - i;
+
+                    var current = this.SliceStore.ElementAtOrDefault(j);
+                    var above   = this.SliceStore.ElementAtOrDefault(j + 1);
+
+                    current.GenerateSupport(above, this.data.NozzleThickness);
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        this.data.SlicingProgressValue++;
+                    });
+                };
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.data.SlicingProgressValue = 0;
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[2];
+                });
+
+
+                // Step 3: Determine surfaces
                 //         Compare with layer above and below to find and add floor/roofs.
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
                     var slice = this.SliceStore[i];
@@ -183,7 +212,6 @@ namespace Slicer.slyce
                     });
                 });
 
-
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) =>
                 {
                     this.SliceStore[i].AddFoundSurfaces();
@@ -192,11 +220,11 @@ namespace Slicer.slyce
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
-                    this.data.ProgressBarColor = SliceModel.StateBrushes[2];
+                    this.data.ProgressBarColor = SliceModel.StateBrushes[3];
                 });
 
 
-                // Step 3: Propagate roof/floors
+                // Step 4: Propagate roof/floors
                 var floors = new List<Polygon2D>();
                 var roofs  = new List<Polygon2D>();
 
@@ -249,35 +277,9 @@ namespace Slicer.slyce
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.data.SlicingProgressValue = 0;
-                    this.data.ProgressBarColor = SliceModel.StateBrushes[3];
-                });
-
-                // Step 4: Generate Support
-                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) =>
-                {
-                    var j = this.data.MaxSliceIdx - i;
-
-                    var current = this.SliceStore.ElementAtOrDefault(j);
-                    var above   = this.SliceStore.ElementAtOrDefault(j + 1);
-
-                    current.GenerateSupport(above, this.data.NozzleThickness);
-
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        this.data.SlicingProgressValue++;
-                    });
-                });
-
-                Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) =>
-                {
-                    this.SliceStore[i].AddFoundSurfaces();
-                });
-
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    this.data.SlicingProgressValue = 0;
                     this.data.ProgressBarColor = SliceModel.StateBrushes[4];
                 });
+
 
                 // Step 5: Add shells and infill
                 Parallel.For(0, this.data.MaxSliceIdx + 1, opt, (i) => {
@@ -289,6 +291,7 @@ namespace Slicer.slyce
 
                     // Add infill for surfaces
                     slice.AddDenseInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
+                    slice.AddSupportInfill(support_struct, this.data.NozzleDiameter * 2.0);
                     slice.AddInfill(infill_struct);
               
                     // Reverse order polies
@@ -301,7 +304,6 @@ namespace Slicer.slyce
                         this.data.SlicingProgressValue++;
                     });
                 });
-
 
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>

@@ -30,10 +30,11 @@ namespace Slicer.slyce.Constructs
         public bool IsHole { get => !IsContour; set => IsContour = !value; }
 
         public bool IsInfill { get; set; } = false;
-        public bool IsShell  { get; set; } = false;
-        public bool IsOpen   { get; set; } = false;
-        public bool IsFloor  { get; set; } = false;
-        public bool IsRoof   { get; set; } = false;
+        public bool IsShell { get; set; } = false;
+        public bool IsOpen { get; set; } = false;
+        public bool IsFloor { get; set; } = false;
+        public bool IsRoof { get; set; } = false;
+        public bool IsSupport { get; set; } = false;
 
 
         // List of seperate points in the Polygon for ClipperLib
@@ -95,16 +96,18 @@ namespace Slicer.slyce.Constructs
         public Polygon2D Clone()
         {
             Path points = this.IntPoints.Select(p => new IntPoint(p.X, p.Y)).ToList();
-            return new Polygon2D(points) {
+            return new Polygon2D(points)
+            {
                 IsSurface = this.IsSurface,
                 IsContour = this.IsContour,
-                Shell     = this.Shell,
+                Shell = this.Shell,
                 Hierarchy = this.Hierarchy,
-                IsInfill  = this.IsInfill,
-                IsShell   = this.IsShell,
-                IsOpen    = this.IsOpen,
-                IsFloor   = this.IsFloor,
-                IsRoof    = this.IsRoof
+                IsInfill = this.IsInfill,
+                IsShell = this.IsShell,
+                IsOpen = this.IsOpen,
+                IsFloor = this.IsFloor,
+                IsRoof = this.IsRoof,
+                IsSupport = this.IsSupport
             };
         }
 
@@ -314,24 +317,26 @@ namespace Slicer.slyce.Constructs
             for (var i = 1; i < this._IntPoints.Count; i++)
             {
                 var start = this._IntPoints[i - 1];
-                var end   = this._IntPoints[i];
-                lines.AddLast(new Line(start, end) {
+                var end = this._IntPoints[i];
+                lines.AddLast(new Line(start, end)
+                {
                     IsContour = this.IsContour,
-                    IsInfill  = this.IsInfill,
-                    IsShell   = this.IsShell,
-                    IsOpen    = this.IsOpen,
+                    IsInfill = this.IsInfill,
+                    IsShell = this.IsShell,
+                    IsOpen = this.IsOpen,
                 });
             }
 
             if (this._IntPoints.Count > 3)
             {
                 var first = this._IntPoints.First();
-                var last  = this._IntPoints.Last();
-                lines.AddLast(new Line(last, first) {
+                var last = this._IntPoints.Last();
+                lines.AddLast(new Line(last, first)
+                {
                     IsContour = this.IsContour,
-                    IsInfill  = this.IsInfill,
-                    IsShell   = this.IsShell,
-                    IsOpen    = this.IsOpen,
+                    IsInfill = this.IsInfill,
+                    IsShell = this.IsShell,
+                    IsOpen = this.IsOpen,
                 });
             }
 
@@ -474,13 +479,14 @@ namespace Slicer.slyce.Constructs
                     {
                         IsSurface = this.IsSurface,
                         IsContour = this.IsContour,
-                        Shell     = this.Shell,
+                        Shell = this.Shell,
                         Hierarchy = this.Hierarchy,
-                        IsInfill  = this.IsInfill,
-                        IsShell   = this.IsShell,
-                        IsOpen    = this.IsOpen,
-                        IsRoof    = this.IsRoof,
-                        IsFloor   = this.IsFloor
+                        IsInfill = this.IsInfill,
+                        IsShell = this.IsShell,
+                        IsOpen = this.IsOpen,
+                        IsRoof = this.IsRoof,
+                        IsFloor = this.IsFloor,
+                        IsSupport = this.IsSupport
                     };
                 }
             }
@@ -524,7 +530,7 @@ namespace Slicer.slyce.Constructs
             {
                 polies.Add(new Polygon2D(polynode.Contour)
                 {
-                    IsHole  = polynode.IsHole
+                    IsHole = polynode.IsHole
                 });
             }
 
@@ -552,10 +558,10 @@ namespace Slicer.slyce.Constructs
                                 {
                                     p.IsSurface = this.IsSurface;
                                     //p.IsContour = this.IsContour;
-                                    p.Shell     = this.Shell;
+                                    p.Shell = this.Shell;
                                     p.Hierarchy = this.Hierarchy;
-                                    p.IsInfill  = this.IsInfill;
-                                    p.IsShell   = this.IsShell;
+                                    p.IsInfill = this.IsInfill;
+                                    p.IsShell = this.IsShell;
                                     return p;
                                 }));
         }
@@ -567,10 +573,10 @@ namespace Slicer.slyce.Constructs
             {
                 p.IsSurface = this.IsSurface;
                 //p.IsContour = this.IsContour;
-                p.Shell     = this.Shell;
+                p.Shell = this.Shell;
                 p.Hierarchy = this.Hierarchy;
-                p.IsInfill  = this.IsInfill;
-                p.IsShell   = this.IsShell;
+                p.IsInfill = this.IsInfill;
+                p.IsShell = this.IsShell;
                 return p;
             });
         }
@@ -582,10 +588,10 @@ namespace Slicer.slyce.Constructs
             {
                 p.IsSurface = this.IsSurface;
                 //p.IsContour = this.IsContour;
-                p.Shell     = this.Shell;
+                p.Shell = this.Shell;
                 p.Hierarchy = this.Hierarchy;
-                p.IsInfill  = this.IsInfill;
-                p.IsShell   = this.IsShell;
+                p.IsInfill = this.IsInfill;
+                p.IsShell = this.IsShell;
                 return p;
             });
         }
@@ -602,10 +608,10 @@ namespace Slicer.slyce.Constructs
             {
                 p.IsSurface = this.IsSurface;
                 //p.IsContour = this.IsContour;
-                p.Shell     = this.Shell;
+                p.Shell = this.Shell;
                 p.Hierarchy = this.Hierarchy;
-                p.IsInfill  = this.IsInfill;
-                p.IsShell   = this.IsShell;
+                p.IsInfill = this.IsInfill;
+                p.IsShell = this.IsShell;
                 return p;
             });
         }
@@ -617,10 +623,10 @@ namespace Slicer.slyce.Constructs
             {
                 p.IsSurface = this.IsSurface;
                 //p.IsContour = this.IsContour;
-                p.Shell     = this.Shell;
+                p.Shell = this.Shell;
                 p.Hierarchy = this.Hierarchy;
-                p.IsInfill  = this.IsInfill;
-                p.IsShell   = this.IsShell;
+                p.IsInfill = this.IsInfill;
+                p.IsShell = this.IsShell;
                 return p;
             });
         }
@@ -665,7 +671,7 @@ namespace Slicer.slyce.Constructs
             {
                 var p1 = v.StartPoint;
                 var p2 = v.EndPoint;
-                var a  = p1.X * p2.Y - p2.X * p1.Y;  // Partial signed area
+                var a = p1.X * p2.Y - p2.X * p1.Y;  // Partial signed area
                 signedArea += a;
                 centroid.X += (p1.X + p2.X) * a;
                 centroid.Y += (p1.Y + p2.Y) * a;
@@ -706,9 +712,10 @@ namespace Slicer.slyce.Constructs
             return Tuple.Create(poly_area.EpsilonEquals(Math.PI * radius * radius, 0.8), radius);
         }
 
-        public static int FindClosest(List<Polygon2D> input, Polygon2D from = null) {
+        public static int FindClosest(List<Polygon2D> input, Polygon2D from = null)
+        {
             var current = from ?? input[0];
-            var start   = from == null ? 1 : 0;
+            var start = from == null ? 1 : 0;
 
             int closest_index = -1;
             double shortest_dist = Double.MaxValue;
@@ -805,10 +812,10 @@ namespace Slicer.slyce.Constructs
                     {
                         List<Polygon2D> pattern = new List<Polygon2D>();
                         var diagonal = Line.Distance(X, Y, X2, Y2);
-                        var XStart   = X  - diagonal / 2.0;
-                        var XEnd     = X2 + diagonal / 2.0;
-                        var Ystart   = Y  - diagonal / 2.0;
-                        var YEnd     = Y2 + diagonal / 2.0;
+                        var XStart = X - diagonal / 2.0;
+                        var XEnd = X2 + diagonal / 2.0;
+                        var Ystart = Y - diagonal / 2.0;
+                        var YEnd = Y2 + diagonal / 2.0;
 
                         // Generate infill rectangles, every length distance, in both X and Y.
                         var x_length = linethickness * pattern_spacing;
@@ -826,8 +833,8 @@ namespace Slicer.slyce.Constructs
                         {
                             var next_y = offset + y_length;
 
-                            pattern.Add(new Polygon2D(new Line(XStart - x_length, offset, XEnd   + x_length, offset)));
-                            pattern.Add(new Polygon2D(new Line(XEnd   + x_length, next_y, XStart - x_length, next_y)));
+                            pattern.Add(new Polygon2D(new Line(XStart - x_length, offset, XEnd + x_length, offset)));
+                            pattern.Add(new Polygon2D(new Line(XEnd + x_length, next_y, XStart - x_length, next_y)));
 
                             offset = next_y + y_length;
                         }
@@ -854,10 +861,10 @@ namespace Slicer.slyce.Constructs
                     {
                         List<Polygon2D> pattern = new List<Polygon2D>();
                         var diagonal = Line.Distance(X, Y, X2, Y2);
-                        var XStart   = X  - diagonal / 2.0;
-                        var XEnd     = X2 + diagonal / 2.0;
-                        var Ystart   = Y  - diagonal / 2.0;
-                        var YEnd     = Y2 + diagonal / 2.0;
+                        var XStart = X - diagonal / 2.0;
+                        var XEnd = X2 + diagonal / 2.0;
+                        var Ystart = Y - diagonal / 2.0;
+                        var YEnd = Y2 + diagonal / 2.0;
 
                         // Generate infill rectangles, every length distance, in both X and Y.
                         var x_length = linethickness * pattern_spacing;
@@ -876,9 +883,9 @@ namespace Slicer.slyce.Constructs
                             var next_y = offset + y_length;
                             var poly = new Polygon2D();
 
-                            poly.AddLine(new Line(XStart - x_length, offset, XEnd   + x_length, offset), ConnectionType.LAST);
-                            poly.AddLine(new Line(XEnd   + x_length, offset, XEnd   + x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(XEnd   + x_length, next_y, XStart - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(XStart - x_length, offset, XEnd + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(XEnd + x_length, offset, XEnd + x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(XEnd + x_length, next_y, XStart - x_length, next_y), ConnectionType.LAST);
                             poly.AddLine(new Line(XStart - x_length, next_y, XStart - x_length, offset), ConnectionType.LAST);
 
                             pattern.Add(poly);
@@ -919,10 +926,10 @@ namespace Slicer.slyce.Constructs
                             var next_y = offset + y_length;
                             var poly = new Polygon2D();
 
-                            poly.AddLine(new Line(X  - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(X - x_length, offset, X2 + x_length, offset), ConnectionType.LAST);
                             poly.AddLine(new Line(X2 + x_length, offset, X2 + x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(X2 + x_length, next_y, X  - x_length, next_y), ConnectionType.LAST);
-                            poly.AddLine(new Line(X  - x_length, next_y, X  - x_length, offset), ConnectionType.LAST);
+                            poly.AddLine(new Line(X2 + x_length, next_y, X - x_length, next_y), ConnectionType.LAST);
+                            poly.AddLine(new Line(X - x_length, next_y, X - x_length, offset), ConnectionType.LAST);
 
                             polies.Add(poly);
 
@@ -935,10 +942,10 @@ namespace Slicer.slyce.Constructs
                             var next_x = offset + x_length;
                             var poly = new Polygon2D();
 
-                            poly.AddLine(new Line(offset, Y  - y_length, offset, Y2 + y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(offset, Y - y_length, offset, Y2 + y_length), ConnectionType.LAST);
                             poly.AddLine(new Line(offset, Y2 + y_length, next_x, Y2 + y_length), ConnectionType.LAST);
-                            poly.AddLine(new Line(next_x, Y2 + y_length, next_x, Y  - y_length), ConnectionType.LAST);
-                            poly.AddLine(new Line(next_x, Y  - y_length, offset, Y  - y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(next_x, Y2 + y_length, next_x, Y - y_length), ConnectionType.LAST);
+                            poly.AddLine(new Line(next_x, Y - y_length, offset, Y - y_length), ConnectionType.LAST);
 
                             polies.Add(poly);
 
@@ -953,7 +960,7 @@ namespace Slicer.slyce.Constructs
 
                         // Transform pattern and add to infill
                         Matrix matr = Matrix.Identity;
-                        matr.RotateAt(60+45, X + size_x / 2.0, Y + size_y / 2.0);
+                        matr.RotateAt(60 + 45, X + size_x / 2.0, Y + size_y / 2.0);
                         polies.AddRange(pattern.Select(p => p.Transform(matr)));
 
                         matr.RotateAt(60, X + size_x / 2.0, Y + size_y / 2.0);
@@ -999,7 +1006,7 @@ namespace Slicer.slyce.Constructs
 
                         break;
                     }
-                }
+            }
 
 
             polies.ForEach(p => { p.IsInfill = true; });

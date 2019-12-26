@@ -109,91 +109,114 @@ namespace Slicer.slyce.Constructs
             this.Polygons = eroded.Where(p => p.FilterShorts()).ToList();
         }
 
+        public void GenerateSupport(Slice above, double diameter)
+        {
+            if (above != null && above.Polygons != null && above.Polygons.Count > 0)
+            {
+                List<Polygon2D> supportPolies = new List<Polygon2D>();
+                List<Polygon2D> abovePolies = new List<Polygon2D>();
+
+                //Take union of every polygon in above (except support)
+                Clipper c = new Clipper();
+                c.AddPaths(above.Polygons.Where(p => !p.IsSupport && p.IsComplete())
+                                .Select(p => p.IntPoints).ToList(), 
+                           PolyType.ptSubject, true);
+
+                PolyTree solution = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution);
+                abovePolies.AddRange(Polygon2D.PolyNodeToPolies(solution));
+
+                //Offset with -half diameter
+                foreach (var p in abovePolies)
+                {
+                    p.Offset(-diameter / 2.0);
+                }
+
+                //Add supports from before
+                c = new Clipper();
+
+                foreach (var p in abovePolies)
+                {
+                    if (p.IsComplete())
+                    {
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                }
+                foreach (var p in above.Polygons.Where(p => p.IsSupport))
+                {
+                    if(p.IsComplete())
+                    {
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                }
+
+                PolyTree solution2 = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution2);
+                abovePolies = Polygon2D.PolyNodeToPolies(solution2).ToList();
+
+                List<Polygon2D> sliceShape = new List<Polygon2D>();
+
+                //Union pieces in this layer
+                c = new Clipper();
+
+                foreach (var p in this.Polygons)
+                {
+                    if(p.IsComplete())
+                    {
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                }
+
+                PolyTree solution3 = new PolyTree();
+                c.Execute(ClipType.ctUnion, solution3);
+                sliceShape.AddRange(Polygon2D.PolyNodeToPolies(solution3));
+
+                //Difference of that and this slice = support area
+                c = new Clipper();
+
+                foreach (var p in abovePolies)
+                {
+                    if (p.IsComplete())
+                    {
+                        c.AddPath(p.IntPoints, PolyType.ptSubject, true);
+                    }
+                }
+
+                foreach (var p in sliceShape)
+                {
+                    if(p.IsComplete())
+                    {
+                        c.AddPath(p.IntPoints, PolyType.ptClip, true);
+                    }
+                }
+
+                PolyTree solution4 = new PolyTree();
+                c.Execute(ClipType.ctDifference, solution4);
+                supportPolies.AddRange(Polygon2D.PolyNodeToPolies(solution4));
+
+                foreach (var p in supportPolies)
+                {
+                    p.IsSupport = true;
+                    foreach (var l in p.Lines)
+                    {
+                        l.IsSupport = true;
+                    }
+                }
+                
+                this.TempSurfaces = supportPolies;
+            }
+            else
+            {
+                this.TempSurfaces = new List<Polygon2D>();
+            }
+        }
+
         public void DetermineSurfaces(Slice below, Slice above)
         {
             // Subtract above/below/this.Polygons
             List<Polygon2D> thisMinusAbove = new List<Polygon2D>(); // Roofs
             List<Polygon2D> thisMinusBelow = new List<Polygon2D>(); // Floors
 
-            ////Make this
-            //PolyTree thisTree = new PolyTree();
-            //PolyTree aboveTree = new PolyTree();
-            //PolyTree belowTree = new PolyTree();
-            //if(this.Polygons != null && this.Polygons.Count() > 0)
-            //{
-            //    Clipper c1 = new Clipper();
-            //    foreach (var p in this.Polygons.Where(p => !p.IsSurface && !p.IsHole && p.IsComplete()))
-            //    {
-            //        if(p.IsComplete())
-            //        {
-            //            c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
-            //        }
-            //    }
-            //    foreach (var p in this.Polygons.Where(p => !p.IsSurface && p.IsHole && p.IsComplete()))
-            //    {
-            //        if (p.IsComplete())
-            //        {
-            //            c1.AddPath(p.IntPoints, PolyType.ptClip, true);
-            //        }
-            //    }
-            //    c1.Execute(ClipType.ctDifference, thisTree);
-            //}
-            ////Make above
-            //if (above != null && above.Polygons != null && above.Polygons.Count() > 0)
-            //{
-            //    Clipper c1 = new Clipper();
-            //    foreach (var p in above.Polygons.Where(p => !p.IsSurface && !p.IsHole && p.IsComplete()))
-            //    {
-            //        if (p.IsComplete())
-            //        {
-            //            c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
-            //        }
-            //    }
-            //    //foreach (var p in above.Polygons.Where(p => !p.IsSurface && p.IsHole && p.IsComplete()))
-            //    //{
-            //    //    if (p.IsComplete())
-            //    //    {
-            //    //        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
-            //    //    }
-            //    //}
-            //    c1.Execute(ClipType.ctDifference, aboveTree);
-            //}
-            ////Make below
-            //if (below != null && below.Polygons != null && below.Polygons.Count() > 0)
-            //{
-            //    Clipper c1 = new Clipper();
-            //    foreach (var p in below.Polygons.Where(p => !p.IsSurface && !p.IsHole && p.IsComplete()))
-            //    {
-            //        if (p.IsComplete())
-            //        {
-            //            c1.AddPath(p.IntPoints, PolyType.ptSubject, true);
-            //        }
-            //    }
-
-            //    //foreach (var p in below.Polygons.Where(p => !p.IsSurface && p.IsHole && p.IsComplete()))
-            //    //{
-            //    //    if (p.IsComplete())
-            //    //    {
-            //    //        c1.AddPath(p.IntPoints, PolyType.ptClip, true);
-            //    //    }
-            //    //}
-            //    c1.Execute(ClipType.ctDifference, belowTree);
-            //}
-            //Clipper cTotalAbove = new Clipper();
-            //cTotalAbove.AddPaths(Clipper.ClosedPathsFromPolyTree(thisTree), PolyType.ptSubject, true);
-            //cTotalAbove.AddPaths(Clipper.ClosedPathsFromPolyTree(aboveTree), PolyType.ptClip, true);
-            //PolyTree solution = new PolyTree();
-            //cTotalAbove.Execute(ClipType.ctDifference, solution);
-            //thisMinusAbove = Polygon2D.PolyNodeToPolies(solution).ToList();
-
-            //Clipper cTotalBelow = new Clipper();
-            //cTotalBelow.AddPaths(Clipper.ClosedPathsFromPolyTree(thisTree), PolyType.ptSubject, true);
-            //cTotalAbove.AddPaths(Clipper.ClosedPathsFromPolyTree(belowTree), PolyType.ptClip, true);
-            //PolyTree solution2 = new PolyTree();
-            //cTotalAbove.Execute(ClipType.ctDifference, solution2);
-            //thisMinusBelow = Polygon2D.PolyNodeToPolies(solution2).ToList();
-
-            // Determine roofs
             if (above != null && above.Polygons != null && above.Polygons.Count != 0)
             {
                 Clipper c1 = new Clipper();
@@ -292,7 +315,7 @@ namespace Slicer.slyce.Constructs
             // EDIT Now ignores shells that would overlap
 
             var shell_miter = 10.0;
-            var polies = this.Polygons.Where(p => !p.IsSurface).ToList();
+            var polies = this.Polygons.Where(p => !p.IsSurface && !p.IsSupport).ToList();
 
             // Amount of overlap between infill and walls, expressed in terms of infill line width
             var infill_overlap_percentage = 0.3; // Same as Cura
@@ -698,10 +721,10 @@ namespace Slicer.slyce.Constructs
                 PolyTree sol2 = new PolyTree();
                 joiner.Execute(ClipType.ctUnion, sol2, PolyFillType.pftPositive);
                 var surfaces = Polygon2D.PolyNodeToPolies(sol2).ToList();
-            
+
 
                 Clipper c = new Clipper();
-                
+
                 foreach (var inf in infill_struct)
                 {
                     var intersected = inf.Intersect(surfaces);

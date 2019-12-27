@@ -124,7 +124,7 @@ namespace Slicer.slyce.Constructs
                 c.Execute(ClipType.ctUnion, solution);
 
                 List<Polygon2D> abovePolies = Polygon2D.PolyNodeToPolies(solution)
-                    //.SelectMany(p => p.Offset(-diameter / 2.0))  // Offset with -half diameter. EDIT: Give errors
+                    .SelectMany(p => p.Offset((p.IsContour ? -1 : 1) * diameter / 2.0))  // Offset with -half diameter.
                     .ToList();
 
                 //Add supports from before
@@ -269,7 +269,6 @@ namespace Slicer.slyce.Constructs
         public void AddFoundSurfaces()
         {
             this.Polygons.AddRange(this.TempSurfaces
-                    //.SelectMany(p => p.CleanToPolygons())   // Causes polies to appear?
                     .Where(p => p.FilterShorts() && p.Lines.Count > 2));
             this.TempSurfaces.Clear();
         }
@@ -714,9 +713,10 @@ namespace Slicer.slyce.Constructs
             }
         }
 
-        public void AddSupportInfill(List<Polygon2D> infill_struct, double offset, bool connect_lines = true, double miter_limit = 3)
+        public void AddSupportInfill(List<Polygon2D> infill_struct, double diameter, bool connect_lines = true, double miter_limit = 3)
         {
             // Add this infill only to supports
+            double overlap_offset = diameter * 2.0;
 
             if (this.Polygons.Any(p => p.IsSupport))
             {
@@ -725,6 +725,7 @@ namespace Slicer.slyce.Constructs
                 // First join supports as Positives (i.e. all supports are solid contours, no holes)
                 Clipper joiner = new Clipper();
                 joiner.AddPaths(this.Polygons.Where(p => p.IsSupport)
+                                             .SelectMany(p => p.Offset(overlap_offset, miter_limit))
                                              .Select(p => p.IntPoints).ToList(),
                                 PolyType.ptSubject, true);
                 PolyTree sol2 = new PolyTree();
@@ -732,12 +733,32 @@ namespace Slicer.slyce.Constructs
 
                 // Get solution and offset to make them a bit smaller
                 var supports = Polygon2D.PolyNodeToPolies(sol2)
-                    .SelectMany(p => p.Offset(-offset, miter_limit))
+                    .SelectMany(p => p.Offset(-overlap_offset, miter_limit))  // Undo offset
+                    .SelectMany(p => p.Offset(-diameter, miter_limit))        // Add extra offset to prevent overlap, must be done after undo!
                     .ToList();
 
+                // Subtract overlapping contours...
+                var supports_cleaned = new List<Polygon2D>();
+                var other_polies = this.Polygons.Where(p => !p.IsSupport && p.IsContour && !p.IsSurface && !p.IsShell).ToList();
+
+                foreach (var s in supports)
+                {
+                    Clipper cdiff = new Clipper();
+                    PolyTree diff = new PolyTree();
+
+                    cdiff.AddPath(s.IntPoints, PolyType.ptSubject, true);
+                    cdiff.AddPaths(other_polies.Where(p => s.ContainsOrOverlaps(p))
+                                               .Select(p => p.IntPoints).ToList(),
+                                   PolyType.ptClip, true);
+                    cdiff.Execute(ClipType.ctDifference, diff, PolyFillType.pftEvenOdd);
+
+                    supports_cleaned.AddRange(Polygon2D.PolyNodeToPolies(diff));
+                }
+
+                // Intersect infill
                 if (connect_lines)
                 {
-                    foreach (var support in supports)
+                    foreach (var support in supports_cleaned.Where(s => s.IsContour))
                     {
                         Clipper c = new Clipper();
 
@@ -754,6 +775,17 @@ namespace Slicer.slyce.Constructs
                         PolyTree solution = new PolyTree();
                         c.Execute(ClipType.ctUnion, solution);
 
+                        // Subtract overlapping contours from the infill itself, again...
+                        c.Clear();
+                        var unioned = Polygon2D.PolyNodeToPolies(solution).ToList();
+                        c.AddPaths(unioned.Select(p => p.IntPoints).ToList(), PolyType.ptSubject, false);
+                        c.AddPaths(other_polies.Where(p => unioned.Any(s => s.ContainsOrOverlaps(p)))
+                                               .SelectMany(p => p.Offset(+diameter, miter_limit))
+                                               .Select(p => p.IntPoints).ToList(),
+                                   PolyType.ptClip, true);
+                        c.Execute(ClipType.ctDifference, solution, PolyFillType.pftPositive);
+
+                        // Add zigzag connectors
                         Polygon2D current = null;
 
                         foreach (var p in Polygon2D.OrderByClosest(Polygon2D.PolyNodeToPolies(solution).ToList()))
@@ -778,7 +810,7 @@ namespace Slicer.slyce.Constructs
                                 var line_fom_to = new Line(current.LastPoint(), p.FirstPoint());
                                 var extra_conn = new Polygon2D(line_fom_to);
 
-                                if (this.Polygons.Where(q => !q.IsSupport).Any(q => extra_conn.ContainsOrOverlaps(q)))
+                                if (this.Polygons.Where(q => !q.IsSupport && !q.IsHole).Any(q => extra_conn.ContainsOrOverlaps(q)))
                                 {
                                     // Intersects, so don't add. current is all we could get.
                                     this.FillPolygons.Add(current);
@@ -803,7 +835,7 @@ namespace Slicer.slyce.Constructs
 
                     foreach (var inf in infill_struct)
                     {
-                        var intersected = inf.Intersect(supports);
+                        var intersected = inf.Intersect(supports_cleaned);
                         foreach (var p in intersected)
                         {
                             p.CleanLines();
@@ -823,8 +855,8 @@ namespace Slicer.slyce.Constructs
 
                     this.FillPolygons.AddRange(Polygon2D.OrderByClosest(tmp_fill));
                 }
-                
-                // Show support structure
+
+                //// Show support structure
                 //this.FillPolygons.AddRange(infill_struct.Select(p =>
                 //{
                 //    p.IsSupport = true;

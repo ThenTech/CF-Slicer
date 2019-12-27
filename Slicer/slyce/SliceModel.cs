@@ -20,9 +20,12 @@ namespace Slicer.slyce
         private ViewModel data;
 
         private static readonly Brush[] StateBrushes =
+        //{
+        //    new SolidColorBrush(Color.FromRgb(0x01, 0xD3, 0x28)), 
+        //    Brushes.Yellow, Brushes.Orange, Brushes.OrangeRed, Brushes.Crimson
+        //};
         {
-            new SolidColorBrush(Color.FromRgb(0x01, 0xD3, 0x28)), 
-            Brushes.Yellow, Brushes.Orange, Brushes.OrangeRed, Brushes.Crimson
+            Line.BrushContour, Line.BrushSupport, Line.BrushFloorFill, Line.BrushRoofFill, Line.BrushInfill
         };
 
         public MeshGeometry3D  Original   { get; private set; }
@@ -106,7 +109,6 @@ namespace Slicer.slyce
             var scale = size / (max - min);
 
             var dense_spacing = this.data.NozzleDiameter * 2.375;  // Default dense_spacing == 0.95
-            var support_extra_offset = this.data.NozzleDiameter * 1.5;  // Erode support to make it smaller
 
             this.SliceStore = Enumerable.Repeat<Slice>(null, this.data.MaxSliceIdx + 1).ToList();
 
@@ -292,7 +294,7 @@ namespace Slicer.slyce
 
                     // Add infill for surfaces
                     slice.AddDenseInfill(i % 2 == 0 ? surface_struct : surface_struct_alt);
-                    slice.AddSupportInfill(support_struct, support_extra_offset, 
+                    slice.AddSupportInfill(support_struct, this.data.NozzleDiameter * dense_spacing,
                                            this.data.UseSupport == InfillType.ZIGZAG || this.data.UseSupport < InfillType.RECTANGLE);
                     slice.AddInfill(infill_struct);
               

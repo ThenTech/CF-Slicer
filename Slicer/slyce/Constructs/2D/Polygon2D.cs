@@ -328,7 +328,7 @@ namespace Slicer.slyce.Constructs
                 });
             }
 
-            if (this._IntPoints.Count > 3)
+            if (this._IntPoints.Count >= 3)
             {
                 var first = this._IntPoints.First();
                 var last = this._IntPoints.Last();

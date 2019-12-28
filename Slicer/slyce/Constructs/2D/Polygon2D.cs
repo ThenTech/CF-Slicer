@@ -29,12 +29,13 @@ namespace Slicer.slyce.Constructs
         // Indicates whether this is an inside edge (hole)
         public bool IsHole { get => !IsContour; set => IsContour = !value; }
 
-        public bool IsInfill  { get; set; } = false;
-        public bool IsShell   { get; set; } = false;
-        public bool IsOpen    { get; set; } = false;
-        public bool IsFloor   { get; set; } = false;
-        public bool IsRoof    { get; set; } = false;
-        public bool IsSupport { get; set; } = false;
+        public bool IsInfill   { get; set; } = false;
+        public bool IsShell    { get; set; } = false;
+        public bool IsOpen     { get; set; } = false;
+        public bool IsFloor    { get; set; } = false;
+        public bool IsRoof     { get; set; } = false;
+        public bool IsSupport  { get; set; } = false;
+        public bool IsAdhesion { get; set; } = false;
 
 
         // List of seperate points in the Polygon for ClipperLib

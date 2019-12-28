@@ -90,6 +90,9 @@ namespace Slicer
             cboxSupportType.ItemsSource = Enum.GetValues(typeof(InfillType)).Cast<InfillType>();
             cboxSupportType.SelectedItem = this._viewModel.UseSupport;
 
+            cboxAdhesionType.ItemsSource = Enum.GetValues(typeof(AdhesionType)).Cast<AdhesionType>();
+            cboxAdhesionType.SelectedItem = this._viewModel.UseAdhesion;
+
             this.ResetCamera_Click(null, null);
             this.Reset_Click(null, null);
         }
@@ -202,9 +205,11 @@ namespace Slicer
 
             if (d.ShowDialog().Value)
             {
-                slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter(_viewModel.NozzleThickness,
-                                                                          _viewModel.NozzleDiameter,
-                                                                          _viewModel.FilamentDiameter);
+                slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter(
+                    _viewModel.NozzleThickness, _viewModel.NozzleDiameter, _viewModel.FilamentDiameter,
+                    //_viewModel.UseAdhesion != AdhesionType.NONE  // TODO Optionally disable extra line if has adhesion
+                );
+
                 gcw.AddAllSlices(_viewModel.Slicer.SliceStore);
                 gcw.ExportToFile(d.FileName);
             }

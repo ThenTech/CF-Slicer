@@ -36,7 +36,11 @@ namespace Slicer.slyce.Constructs
                 {
                     foreach (var l in p.Lines)
                     {
-                        l.IsContour = p.IsContour;
+                        l.IsContour  = p.IsContour;
+                        l.IsInfill   = p.IsInfill;
+                        l.IsSurface  = p.IsSurface;
+                        l.IsSupport  = p.IsSupport;
+                        l.IsAdhesion = p.IsAdhesion;
                         yield return l;
                     }
                 }
@@ -273,7 +277,7 @@ namespace Slicer.slyce.Constructs
             this.TempSurfaces.Clear();
         }
 
-        public void AddShells(int nShells, double thickness)
+        public void AddShells(int nShells, double diameter)
         {
             // WARNING Does not take into account if shell poly intersects with other parts of the layer...
             // EDIT Now ignores shells that would overlap
@@ -283,7 +287,7 @@ namespace Slicer.slyce.Constructs
 
             // Amount of overlap between infill and walls, expressed in terms of infill line width
             var infill_overlap_percentage = 0.3; // Same as Cura
-            var overlapp_offset = thickness * infill_overlap_percentage;
+            var overlapp_offset = diameter * infill_overlap_percentage;
 
 #if false
             for (int shell = 1; shell < nShells /* -1 */; shell++)
@@ -546,7 +550,7 @@ namespace Slicer.slyce.Constructs
 
                     if (poly.IsContour)
                     {
-                        IEnumerable<Polygon2D> offsetted = contour.Offset(-thickness * (double)shell, shell_miter);
+                        IEnumerable<Polygon2D> offsetted = contour.Offset(-diameter * (double)shell, shell_miter);
 
                         // TODO Always add but clip with existing things?
                         //foreach (var p in this.Polygons)
@@ -584,7 +588,7 @@ namespace Slicer.slyce.Constructs
                     }
                     else
                     {
-                        IEnumerable<Polygon2D> offsetted = contour.Offset(+thickness * (double)shell, shell_miter);
+                        IEnumerable<Polygon2D> offsetted = contour.Offset(+diameter * (double)shell, shell_miter);
 
                         // TODO Always add but clip with existing things?
                         //foreach (var p in this.Polygons)
@@ -955,6 +959,85 @@ namespace Slicer.slyce.Constructs
 
             // Remove surfaces as they are now handled
             this.Polygons = this.Polygons.Where(p => !p.IsSurface && !p.IsSupport).ToList();
+        }
+
+        public void AddAdhesion(AdhesionType type, double diameter, bool add_to_polies = true /*else to fill*/, int distance = 12, int miter_dist = 5)
+        {
+            if (type == AdhesionType.NONE)
+                return;
+
+            Polygon2D outside_poly = null;
+            
+            if (add_to_polies)
+            {
+                // Select largest outer poly
+                outside_poly = this.Polygons.Where(p => p.Hierarchy == 0).First();
+            }
+            else
+            {
+                // Get bounds instead of poly, because order and contents are not sure for fill...
+                var rect = Clipper.GetBounds(this.FillPolygons.Select(p => p.IntPoints).ToList());
+                outside_poly = new Polygon2D(new Path()
+                {
+                    new IntPoint(rect.top   , rect.left),
+                    new IntPoint(rect.top   , rect.right),
+                    new IntPoint(rect.bottom, rect.right),
+                    new IntPoint(rect.bottom, rect.left),
+                });
+            }
+
+            if (outside_poly == null)
+            {
+                return;
+            }
+
+            List<Polygon2D> adhesion_polies = null;
+ 
+            switch (type)
+            {
+                case AdhesionType.SKIRT:
+                    {
+                        // Separated rings around ground poly
+                        const int rings = 2;
+                        adhesion_polies = new List<Polygon2D>(rings + this.Polygons.Count);
+
+                        for (int offsetted_line = 0; offsetted_line < rings; offsetted_line++)
+                        {
+                            var offset = diameter * (distance - offsetted_line);
+                            adhesion_polies.AddRange(outside_poly.Offset(offset, miter_dist)
+                                                                 .Where(p => p.FilterShorts()));
+                        }
+                        
+                        break;
+                    }
+                case AdhesionType.BRIM:
+                    {
+                        // Number of offsets going to ground poly, from distance away
+                        adhesion_polies = new List<Polygon2D>(distance + this.Polygons.Count);
+
+                        for (int offsetted_line = 0; offsetted_line < distance; offsetted_line++)
+                        {
+                            var offset = diameter * (distance - offsetted_line);
+                            adhesion_polies.AddRange(outside_poly.Offset(offset, miter_dist)
+                                                                 .Where(p => p.FilterShorts()));
+                        }
+
+                        break;
+                    }
+            }
+
+            // Mark flags for proper drawing of colour, useless otherwise
+            adhesion_polies.ForEach(p =>
+            {
+                p.IsInfill   = true;
+                p.IsSupport  = true;
+                p.IsShell    = true;
+                p.IsSurface  = true;
+                p.IsAdhesion = true;
+            });
+
+            adhesion_polies.AddRange(this.Polygons);
+            this.Polygons = adhesion_polies;
         }
 
         public List<Shape> ToShapes(double minX, double minY, double scale, double arrow_scale = 1.0, double stroke = 1.0)

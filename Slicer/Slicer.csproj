@@ -81,6 +81,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="slyce\Constructs\2D\AdhesionType.cs" />
     <Compile Include="slyce\Constructs\2D\ConnectionType.cs" />
     <Compile Include="slyce\Constructs\2D\InfillType.cs" />
     <Compile Include="slyce\Constructs\2D\Polygon2D.cs" />

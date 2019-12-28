@@ -23,6 +23,7 @@
 - [ ] Automatic orientation of model (XY rotation; optimization)
 - [x] Automatic centring of model (XY position)
 - [x] Optimized support structures (zigzag)
+- [x] Adhesion with brim/skirt
 - [ ] Print time estimation (take speed per accumulated extrusion and sum them)
 
 ## Progress
@@ -57,7 +58,7 @@
 - [x] Slice opstellen door triangle en plane intersection ipv 3D intersection
 - [x] Add ambient light ~~
 - [x] Basic SliceModel class with slice plane and sliced model preview
-- [ ] Add brim/skirt (erode to outer on slice 0)
+- [x] Add brim/skirt (erode to outer on slice 0)
 - [x] Make offsets for every contour/hole and then union them
 - [x] Surface (floor/roof) herkenning
   - ✔ Refactor code to split generation

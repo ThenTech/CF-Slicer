@@ -349,6 +349,19 @@ namespace Slicer.GUI
             }
         }
 
+        public AdhesionType UseAdhesion { get; set; } = AdhesionType.SKIRT;
+
+        private int _AdhesionDistance = 12;
+        public int AdhesionDistance
+        {
+            get { return _AdhesionDistance; }
+            set
+            {
+                _AdhesionDistance = value;
+                OnPropertyChanged("AdhesionDistance");
+            }
+        }
+
         private Brush _ProgressBarColor = Brushes.Red;
         public Brush ProgressBarColor {
             get { return _ProgressBarColor; }

@@ -28,13 +28,14 @@ namespace Slicer.slyce.Constructs
         public Point StartPoint { get; set; }
         public Point EndPoint { get; set; }
 
-        public bool IsContour { get; set; } = true;
-        public bool IsHole    { get => !IsContour; set => IsContour = !value; }
-        public bool IsInfill  { get; set; } = false;
-        public bool IsShell   { get; set; } = false;
-        public bool IsOpen    { get; set; } = false;
-        public bool IsSurface { get; set; } = false;
-        public bool IsSupport { get; set; } = false;
+        public bool IsContour  { get; set; } = true;
+        public bool IsHole     { get => !IsContour; set => IsContour = !value; }
+        public bool IsInfill   { get; set; } = false;
+        public bool IsShell    { get; set; } = false;
+        public bool IsOpen     { get; set; } = false;
+        public bool IsSurface  { get; set; } = false;
+        public bool IsSupport  { get; set; } = false;
+        public bool IsAdhesion { get; set; } = false;
 
         public Line(double X1, double Y1, double X2, double Y2)
         {
@@ -187,7 +188,9 @@ namespace Slicer.slyce.Constructs
                                ? Line.BrushContourShell
                                : Line.BrushHoleShell
                              : this.IsSurface
-                               ? Line.BrushFloorFill
+                               ? this.IsAdhesion
+                                 ? Line.BrushRoofFill
+                                 : Line.BrushFloorFill
                                : Line.BrushInfill
                          : this.IsContour
                            ? Line.BrushContour : Line.BrushHole;

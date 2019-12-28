@@ -25,6 +25,7 @@ namespace Slicer.slyce
         //    Brushes.Yellow, Brushes.Orange, Brushes.OrangeRed, Brushes.Crimson
         //};
         {
+            // Progress coloured by lines in preview
             Line.BrushContour, Line.BrushSupport, Line.BrushFloorFill, Line.BrushRoofFill, Line.BrushInfill
         };
 
@@ -304,16 +305,40 @@ namespace Slicer.slyce
                     // Add shapes
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
-                        slice.ToShapes(bounds.X, bounds.Y, scale, this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
+                        if (i > 0)
+                            slice.ToShapes(bounds.X, bounds.Y, scale, this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness);
                         this.data.SlicingProgressValue++;
                     });
                 });
 
 
+                // Step 6: Add adhesion to ground plane
+                // WARNING Polies need to be sorted first (see slice.SortPolygons() above == OK)
+                first_index = this.SliceStore.FindIndex(s => s.Polygons.Count > 0);
+                if (first_index >= 0)
+                {
+                    this.SliceStore[first_index].AddAdhesion(
+                        this.data.UseAdhesion, 
+                        data.NozzleDiameter * dense_spacing, 
+                        true, this.data.AdhesionDistance);
+                }
+                else
+                {
+                    first_index = this.SliceStore.FindIndex(s => s.FillPolygons.Count > 0);
+                    if (first_index >= 0)
+                    {
+                        this.SliceStore[first_index].AddAdhesion(
+                            this.data.UseAdhesion, 
+                            data.NozzleDiameter * dense_spacing, 
+                            false, this.data.AdhesionDistance);
+                    }
+                }
+
+
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     this.Slice = this.SliceStore[0];
-                    this.data.SliceShapes = this.Slice.Shapes;
+                    this.data.SliceShapes = this.Slice.ToShapes(bounds.X, bounds.Y, scale, this.data.PreviewArrowThickness, this.data.PreviewStrokeThickness); ;
 
                     this.data.SliceCanvas.Children.Clear();
                     this.data.SliceShapes.ForEach(x => this.data.SliceCanvas.Children.Add(x));

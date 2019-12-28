@@ -27,6 +27,7 @@ namespace Slicer.slyce.GCode
         private double layer_height;
         private double nozzle_diam;
         private double filament_diam;
+        private bool has_adh;
         private bool first_start;
 
         private static readonly Comment header_comment   = new Comment() { Text = "Generated with Pancakes - © 2019 Lieven Libberecht, William Thenaers" };
@@ -54,21 +55,27 @@ namespace Slicer.slyce.GCode
             new SetExtrudeFactorOverride() { Percentage = 100.0m },
 
             new MoveToOrigin(),
+
+            // test_line_sequence
+        };
+
+        private static readonly CommandCollection test_line_sequence = new CommandCollection()
+        {
             new SetPosition() { Extrude = 0 },
-            new LinearMove() { MoveZ = 2.0m, Feedrate=3000},
-            new LinearMove() { MoveX = 10.1m, MoveY =  20.0m, MoveZ = 0.28m, Feedrate=5000 },
-            new LinearMove() { MoveX = 10.1m, MoveY = 200.0m, MoveZ = 0.28m, Feedrate=1500, Extrude = 15},
-            new LinearMove() { MoveX = 10.4m, MoveY = 200.0m, MoveZ = 0.28m, Feedrate=5000 },
-            new LinearMove() { MoveX = 10.4m, MoveY =  20.0m, MoveZ = 0.28m, Feedrate=1500, Extrude = 30 },
+            new LinearMove()  { MoveZ = 2.0m, Feedrate=3000},
+            new LinearMove()  { MoveX = 10.1m, MoveY =  20.0m, MoveZ = 0.28m, Feedrate=5000 },
+            new LinearMove()  { MoveX = 10.1m, MoveY = 200.0m, MoveZ = 0.28m, Feedrate=1500, Extrude = 15},
+            new LinearMove()  { MoveX = 10.4m, MoveY = 200.0m, MoveZ = 0.28m, Feedrate=5000 },
+            new LinearMove()  { MoveX = 10.4m, MoveY =  20.0m, MoveZ = 0.28m, Feedrate=1500, Extrude = 30 },
 
             new SetPosition() { Extrude = 0 },
-            new LinearMove() { MoveZ = 2.0m, Feedrate=3000},
+            new LinearMove()  { MoveZ = 2.0m, Feedrate=3000},
 
             new SetPosition() { Extrude = 0 },
-            new LinearMove() { Feedrate=2700, Extrude = -5 },
+            new LinearMove()  { Feedrate=2700, Extrude = -5 },
 
             new FanOff(),
-            new LinearMove() { Feedrate=1500, Extrude = 0 },
+            new LinearMove()  { Feedrate=1500, Extrude = 0 },
         };
 
         private static readonly CommandCollection teardown_sequence = new CommandCollection()
@@ -92,12 +99,13 @@ namespace Slicer.slyce.GCode
             new SetExtruderTemperature() { Temperature = 0 },
         };
 
-        public GCodeWriter(double layer_height, double nozzle_diam, double filament_diam)
+        public GCodeWriter(double layer_height, double nozzle_diam, double filament_diam, bool has_adh = false)
         {
             this.instructions  = new CommandCollection();
             this.layer_height  = layer_height;
             this.nozzle_diam   = nozzle_diam;
             this.filament_diam = filament_diam;
+            this.has_adh       = has_adh;
         }
 
         public void Reset()
@@ -260,7 +268,11 @@ namespace Slicer.slyce.GCode
 
                 // Start layer 0
                 this.Add(new Comment() { Text = String.Format(layer_fmt, layer++) });
-                this.Add(new FanOn() { FanSpeed = 85 });  // Fan on low for first layer or off?
+
+                // Fan on low for first layer or off?
+                this.Add(new FanOff());  
+                //this.Add(new FanOn() { FanSpeed = 85 });
+
                 this.AddSlice(it.Current);
                 this.Add(new FanOn() { FanSpeed = 255 });
 
@@ -289,6 +301,13 @@ namespace Slicer.slyce.GCode
                 GCodeWriter.startup_sequence.ForEach(x => {
                     fout.WriteLine(x.ToString());
                 });
+
+                if (!this.has_adh)
+                {
+                    GCodeWriter.test_line_sequence.ForEach(x => {
+                        fout.WriteLine(x.ToString());
+                    });
+                }
             }
 
             fout.WriteLine(GCodeWriter.print_comment.ToString());

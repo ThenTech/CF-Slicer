@@ -72,6 +72,7 @@ namespace Slicer.slyce.GCode
             new LinearMove()  { MoveZ = 2.0m, Feedrate=3000},
 
             new SetPosition() { Extrude = 0 },
+            new SetPosition() { Extrude = 0 },
             new LinearMove()  { Feedrate=2700, Extrude = -5 },
 
             new FanOff(),

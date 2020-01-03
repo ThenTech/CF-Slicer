@@ -206,8 +206,8 @@ namespace Slicer
             if (d.ShowDialog().Value)
             {
                 slyce.GCode.GCodeWriter gcw = new slyce.GCode.GCodeWriter(
-                    _viewModel.NozzleThickness, _viewModel.NozzleDiameter, _viewModel.FilamentDiameter,
-                    //_viewModel.UseAdhesion != AdhesionType.NONE  // TODO Optionally disable extra line if has adhesion
+                    _viewModel.NozzleThickness, _viewModel.NozzleDiameter, _viewModel.FilamentDiameter
+                //, _viewModel.UseAdhesion != AdhesionType.NONE  // TODO Optionally disable extra line if has adhesion
                 );
 
                 gcw.AddAllSlices(_viewModel.Slicer.SliceStore);

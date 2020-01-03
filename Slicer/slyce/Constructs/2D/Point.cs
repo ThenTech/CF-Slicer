@@ -10,7 +10,7 @@ namespace Slicer.slyce.Constructs
     public class Point
     {
         // Conversion to ClipperLib.IntPoint
-        public static readonly double INT_POINT_FACTOR = 1000.0;
+        public static readonly double INT_POINT_FACTOR = 1000000.0;
 
         // Point equality tolerance
         public static readonly double EPSILON = 1e-6;

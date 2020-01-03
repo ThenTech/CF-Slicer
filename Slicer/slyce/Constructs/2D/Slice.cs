@@ -167,7 +167,7 @@ namespace Slicer.slyce.Constructs
                 c.Execute(ClipType.ctDifference, solution4);
 
                 this.TempSurfaces = Polygon2D.PolyNodeToPolies(solution4)
-                    .SelectMany(p => p.CleanSimple())
+                    //.SelectMany(p => p.CleanSimple())
                     .Select(p => { p.IsSupport = true; p.IsInfill = true; return p; })
                     .ToList();
                 
@@ -738,7 +738,7 @@ namespace Slicer.slyce.Constructs
                 // Get solution and offset to make them a bit smaller
                 var supports = Polygon2D.PolyNodeToPolies(sol2)
                     .SelectMany(p => p.Offset(-overlap_offset, miter_limit))  // Undo offset
-                    .SelectMany(p => p.Offset(-diameter, miter_limit))        // Add extra offset to prevent overlap, must be done after undo!
+                    .SelectMany(p => p.Offset(-diameter * 2.0, miter_limit))        // Add extra offset to prevent overlap, must be done after undo!
                     .ToList();
 
                 // Subtract overlapping contours...

@@ -202,7 +202,7 @@ namespace Slicer.slyce.Constructs
             if (this.GetLength() < Line.MIN_LENGTH)
             {
                 colour = Line.BrushLengthWarn;
-                arrow_scale *= 4.0;
+                //arrow_scale *= 4.0;
             }
 
             if (arrow_scale > 0.0)

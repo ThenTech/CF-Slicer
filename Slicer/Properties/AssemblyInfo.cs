@@ -12,7 +12,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("UHasselt")]
 [assembly: AssemblyProduct("Pancakes")]
-[assembly: AssemblyCopyright("Copyright © 2019 Lieven Libberecht, William Thenaers")]
+[assembly: AssemblyCopyright("Copyright © 2020 Lieven Libberecht, William Thenaers")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

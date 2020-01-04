@@ -23,6 +23,7 @@
 - [ ] Automatic orientation of model (XY rotation; optimization)
 - [x] Manual orientation of model (XYZ rotation and scale)
 - [x] Automatic centring of model (XY position)
+- [x] Indication of bounding box size and warning if it's larger than the Ender3 build plate (text turns red)
 - [x] Optimized support structures (zigzag + others + size)
 - [x] Adhesion with brim/skirt (+ size)
 - [ ] Print time estimation (take speed per accumulated extrusion and sum them)
@@ -42,6 +43,7 @@
   - <span style="background-color:#FFC0CB;">     </span> Polygons that appeared "open" but were "fixed" to include them anyway
 - [x] Progress indication during slicing (also indicated by same colours for every phase)
 - [x] Slicing is multithreaded where possible
+- [x] Arc detection for polygons to see if it's a circle, so we could print an arc in GCode instead, but the firmware does not have this enabled, so it is commented out.
 
 ## Progress
 

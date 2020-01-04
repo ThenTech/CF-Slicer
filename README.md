@@ -99,5 +99,5 @@
     - ✔ OF Line clipping in de plaats => Paths met lines clippen met inner shell
 - [x] Overhang herkenning voor support (diff van subtraction > nozzle width => support needed)
 - [x] Support toevoegen voor overgang
-- [ ] Check Cura output to identify stringing issue?
-- [ ] Report schrijven
+- [x] Check Cura output to identify stringing issue? Nothing found...
+- [x] Report schrijven

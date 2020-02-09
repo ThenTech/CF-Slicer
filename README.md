@@ -100,4 +100,5 @@
 - [x] Overhang herkenning voor support (diff van subtraction > nozzle width => support needed)
 - [x] Support toevoegen voor overgang
 - [x] Check Cura output to identify stringing issue? Nothing found...
+    -  ==> The solution is probably to retract and reset extrusion if the travel distance to the next polygon is too big (>5 mm or something)
 - [x] Report schrijven
